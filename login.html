@@ -29,6 +29,8 @@
         .role-selector { margin: 1rem 0; }
         .role-selector label { margin-right: 1rem; font-weight: normal; }
         .hidden { display: none; }
+        .forgot-link { text-align: center; margin-top: 1rem; }
+        .forgot-link a { color: #2c5f2d; text-decoration: none; }
     </style>
 </head>
 <body>
@@ -58,7 +60,7 @@
                 Sign in with Google
             </button>
             
-            <p style="text-align: center; margin-top: 1rem;"><a href="#" onclick="resetPassword()" style="color: #2c5f2d;">Forgot password?</a></p>
+            <div class="forgot-link"><a href="#" id="forgotPasswordLink">Forgot password?</a></div>
         </div>
         
         <div id="registerForm" style="display: none;">
@@ -135,7 +137,7 @@
         function showMessage(msg, type) {
             const el = document.getElementById('message');
             el.textContent = msg;
-            el.className = \`message \${type}\`;
+            el.className = 'message ' + type;
             setTimeout(() => el.className = 'message', 5000);
         }
         
@@ -144,13 +146,13 @@
                 const result = await signInWithPopup(auth, googleProvider);
                 const user = result.user;
                 
-                // Check if user exists in Firestore
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
                 
                 if (!userDoc.exists() && isRegister) {
-                    // New user - prompt for role
                     const role = prompt('Are you a Patient, Doctor, or Clinic?', 'Patient');
-                    const validRole = role && ['Patient', 'Doctor', 'Clinic'].includes(role) ? role.toLowerCase() : 'patient';
+                    let validRole = 'patient';
+                    if (role && role.toLowerCase() === 'doctor') validRole = 'doctor';
+                    if (role && role.toLowerCase() === 'clinic') validRole = 'clinic';
                     
                     const profileData = {
                         id: user.uid,
@@ -176,7 +178,6 @@
                     await setDoc(doc(db, 'users', user.uid), profileData);
                     showMessage('Account created with Google! Redirecting...', 'success');
                 } else if (!userDoc.exists() && !isRegister) {
-                    // Existing Google user but no profile - create one
                     const profileData = {
                         id: user.uid,
                         email: user.email,
@@ -258,7 +259,8 @@
         document.getElementById('googleSignUpBtn').addEventListener('click', () => handleGoogleSignIn(true));
         
         // Password reset
-        window.resetPassword = async () => {
+        document.getElementById('forgotPasswordLink').addEventListener('click', async (e) => {
+            e.preventDefault();
             const email = prompt('Enter your email address:');
             if (email) {
                 try {
@@ -268,7 +270,7 @@
                     alert(error.message);
                 }
             }
-        };
+        });
     </script>
 </body>
 </html>

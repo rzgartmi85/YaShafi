@@ -1,0 +1,8 @@
+{
+    "indexes": [
+        {"collectionGroup": "doctors", "queryScope": "COLLECTION", "fields": [{"fieldPath": "kcs", "order": "DESCENDING"}]},
+        {"collectionGroup": "clinics", "queryScope": "COLLECTION", "fields": [{"fieldPath": "rcs", "order": "DESCENDING"}]},
+        {"collectionGroup": "questions", "queryScope": "COLLECTION", "fields": [{"fieldPath": "timestamp", "order": "DESCENDING"}]}
+    ],
+    "fieldOverrides": []
+}

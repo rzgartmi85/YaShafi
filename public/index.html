@@ -4306,6 +4306,7 @@ function renderFlowSide(rows){
     });
     if(cur.length) paragraphs.push(cur);
     const text=paragraphs.map(p=>p.map(r=>AR(r[COL_KEYS[col]]||'')).filter(Boolean).join(' ')).filter(Boolean).join('<br><br>');
+    if(!text) return;
     const colDiv=document.createElement('div');
     colDiv.className=`flow-col ${col}${COL_RTL[col]?' rtl-cell':''}`;
     colDiv.innerHTML=`<div class="flow-col-lbl">${COL_LABELS[col]}</div>${text}`;
@@ -4334,8 +4335,8 @@ function renderFlowStack(rows){
     });
     if(cur.length) paragraphs.push(cur);
     const text=paragraphs.map(p=>p.map(r=>AR(r[COL_KEYS[col]]||'')).filter(Boolean).join(' ')).filter(Boolean).join('<br><br>');
+    if(!text) return;
     const colDiv=document.createElement('div');
-    colDiv.className=`flow-stack-col ${col}${COL_RTL[col]?' rtl-cell':''}`;
     colDiv.innerHTML=`<div class="flow-col-lbl">${COL_LABELS[col]}</div>${text}`;
     el.appendChild(colDiv);
   });

@@ -2046,6 +2046,197 @@ tr.row-bookmarked {
   /* Topbar: tighten spacing */
   #topbar { padding: 0 8px; gap: 6px; }
 }
+
+/* ── SKELETON LOADING ── */
+@keyframes rsl-pulse {
+  0%, 100% { opacity: 0.45; }
+  50%       { opacity: 1; }
+}
+.skel-overlay {
+  position: absolute; inset: 0;
+  background: var(--bg);
+  z-index: 50;
+  padding: 18px 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+.skel-header-row {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+}
+.skel-th {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--surface2);
+  animation: rsl-pulse 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.skel-row {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border-soft);
+  padding: 11px 0;
+}
+.skel-td {
+  height: 18px;
+  border-radius: 4px;
+  background: var(--surface2);
+  animation: rsl-pulse 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.skel-td:nth-child(2) { animation-delay: .15s; }
+.skel-td:nth-child(3) { animation-delay: .3s;  }
+.skel-td:nth-child(4) { animation-delay: .45s; }
+.skel-td:nth-child(5) { animation-delay: .6s;  }
+
+/* ── OFFLINE BANNER ── */
+#offline-banner {
+  display: none;
+  width: 100%;
+  height: 32px;
+  background: rgba(200,160,64,0.18);
+  color: var(--warn);
+  font-size: 0.75rem;
+  font-family: 'Spectral', serif;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  letter-spacing: .02em;
+  border-bottom: 1px solid rgba(200,160,64,0.25);
+}
+#offline-banner.visible { display: flex; }
+
+/* ── AUTH TOPBAR ── */
+#auth-guest-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-family: 'Spectral', serif;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all .18s;
+  white-space: nowrap;
+}
+#auth-guest-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+#auth-user-wrap {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+#auth-user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 9px;
+  transition: all .18s;
+  background: none;
+  font-family: 'Spectral', serif;
+}
+#auth-user-trigger:hover { border-color: var(--accent); }
+#auth-avatar {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+#auth-name {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+#auth-user-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 140px;
+  z-index: 500;
+  box-shadow: 0 6px 20px rgba(0,0,0,.4);
+  overflow: hidden;
+}
+#auth-user-dropdown.open { display: block; }
+.auth-dd-btn {
+  display: flex; align-items: center; gap: 7px;
+  width: 100%; background: none; border: none;
+  color: var(--text-dim);
+  font-family: 'Spectral', serif;
+  font-size: 0.76rem;
+  padding: 9px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: background .12s, color .12s;
+  white-space: nowrap;
+}
+.auth-dd-btn:hover { background: var(--surface3); color: var(--text); }
+.auth-dd-btn.danger { color: var(--danger); }
+.auth-dd-btn.danger:hover { background: rgba(192,112,112,.1); color: var(--danger); }
+
+/* ── AUTH MODAL ── */
+#m-auth .modal {
+  max-width: 380px;
+  text-align: center;
+}
+#m-auth .modal h2 { text-align: center; margin-bottom: 10px; }
+#m-auth .auth-modal-body {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+#m-auth .auth-modal-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 6px;
+}
+.auth-google-btn {
+  background: var(--accent);
+  border: none;
+  color: #1a1208;
+  font-family: 'Spectral', serif;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: filter .18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.auth-google-btn:hover { filter: brightness(1.1); }
+.auth-guest-close-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: 'Spectral', serif;
+  font-size: 0.78rem;
+  padding: 8px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .18s;
+}
+.auth-guest-close-btn:hover { border-color: var(--text-dim); color: var(--text); }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -2059,42 +2250,17 @@ tr.row-bookmarked {
   <button class="tb-btn" id="btn-home" onclick="toggleHomePage()" title="Home">⌂</button>
   <div id="topbar-title">Ya Hakeem Risale</div>
   <div class="tb-right">
-    <!-- Auth area -->
-    <!-- Anonymous / signed-out: ghost "Sign in" button -->
-    <button id="auth-guest-btn" onclick="openM('m-auth')" title="Sign in to sync across devices"
-      style="display:none;align-items:center;gap:5px;font-size:0.75rem;padding:4px 10px;
-             border:1px solid var(--border);border-radius:6px;background:none;
-             color:var(--text-dim);cursor:pointer;font-family:'Spectral',serif;
-             white-space:nowrap;transition:border-color .18s,color .18s;"
-      onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-      onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
-      ☁ Sign in
-    </button>
-    <!-- Google-signed-in user: avatar + name + dropdown -->
-    <div id="auth-user-area" style="display:none;position:relative;">
-      <span id="auth-signed-in"
-        onclick="toggleAuthDropdown()"
-        style="display:flex;align-items:center;gap:6px;cursor:pointer;
-               border:1px solid var(--border);border-radius:6px;padding:4px 9px;
-               transition:border-color .18s;"
-        onmouseover="this.style.borderColor='var(--accent)'"
-        onmouseout="this.style.borderColor='var(--border)'">
-        <img id="auth-avatar" src="" alt=""
-          style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;">
-        <span id="auth-name"
-          style="font-size:0.78rem;color:var(--text-dim);font-family:'Spectral',serif;white-space:nowrap;"></span>
-        <span style="font-size:0.6rem;color:var(--text-dim);margin-left:1px;">▾</span>
-      </span>
-      <div id="auth-dropdown"
-        style="display:none;position:absolute;right:0;top:calc(100% + 6px);
-               background:var(--surface2);border:1px solid var(--border);border-radius:8px;
-               padding:4px;min-width:130px;z-index:600;box-shadow:0 4px 16px rgba(0,0,0,.28);">
-        <button onclick="signOut()"
-          style="width:100%;text-align:left;background:none;border:none;
-                 color:var(--text-dim);font-family:'Spectral',serif;font-size:0.82rem;
-                 padding:7px 12px;cursor:pointer;border-radius:5px;transition:background .15s;"
-          onmouseover="this.style.background='var(--surface3)'"
-          onmouseout="this.style.background='none'">Sign out</button>
+    <!-- Auth: guest button (anonymous) -->
+    <button id="auth-guest-btn" onclick="openAuthModal()" title="Sign in to sync your data">☁ Sign in</button>
+    <!-- Auth: signed-in Google user -->
+    <div id="auth-user-wrap">
+      <button id="auth-user-trigger" onclick="toggleAuthDropdown()" title="Account options">
+        <img id="auth-avatar" src="" alt="">
+        <span id="auth-name"></span>
+        <span style="font-size:0.6rem;color:var(--text-faint);">▾</span>
+      </button>
+      <div id="auth-user-dropdown">
+        <button class="auth-dd-btn danger" onclick="doSignOut()">Sign out</button>
       </div>
     </div>
     <button class="tb-btn" id="btn-bk" onclick="openBookmarksTab()" title="Bookmarks">🔖</button>
@@ -2135,6 +2301,8 @@ tr.row-bookmarked {
 
   <!-- MAIN -->
   <div id="main">
+    <!-- Offline banner -->
+    <div id="offline-banner">⚠ You're offline — changes will sync when reconnected</div>
     <div class="c-pad">
       <!-- Side-by-side table view -->
       <div id="side-view">
@@ -2536,6 +2704,21 @@ tr.row-bookmarked {
   </div>
 </div>
 
+<!-- MODAL: Auth / Sign In -->
+<div class="modal-bg" id="m-auth" onclick="if(event.target===this)closeM('m-auth')">
+  <div class="modal">
+    <h2>☁ Sign in to save your work</h2>
+    <p class="auth-modal-body">Your bookmarks, reflections, and Ders are saved locally. Sign in to sync across devices and keep your data safe.</p>
+    <div class="auth-modal-btns">
+      <button class="auth-google-btn" onclick="signInWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+      <button class="auth-guest-close-btn" onclick="closeM('m-auth')">Continue as Guest</button>
+    </div>
+  </div>
+</div>
+
 <!-- VISIT HISTORY MODAL -->
 <div class="modal-bg" id="m-visit-history" onclick="if(event.target===this)closeM('m-visit-history')">
   <div class="modal" style="max-width:500px;max-height:70vh;display:flex;flex-direction:column;">
@@ -2544,55 +2727,6 @@ tr.row-bookmarked {
       <button class="modal-x" onclick="closeM('m-visit-history')">×</button>
     </div>
     <div id="visit-history-list" style="flex:1;overflow-y:auto;padding:8px 0;"></div>
-  </div>
-</div>
-
-<!-- OFFLINE BANNER (injected into #main by JS) -->
-<template id="tpl-offline-banner">
-  <div id="offline-banner" style="display:flex;width:100%;height:32px;
-    background:rgba(200,160,64,0.18);color:var(--warn);
-    font-size:0.75rem;font-family:'Spectral',serif;
-    align-items:center;justify-content:center;gap:6px;
-    border-bottom:1px solid rgba(200,160,64,0.25);flex-shrink:0;">
-    ⚡ You're offline — changes will sync when reconnected
-  </div>
-</template>
-
-<!-- AUTH MODAL -->
-<div class="modal-bg" id="m-auth" onclick="if(event.target===this)closeM('m-auth')"
-  role="dialog" aria-modal="true" aria-label="Sign in">
-  <div class="modal" style="max-width:380px;text-align:center;">
-    <div style="font-size:2rem;margin-bottom:8px;">☁</div>
-    <h2 style="margin-bottom:8px;">Sign in to save your work</h2>
-    <p class="note" style="margin-bottom:20px;">
-      Your bookmarks, reflections, and Ders are saved locally.
-      Sign in to sync across devices and keep your data safe.
-    </p>
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <button onclick="signIn()" style="
-        display:flex;align-items:center;justify-content:center;gap:10px;
-        width:100%;padding:11px 16px;border-radius:8px;cursor:pointer;
-        background:var(--accent);border:none;color:#1a1208;
-        font-family:'Spectral',serif;font-size:0.92rem;font-weight:600;
-        transition:filter .18s;" onmouseover="this.style.filter='brightness(1.12)'"
-        onmouseout="this.style.filter=''">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
-          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#34A853"/>
-          <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#FBBC05"/>
-          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z" fill="#EA4335"/>
-        </svg>
-        Continue with Google
-      </button>
-      <button onclick="closeM('m-auth')" style="
-        width:100%;padding:10px 16px;border-radius:8px;cursor:pointer;
-        background:none;border:1px solid var(--border);color:var(--text-dim);
-        font-family:'Spectral',serif;font-size:0.88rem;transition:border-color .18s;"
-        onmouseover="this.style.borderColor='var(--accent-dim)'"
-        onmouseout="this.style.borderColor='var(--border)'">
-        Continue as Guest
-      </button>
-    </div>
   </div>
 </div>
 
@@ -2640,98 +2774,112 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-/* ── ANONYMOUS AUTH on load (called just before loadBooksFromFirestore) ── */
+/* ── ANONYMOUS AUTH ON LOAD ── */
 function ensureAnonymousAuth() {
-  if (auth.currentUser) return Promise.resolve(auth.currentUser);
-  return auth.signInAnonymously().catch(e => console.warn('Anonymous sign-in failed:', e));
+  if (!auth.currentUser) {
+    auth.signInAnonymously().catch(e => console.warn('Anonymous sign-in failed:', e));
+  }
 }
 
-/* ── SIGN IN: link anon → Google, or fall back to normal popup ── */
-function signIn() {
+/* ── SIGN IN (credential linking + fallback) ── */
+function signInWithGoogle() {
   closeM('m-auth');
   const provider = new firebase.auth.GoogleAuthProvider();
-  const current = auth.currentUser;
-  if (current && current.isAnonymous) {
-    current.linkWithPopup(provider)
+  if (auth.currentUser) {
+    auth.currentUser.linkWithPopup(provider)
+      .then(result => {
+        // Successfully linked — same UID, data preserved
+        currentUser = result.user;
+        updateAuthUI();
+      })
       .catch(err => {
         if (err.code === 'auth/credential-already-in-use' ||
             err.code === 'auth/email-already-in-use') {
           // Already has a Google account — sign in normally
-          // (anon data stays under its UID — acceptable v1 behaviour)
-          return auth.signInWithPopup(provider);
+          // (anonymous data under old UID is lost — acceptable for v1)
+          auth.signInWithPopup(provider).catch(e => console.error('signInWithPopup error:', e));
+        } else {
+          console.error('linkWithPopup error:', err);
+          // Fallback to plain sign-in
+          auth.signInWithPopup(provider).catch(e => console.error('signInWithPopup fallback error:', e));
         }
-        console.error('linkWithPopup error:', err);
       });
   } else {
     auth.signInWithPopup(provider).catch(e => console.error('signInWithPopup error:', e));
   }
 }
 
-function signOut() {
+/* Legacy shim — keep existing call-sites working */
+function signIn() { openAuthModal(); }
+
+function doSignOut() {
   closeAuthDropdown();
-  auth.signOut();
+  auth.signOut().then(() => {
+    // Re-sign in anonymously so the visitor still has a UID
+    auth.signInAnonymously().catch(e => console.warn('Anonymous re-auth failed:', e));
+  });
 }
 
-/* ── AUTH DROPDOWN ── */
+/* Keep old signOut reference working */
+function signOut() { doSignOut(); }
+
+function openAuthModal() {
+  openM('m-auth');
+}
+
 function toggleAuthDropdown() {
-  const dd = document.getElementById('auth-dropdown');
+  const dd = document.getElementById('auth-user-dropdown');
   if (!dd) return;
-  const open = dd.style.display === 'block';
-  dd.style.display = open ? 'none' : 'block';
-  if (!open) {
-    // close on next outside click
-    setTimeout(() => {
-      document.addEventListener('click', closeAuthDropdown, { once: true });
-    }, 0);
-  }
+  dd.classList.toggle('open');
 }
 function closeAuthDropdown() {
-  const dd = document.getElementById('auth-dropdown');
-  if (dd) dd.style.display = 'none';
+  const dd = document.getElementById('auth-user-dropdown');
+  if (dd) dd.classList.remove('open');
 }
 
-/* ── UPDATE AUTH UI ── */
-function updateAuthUI() {
-  const guestBtn   = document.getElementById('auth-guest-btn');
-  const userArea   = document.getElementById('auth-user-area');
-  const avatar     = document.getElementById('auth-avatar');
-  const authName   = document.getElementById('auth-name');
-  const seedSection = document.getElementById('ss-seed');
-  if (!guestBtn || !userArea) return;
+/* Close auth dropdown when clicking outside */
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('auth-user-wrap');
+  if (wrap && !wrap.contains(e.target)) closeAuthDropdown();
+});
 
-  if (currentUser && !currentUser.isAnonymous) {
-    // Signed in with Google (or other real provider)
+function updateAuthUI() {
+  const guestBtn  = document.getElementById('auth-guest-btn');
+  const userWrap  = document.getElementById('auth-user-wrap');
+  const avatar    = document.getElementById('auth-avatar');
+  const authName  = document.getElementById('auth-name');
+  const seedSection = document.getElementById('ss-seed');
+  if (!guestBtn || !userWrap) return;
+
+  const isAnonymous = !currentUser || currentUser.isAnonymous;
+
+  if (!isAnonymous && currentUser) {
+    // Google-signed-in user
     guestBtn.style.display = 'none';
-    userArea.style.display = 'block';
+    userWrap.style.display = 'flex';
     const firstName = (currentUser.displayName || '').split(' ')[0] || 'User';
     authName.textContent = firstName;
     avatar.src = currentUser.photoURL || '';
     avatar.style.display = currentUser.photoURL ? 'inline-block' : 'none';
     if (seedSection) seedSection.style.display = '';
-  } else if (currentUser && currentUser.isAnonymous) {
-    // Anonymous session
-    guestBtn.style.display = 'flex';
-    userArea.style.display = 'none';
-    if (seedSection) seedSection.style.display = '';
-    // Auto-open sign-in modal once user has created data
-    _maybePromptSignIn();
   } else {
-    // Fully signed out (brief state before anon sign-in completes)
-    guestBtn.style.display = 'none';
-    userArea.style.display = 'none';
+    // Anonymous or signed out
+    guestBtn.style.display = 'flex';
+    userWrap.style.display = 'none';
     if (seedSection) seedSection.style.display = 'none';
   }
 }
 
-/* ── AUTO-PROMPT: open auth modal when anon user has bookmarks/reflections ── */
-const _AUTH_PROMPT_KEY = 'yh-auth-prompted';
-function _maybePromptSignIn() {
-  if (localStorage.getItem(_AUTH_PROMPT_KEY)) return; // already shown once
-  const hasData = bookmarksStore.length > 0 ||
-    Object.values(reflectionsStore).some(arr => arr && arr.length > 0);
+/* ── AUTO-SHOW AUTH MODAL ON FIRST VISIT IF USER HAS DATA ── */
+function maybeShowAuthPrompt() {
+  if (currentUser && !currentUser.isAnonymous) return; // already signed in with Google
+  const hasData = bookmarksStore.length > 0 || getAllReflections().length > 0;
   if (!hasData) return;
-  localStorage.setItem(_AUTH_PROMPT_KEY, '1');
-  setTimeout(() => openM('m-auth'), 1200); // slight delay so UI settles first
+  const key = 'rsl_auth_nudge_shown';
+  if (localStorage.getItem(key)) return;
+  localStorage.setItem(key, '1');
+  // Small delay so page settles before showing modal
+  setTimeout(() => openM('m-auth'), 1200);
 }
 
 /* ── FIRESTORE USER DATA LOAD / CLEAR ── */
@@ -2983,41 +3131,58 @@ async function seedFirestore() {
 }
 
 /* ── FIRESTORE: LOAD ── */
-function showMainSpinner() {
+function showMainSkeleton() {
   let ov = document.getElementById('fs-loading-overlay');
   if (!ov) {
     ov = document.createElement('div');
     ov.id = 'fs-loading-overlay';
-    ov.style.cssText = 'position:absolute;inset:0;background:var(--bg);z-index:50;overflow:hidden;padding:16px 20px;box-sizing:border-box;';
-    // Skeleton pulse animation + rows
-    ov.innerHTML = `<style>
-      @keyframes rsl-pulse{0%,100%{opacity:.45}50%{opacity:1}}
-      .sk-row{display:flex;gap:12px;align-items:center;margin-bottom:14px;}
-      .sk-bar{background:var(--surface2);border-radius:5px;animation:rsl-pulse 1.6s ease-in-out infinite;}
-    </style>
-    ${[
-      [32, '5%', '28%', '38%', '22%'],
-      [28, '5%', '38%', '30%', '20%'],
-      [44, '4%', '22%', '42%', '26%'],
-      [28, '5%', '32%', '35%', '22%'],
-    ].map(([h, w0, w1, w2, w3], i) => `
-      <div class="sk-row" style="animation-delay:${i * 0.12}s">
-        <div class="sk-bar" style="width:${w0};height:${h}px;flex-shrink:0;animation-delay:${i*0.12}s"></div>
-        <div class="sk-bar" style="width:${w1};height:${h}px;animation-delay:${i*0.12+0.1}s"></div>
-        <div class="sk-bar" style="width:${w2};height:${h}px;animation-delay:${i*0.12+0.2}s"></div>
-        <div class="sk-bar" style="width:${w3};height:${h}px;animation-delay:${i*0.12+0.3}s"></div>
-      </div>`).join('')}`;
+    ov.className = 'skel-overlay';
+    // Column widths that mimic the table: #, OT, MT, KU-L, KU-F
+    const cols = [
+      { w: '38px',  label: '#' },
+      { w: '25%',   label: 'Ottoman Turkish' },
+      { w: '25%',   label: 'Modern Turkish' },
+      { w: '22%',   label: 'Kurdish — Literal' },
+      { w: '22%',   label: 'Kurdish — Free' }
+    ];
+    // Header row
+    const hdr = document.createElement('div');
+    hdr.className = 'skel-header-row';
+    cols.forEach((c, i) => {
+      const th = document.createElement('div');
+      th.className = 'skel-th';
+      th.style.cssText = `width:${c.w};max-width:${c.w};margin-right:${i<cols.length-1?'11px':'0'};animation-delay:${i*0.1}s;`;
+      hdr.appendChild(th);
+    });
+    ov.appendChild(hdr);
+    // 4 skeleton rows
+    for (let row = 0; row < 4; row++) {
+      const tr = document.createElement('div');
+      tr.className = 'skel-row';
+      cols.forEach((c, i) => {
+        const td = document.createElement('div');
+        td.className = 'skel-td';
+        const rowOff = row * 0.12;
+        td.style.cssText = `width:${c.w};max-width:${c.w};height:${18 + (i%2)*6}px;margin-right:${i<cols.length-1?'11px':'0'};animation-delay:${rowOff + i*0.1}s;`;
+        tr.appendChild(td);
+      });
+      ov.appendChild(tr);
+    }
     const main = document.getElementById('main');
     main.style.position = 'relative';
     main.appendChild(ov);
   }
-  ov.style.display = 'block';
+  ov.style.display = 'flex';
 }
 
-function hideMainSpinner() {
+function hideMainSkeleton() {
   const ov = document.getElementById('fs-loading-overlay');
   if (ov) ov.style.display = 'none';
 }
+
+/* Keep legacy references working */
+function showMainSpinner() { showMainSkeleton(); }
+function hideMainSpinner() { hideMainSkeleton(); }
 
 function showMainError(msg) {
   let ov = document.getElementById('fs-loading-overlay');
@@ -3036,7 +3201,7 @@ function showMainError(msg) {
 }
 
 async function loadBooksFromFirestore() {
-  showMainSpinner();
+  showMainSkeleton();
   try {
     const booksSnap = await db.collection('books').orderBy('order').get();
     if (booksSnap.empty) {
@@ -6046,6 +6211,24 @@ function addDropdownKeyboardNav(dotsBtn, dd) {
 
 
 /* ── INIT ── */
+// Anonymous auth on load — give every visitor a persistent UID before loading books
+ensureAnonymousAuth();
+
+// Offline / online banner
+(function() {
+  const banner = document.getElementById('offline-banner');
+  function syncBanner() {
+    if (!navigator.onLine) {
+      banner.classList.add('visible');
+    } else {
+      banner.classList.remove('visible');
+    }
+  }
+  window.addEventListener('offline', syncBanner);
+  window.addEventListener('online', syncBanner);
+  syncBanner(); // check on load
+})();
+
 // Enter key on modal text inputs triggers primary action
 document.getElementById('i-rname').addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); confirmNewRisale(); } });
 document.getElementById('i-bkname').addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); confirmNewBook(); } });
@@ -6064,35 +6247,16 @@ function openM(id) {
   });
 }
 
-// ── Startup: ensure an auth session (anon if not signed in), then load books ──
-ensureAnonymousAuth().then(() => {
-  loadBooksFromFirestore();
-});
-
-// ── Offline / online banner ──
-(function initOfflineBanner() {
-  function showOfflineBanner() {
-    if (document.getElementById('offline-banner')) return;
-    const tpl = document.getElementById('tpl-offline-banner');
-    if (!tpl) return;
-    const clone = tpl.content.cloneNode(true);
-    const main = document.getElementById('main');
-    if (main) main.insertBefore(clone, main.firstChild);
-  }
-  function hideOfflineBanner() {
-    const b = document.getElementById('offline-banner');
-    if (b) b.remove();
-  }
-  window.addEventListener('online',  hideOfflineBanner);
-  window.addEventListener('offline', showOfflineBanner);
-  if (!navigator.onLine) showOfflineBanner();
-})();
-
+loadBooksFromFirestore();
 setView('side');
 renderTypoGroups();
 ensureReflectionsGroup();
 backfillReflectionsGroup();
 initTheme();
+
+// After initial data load, maybe show the auth nudge
+// We delay so loadUserData has had a chance to populate stores
+setTimeout(maybeShowAuthPrompt, 3500);
 
 // Click outside right sidebar (desktop) → close it
 ['main', 'home-page'].forEach(id => {

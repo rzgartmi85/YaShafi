@@ -2059,6 +2059,152 @@ tr.row-bookmarked {
   border-radius: 50%;
   animation: fs-spin .7s linear infinite;
 }
+
+/* ── Loading skeleton ── */
+@keyframes sk-pulse {
+  0%,100% { opacity: .45; }
+  50%      { opacity: .9; }
+}
+.sk-wrap { padding: 14px 18px; }
+.sk-row {
+  display: flex; gap: 10px; margin-bottom: 12px; align-items: center;
+}
+.sk-cell {
+  height: 14px; border-radius: 4px;
+  background: var(--surface2);
+  animation: sk-pulse 1.4s ease-in-out infinite;
+}
+.sk-cell:nth-child(2) { animation-delay: .1s; }
+.sk-cell:nth-child(3) { animation-delay: .2s; }
+.sk-cell:nth-child(4) { animation-delay: .3s; }
+.sk-cell:nth-child(5) { animation-delay: .4s; }
+.sk-num  { width: 28px; flex-shrink: 0; }
+.sk-ot   { flex: 2; }
+.sk-mt   { flex: 1.5; }
+.sk-v1   { flex: 1.8; }
+.sk-v2   { flex: 1.8; }
+.sk-hdr-row { margin-bottom: 18px; }
+.sk-hdr-row .sk-cell { height: 10px; background: var(--border); animation: none; opacity: .6; }
+
+/* ── Offline banner ── */
+#offline-banner {
+  display: none;
+  height: 32px;
+  background: rgba(200,160,64,.18);
+  color: var(--warn);
+  font-size: 0.75rem;
+  font-family: 'Spectral', serif;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex-shrink: 0;
+  letter-spacing: .02em;
+  border-bottom: 1px solid rgba(200,160,64,.25);
+}
+#offline-banner.visible { display: flex; }
+
+/* ── Auth UI ── */
+#auth-signed-out {
+  font-size: 0.76rem;
+  padding: 4px 11px;
+  gap: 4px;
+  border-style: dashed;
+  color: var(--text-faint);
+}
+#auth-signed-out:hover { border-color: var(--accent); color: var(--accent); border-style: solid; }
+
+/* Google user widget */
+#auth-user-widget {
+  display: none;
+  position: relative;
+}
+#auth-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 9px;
+  transition: border-color .18s;
+  background: none;
+  font-family: 'Spectral', serif;
+}
+#auth-user-chip:hover { border-color: var(--accent); }
+#auth-avatar {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: none;
+}
+#auth-name {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.auth-dropdown {
+  display: none;
+  position: absolute;
+  right: 0; top: calc(100% + 6px);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 130px;
+  z-index: 400;
+  box-shadow: 0 6px 20px rgba(0,0,0,.4);
+  overflow: hidden;
+}
+.auth-dropdown.open { display: block; }
+.auth-dd-btn {
+  display: block; width: 100%;
+  background: none; border: none;
+  color: var(--text-dim);
+  font-family: 'Spectral', serif;
+  font-size: 0.76rem;
+  padding: 9px 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.auth-dd-btn:hover { background: var(--surface3); color: var(--danger); }
+
+/* ── Auth modal (m-auth) ── */
+#m-auth .modal { max-width: 380px; text-align: center; }
+#m-auth .modal h2 { font-size: 1rem; margin-bottom: 10px; }
+#m-auth .modal .auth-modal-body { font-size: 0.8rem; color: var(--text-dim); line-height: 1.65; margin-bottom: 20px; }
+.auth-google-btn {
+  width: 100%;
+  background: var(--accent);
+  border: none;
+  color: #1a1208;
+  font-family: 'Spectral', serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: filter .18s;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.auth-google-btn:hover { filter: brightness(1.1); }
+.auth-guest-btn {
+  width: 100%;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: 'Spectral', serif;
+  font-size: 0.78rem;
+  padding: 8px 18px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: border-color .18s, color .18s;
+}
+.auth-guest-btn:hover { border-color: var(--text-dim); color: var(--text); }
 </style>
 </head>
 <body>
@@ -2069,17 +2215,26 @@ tr.row-bookmarked {
   <button class="tb-btn" id="btn-home" onclick="toggleHomePage()" title="Home">⌂</button>
   <div id="topbar-title">Ya Hakeem Risale</div>
   <div class="tb-right">
-    <!-- Firebase Auth UI -->
-    <button class="tb-btn" id="auth-signed-out" onclick="signIn()" title="Sign in with Google" style="font-size:0.78rem;padding:5px 10px;gap:5px;">Sign In</button>
-    <span id="auth-signed-in" onclick="signOut()" title="Sign out" style="display:none;align-items:center;gap:6px;cursor:pointer;border:1px solid var(--border);border-radius:6px;padding:4px 9px;transition:border-color .18s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-      <img id="auth-avatar" src="" alt="" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;display:none;">
-      <span id="auth-name" style="font-size:0.78rem;color:var(--text-dim);font-family:'Spectral',serif;white-space:nowrap;"></span>
-    </span>
+    <!-- Anonymous / signed-out: ghost sign-in button -->
+    <button class="tb-btn" id="auth-signed-out" onclick="openAuthModal()" title="Sign in to sync your work" style="display:none;">☁ Sign in</button>
+    <!-- Google signed-in: avatar chip + dropdown -->
+    <div id="auth-user-widget">
+      <button id="auth-user-chip" onclick="toggleAuthDropdown()" title="Account">
+        <img id="auth-avatar" src="" alt="">
+        <span id="auth-name"></span>
+        <span style="font-size:0.6rem;color:var(--text-faint);">▾</span>
+      </button>
+      <div class="auth-dropdown" id="auth-dropdown">
+        <button class="auth-dd-btn" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
     <button class="tb-btn" id="btn-bk" onclick="openBookmarksTab()" title="Bookmarks">🔖</button>
     <button class="tb-btn" id="btn-reflect" onclick="openReflectionsTab()" title="Reflections">📝</button>
     <button class="tb-btn" id="btn-tr" onclick="openSettingsTab()" title="Settings">⚙</button>
   </div>
 </div>
+<!-- OFFLINE BANNER -->
+<div id="offline-banner">⚡ You're offline — changes will sync when reconnected</div>
 
 <!-- LAYOUT -->
 <div id="layout">
@@ -2394,6 +2549,19 @@ tr.row-bookmarked {
   </div>
 </div>
 
+<!-- MODAL: Sign in (m-auth) -->
+<div class="modal-bg" id="m-auth" role="dialog" aria-modal="true" aria-label="Sign in" onclick="if(event.target===this)closeM('m-auth')">
+  <div class="modal">
+    <h2>Sign in to save your work</h2>
+    <p class="auth-modal-body">Your bookmarks, reflections, and Ders are saved locally. Sign in with Google to sync them across all your devices.</p>
+    <button class="auth-google-btn" onclick="signIn()">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+      Continue with Google
+    </button>
+    <button class="auth-guest-btn" onclick="closeM('m-auth')">Continue as Guest</button>
+  </div>
+</div>
+
 <!-- MODAL: Add Row -->
 <div class="modal-bg" id="m-add" role="dialog" aria-modal="true" aria-label="Add New Row">
   <div class="modal">
@@ -2585,19 +2753,90 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-function signIn()  { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-function signOut() { auth.signOut(); }
+/* ── ANONYMOUS AUTH on load ── */
+async function initAuth() {
+  if (!auth.currentUser) {
+    try {
+      await auth.signInAnonymously();
+    } catch(e) {
+      console.warn('Anonymous sign-in failed:', e);
+    }
+  }
+}
 
+/* ── SIGN IN (link anon account → Google, or fall back to normal sign-in) ── */
+function signIn() {
+  closeM('m-auth');
+  const provider = new firebase.auth.GoogleAuthProvider();
+  if (auth.currentUser) {
+    auth.currentUser.linkWithPopup(provider)
+      .then(result => {
+        currentUser = result.user;
+        updateAuthUI();
+        showToast('Signed in and account linked ✓', 2200);
+      })
+      .catch(err => {
+        if (err.code === 'auth/credential-already-in-use' ||
+            err.code === 'auth/email-already-in-use') {
+          // Already has Google account — sign in normally
+          auth.signInWithPopup(provider).catch(e => console.warn('signInWithPopup error:', e));
+        } else {
+          console.warn('linkWithPopup error:', err);
+        }
+      });
+  } else {
+    auth.signInWithPopup(provider).catch(e => console.warn('signInWithPopup error:', e));
+  }
+}
+
+function signOut() {
+  closeAuthDropdown();
+  auth.signOut();
+}
+
+/* ── AUTH DROPDOWN ── */
+function toggleAuthDropdown() {
+  const dd = document.getElementById('auth-dropdown');
+  if (!dd) return;
+  dd.classList.toggle('open');
+}
+function closeAuthDropdown() {
+  const dd = document.getElementById('auth-dropdown');
+  if (dd) dd.classList.remove('open');
+}
+document.addEventListener('click', e => {
+  const widget = document.getElementById('auth-user-widget');
+  if (widget && !widget.contains(e.target)) closeAuthDropdown();
+});
+
+/* ── OPEN AUTH MODAL ── */
+function openAuthModal() {
+  openM('m-auth');
+}
+
+/* ── AUTO-PROMPT: show auth modal if anon user has created data ── */
+function maybePromptAuth() {
+  if (!currentUser || !currentUser.isAnonymous) return;
+  const hasData = bookmarksStore.length > 0 || getAllReflections().length > 0;
+  if (!hasData) return;
+  const PROMPT_KEY = 'rsl_auth_prompted';
+  if (localStorage.getItem(PROMPT_KEY)) return;
+  localStorage.setItem(PROMPT_KEY, '1');
+  setTimeout(() => openAuthModal(), 600);
+}
+
+/* ── UPDATE AUTH UI ── */
 function updateAuthUI() {
   const signedOut = document.getElementById('auth-signed-out');
-  const signedIn  = document.getElementById('auth-signed-in');
-  const avatar    = document.getElementById('auth-avatar');
-  const authName  = document.getElementById('auth-name');
-  if (!signedOut || !signedIn) return;
-  if (currentUser) {
-    console.log('User signed in:', currentUser.uid);
+  const userWidget = document.getElementById('auth-user-widget');
+  const avatar     = document.getElementById('auth-avatar');
+  const authName   = document.getElementById('auth-name');
+  if (!signedOut || !userWidget) return;
+
+  if (currentUser && !currentUser.isAnonymous) {
+    // Google (or linked) user
     signedOut.style.display = 'none';
-    signedIn.style.display  = 'flex';
+    userWidget.style.display = '';
     const firstName = (currentUser.displayName || '').split(' ')[0] || 'User';
     authName.textContent = firstName;
     if (currentUser.photoURL) {
@@ -2606,10 +2845,14 @@ function updateAuthUI() {
     } else {
       avatar.style.display = 'none';
     }
-  } else {
-    console.log('User signed out');
+  } else if (currentUser && currentUser.isAnonymous) {
+    // Anonymous user: show ghost sign-in button
     signedOut.style.display = 'flex';
-    signedIn.style.display  = 'none';
+    userWidget.style.display = 'none';
+  } else {
+    // Signed out (transitional)
+    signedOut.style.display = 'flex';
+    userWidget.style.display = 'none';
   }
 }
 
@@ -2725,14 +2968,31 @@ function clearUserData() {
 }
 
 /* ── LOADING / ERROR UI ── */
-function showMainSpinner() {
+function showMainSkeleton() {
   const main = document.getElementById('main');
+  const rows = [1, 0.9, 0.75, 1, 0.85, 0.95, 0.7, 1];
+  const rowsHtml = rows.map((_, i) => `
+    <div class="sk-row">
+      <div class="sk-cell sk-num" style="width:${20 + Math.random()*10|0}px"></div>
+      <div class="sk-cell sk-ot"  style="width:${55+Math.random()*30|0}%"></div>
+      <div class="sk-cell sk-mt"  style="width:${40+Math.random()*25|0}%"></div>
+      <div class="sk-cell sk-v1"  style="width:${45+Math.random()*25|0}%"></div>
+      <div class="sk-cell sk-v2"  style="width:${38+Math.random()*28|0}%"></div>
+    </div>`).join('');
   main.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;">
-      <div class="fs-spinner"></div>
-      <div style="font-size:0.85rem;color:var(--text-faint);font-family:'Spectral',serif;">Loading from Firestore…</div>
+    <div class="sk-wrap">
+      <div class="sk-row sk-hdr-row">
+        <div class="sk-cell sk-num"></div>
+        <div class="sk-cell sk-ot" style="width:22%"></div>
+        <div class="sk-cell sk-mt" style="width:16%"></div>
+        <div class="sk-cell sk-v1" style="width:20%"></div>
+        <div class="sk-cell sk-v2" style="width:20%"></div>
+      </div>
+      ${rowsHtml}
     </div>`;
 }
+
+function showMainSpinner() { showMainSkeleton(); }
 
 function showMainError(msg) {
   const main = document.getElementById('main');
@@ -3163,6 +3423,7 @@ function addReflection(text,type,scope,rowNum){
   }
   // Auto-assign the bookmark (if any) for this risale+row to the Reflections singleton group
   assignBookmarkToReflectionsGroup(rid, scope === 'row' ? rowNum : null);
+  maybePromptAuth();
   if (currentUser) {
     const r = cur();
     const fsObj = { ...refObj, risaleId: rid, risalahName: r ? r.name : '' };
@@ -4104,6 +4365,7 @@ function getOrCreateBookmark(risaleId, rowIndex) {
     db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(bm.id)).set(bm)
       .catch(e => console.warn('Firestore bookmark write failed:', e));
   }
+  maybePromptAuth();
   return bm;
 }
 
@@ -5925,6 +6187,20 @@ renderTypoGroups();
 ensureReflectionsGroup();
 backfillReflectionsGroup();
 initTheme();
+
+/* ── ANONYMOUS AUTH bootstrap ── */
+initAuth();
+
+/* ── OFFLINE BANNER ── */
+(function() {
+  const banner = document.getElementById('offline-banner');
+  function updateOnline() {
+    if (banner) banner.classList.toggle('visible', !navigator.onLine);
+  }
+  window.addEventListener('online',  updateOnline);
+  window.addEventListener('offline', updateOnline);
+  updateOnline(); // check immediately
+})();
 
 // Click outside right sidebar (desktop) → close it
 ['main', 'home-page'].forEach(id => {

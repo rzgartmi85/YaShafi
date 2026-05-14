@@ -204,6 +204,11 @@ body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectra
 .size-val{font-family:'Spectral',serif;font-size:0.72rem;color:var(--text);min-width:32px;text-align:center;padding:0 2px;border-left:1px solid var(--border);border-right:1px solid var(--border);}
 .size-label{font-size:0.6rem;color:var(--text-faint);margin-bottom:4px;letter-spacing:.06em;}
 
+/* ── PAGE NUMBER BADGE ── */
+.pg-badge{display:inline-block;font-size:0.58rem;color:var(--text-faint);background:var(--surface3);border:1px solid var(--border-soft);border-radius:3px;padding:1px 4px;margin-left:5px;vertical-align:middle;font-family:'Spectral',serif;letter-spacing:.04em;opacity:0.75;user-select:none;}
+[data-theme="light"] .pg-badge{background:var(--surface2);}
+.hide-pages .pg-badge{display:none!important;}
+
 /* ── PARAGRAPH BREAK ROW ── */
 tr.para-break-row td { padding: 2px 11px; border-bottom: none; }
 tr.para-break-row:hover { background: none; }
@@ -2393,6 +2398,9 @@ tr.row-bookmarked {
           <div class="ct-row"><span class="ct-name">Kurdish — Free</span>
             <label class="sw"><input type="checkbox" id="sw-v2" onchange="toggleCol('col-v2',this.checked)"><div class="sw-t"></div></label>
           </div>
+          <div class="ct-row" style="margin-top:6px;border-top:1px solid var(--border-soft);padding-top:6px;"><span class="ct-name">Show page numbers</span>
+            <label class="sw"><input type="checkbox" id="sw-pages" checked onchange="togglePages(this.checked)"><div class="sw-t"></div></label>
+          </div>
         </div>
 
         <!-- TYPOGRAPHY GROUPS -->
@@ -2588,6 +2596,13 @@ tr.row-bookmarked {
     <div class="fg fg-readonly"><label>Modern Turkish</label><textarea class="ltr" id="edit-mt" rows="3" readonly tabindex="-1"></textarea></div>
     <div class="fg"><label>Kurdish — Literal</label><textarea class="rtl" id="edit-v1" rows="3"></textarea></div>
     <div class="fg"><label>Kurdish — Free</label><textarea class="rtl" id="edit-v2" rows="3"></textarea></div>
+    <div class="fg"><label>Paragraph №</label><input type="number" id="edit-para" min="1" placeholder="e.g. 1" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label>Page — Ottoman</label><input type="text" id="edit-pg-ot" placeholder="e.g. 42" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
+      <div class="fg"><label>Page — Modern TR</label><input type="text" id="edit-pg-mt" placeholder="e.g. 38" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
+      <div class="fg"><label>Page — Kurdish (L)</label><input type="text" id="edit-pg-v1" placeholder="e.g. 55" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
+      <div class="fg"><label>Page — Kurdish (F)</label><input type="text" id="edit-pg-v2" placeholder="e.g. 55" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
+    </div>
     <div class="ma">
       <button class="btn btn-ghost" onclick="closeM('m-edit-row')">Cancel</button>
       <button class="btn btn-pri" onclick="saveEditRow()">Save Changes</button>
@@ -2603,6 +2618,13 @@ tr.row-bookmarked {
     <div class="fg"><label>Modern Turkish</label><textarea class="ltr" id="i-mt" rows="3" placeholder="Modern Türkçe..."></textarea></div>
     <div class="fg"><label>Kurdish — Literal</label><textarea class="rtl" id="i-v1" rows="3" placeholder="کوردی — ئەدەبی..."></textarea></div>
     <div class="fg"><label>Kurdish — Free</label><textarea class="rtl" id="i-v2" rows="3" placeholder="کوردی — ئازاد..."></textarea></div>
+    <div class="fg"><label>Paragraph №</label><input type="number" id="i-para" min="1" placeholder="e.g. 1" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label>Page — Ottoman</label><input type="text" id="i-pg-ot" placeholder="e.g. 42" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
+      <div class="fg"><label>Page — Modern TR</label><input type="text" id="i-pg-mt" placeholder="e.g. 38" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
+      <div class="fg"><label>Page — Kurdish (L)</label><input type="text" id="i-pg-v1" placeholder="e.g. 55" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
+      <div class="fg"><label>Page — Kurdish (F)</label><input type="text" id="i-pg-v2" placeholder="e.g. 55" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
+    </div>
     <div class="ma">
       <button class="btn btn-ghost" onclick="closeM('m-add')">Cancel</button>
       <button class="btn btn-pri" onclick="saveRow()">Add Row</button>
@@ -2627,7 +2649,7 @@ tr.row-bookmarked {
 <div class="modal-bg" id="m-import" role="dialog" aria-modal="true" aria-label="Import JSON">
   <div class="modal">
     <h2>Import JSON — Current Risale</h2>
-    <p class="note">Paste a JSON array of objects with keys <code>ot</code>, <code>mt</code>, <code>v1</code>, <code>v2</code>. Choose to <strong>append</strong> or <strong>replace</strong> all rows.</p>
+    <p class="note">Paste a JSON array of objects with keys <code>ot</code>, <code>mt</code>, <code>v1</code>, <code>v2</code> (content), plus optional <code>para</code> (paragraph number), <code>pgOt</code>, <code>pgMt</code>, <code>pgV1</code>, <code>pgV2</code> (page numbers). Choose to <strong>append</strong> or <strong>replace</strong> all rows.</p>
     <div class="fg"><label>Paste JSON</label><textarea class="mono" id="imp-ta" rows="12" placeholder='[{"ot":"...","mt":"...","v1":"...","v2":"..."}]'></textarea></div>
     <div class="fb" id="imp-fb"></div>
     <div class="ma">
@@ -3071,6 +3093,7 @@ function savePrefsToFirestore() {
   const prefsDoc = {
     theme: localStorage.getItem(THEME_KEY) || 'system',
     vis: Object.assign({}, vis),
+    showPages: showPages,
     view: view,
     activeId: activeId,
     activeBookId: activeBookId,
@@ -3122,6 +3145,14 @@ async function loadPrefsFromFirestore(uid) {
       const btnStack = document.getElementById('vs-stack');
       if (btnSide)  btnSide.classList.toggle('active', view === 'side');
       if (btnStack) btnStack.classList.toggle('active', view === 'stack');
+    }
+
+    // Show pages
+    if (prefs.showPages != null) {
+      showPages = !!prefs.showPages;
+      const cb = document.getElementById('sw-pages');
+      if (cb) cb.checked = showPages;
+      document.getElementById('main').classList.toggle('hide-pages', !showPages);
     }
 
     // Last active risale
@@ -3348,6 +3379,7 @@ let activeId = 1;       // active risale id (global across books)
 let nextId = 2;
 let sidebarLevel = 1;   // 1 = book list, 2 = risale list
 let vis = {'col-num':true,'col-ot':false,'col-mt':false,'col-v1':true,'col-v2':false};
+let showPages = true;
 let view = 'side';
 let flowMode = false;
 let dark = true; // runtime bool — true=dark, false=light
@@ -4171,6 +4203,7 @@ function toggleFlow(on){
 
 /* ── COLUMNS ── */
 function toggleCol(col,on){ vis[col]=on; render(); savePrefsToFirestore(); }
+function togglePages(on){ showPages=on; document.getElementById('main').classList.toggle('hide-pages',!on); savePrefsToFirestore(); }
 
 /* ── RENDER ── */
 function render(){
@@ -4216,23 +4249,22 @@ function renderTable(rows){
     return;
   }
   rows.forEach((row,i)=>{
-    const isParaBreak = !row.ot && !row.mt && !row.v1 && !row.v2;
-    if(isParaBreak){
+    // Paragraph break: para number changes from previous content row
+    if(i>0 && row.para != null && rows[i-1].para != null && row.para !== rows[i-1].para){
       const tr=document.createElement('tr'); tr.className='para-break-row';
       const colCount=Object.values(vis).filter(Boolean).length+1;
       const td=document.createElement('td'); td.colSpan=colCount;
-      td.innerHTML=`<div class="para-break-cell">¶ paragraph break</div>`;
+      td.innerHTML=`<div class="para-break-cell">¶ ${row.para}</div>`;
       tr.appendChild(td); tb.appendChild(tr);
-      return;
     }
     const tr=document.createElement('tr');
     if(isRowBookmarked(i)) tr.classList.add('row-bookmarked');
     tr.innerHTML=
-      `<td class="col-num${vis['col-num']?'':' col-hidden'}">${i+1}</td>`+
-      `<td class="col-ot${vis['col-ot']?'':' col-hidden'}">${AR(row.ot)}</td>`+
-      `<td class="col-mt${vis['col-mt']?'':' col-hidden'}">${AR(row.mt)}</td>`+
-      `<td class="col-v1${vis['col-v1']?'':' col-hidden'}">${AR(row.v1)}</td>`+
-      `<td class="col-v2${vis['col-v2']?'':' col-hidden'}">${AR(row.v2)}</td>`;
+      `<td class="col-num${vis['col-num']?'':' col-hidden'}">${i+1}${row.para!=null?'<br><span class="pg-badge">¶'+row.para+'</span>':''}</td>`+
+      `<td class="col-ot${vis['col-ot']?'':' col-hidden'}">${AR(row.ot)}${row.pgOt?'<span class="pg-badge">p.'+AR(row.pgOt)+'</span>':''}</td>`+
+      `<td class="col-mt${vis['col-mt']?'':' col-hidden'}">${AR(row.mt)}${row.pgMt?'<span class="pg-badge">p.'+AR(row.pgMt)+'</span>':''}</td>`+
+      `<td class="col-v1${vis['col-v1']?'':' col-hidden'}">${AR(row.v1)}${row.pgV1?'<span class="pg-badge">p.'+AR(row.pgV1)+'</span>':''}</td>`+
+      `<td class="col-v2${vis['col-v2']?'':' col-hidden'}">${AR(row.v2)}${row.pgV2?'<span class="pg-badge">p.'+AR(row.pgV2)+'</span>':''}</td>`;
     // Action cell
     const actionTd=document.createElement('td');
     actionTd.className='col-action';
@@ -4254,12 +4286,10 @@ function renderStacked(rows){
   }
   const ac=DATA_COLS.filter(c=>vis[c]);
   rows.forEach((row,i)=>{
-    const isParaBreak = !row.ot && !row.mt && !row.v1 && !row.v2;
-    if(isParaBreak){
+    if(i>0 && row.para != null && rows[i-1].para != null && row.para !== rows[i-1].para){
       const sep=document.createElement('div'); sep.className='s-para-break';
-      sep.textContent='¶ paragraph break';
+      sep.textContent=`¶ ${row.para}`;
       el.appendChild(sep);
-      return;
     }
     const d=document.createElement('div'); d.className='s-row';
     if(isRowBookmarked(i)) d.classList.add('row-bookmarked');
@@ -4283,10 +4313,12 @@ function renderStacked(rows){
     else{
       const cells=document.createElement('div'); cells.className='s-cells';
       cells.style.gridTemplateColumns=`1fr`;
+      const PAGE_KEYS={'col-ot':'pgOt','col-mt':'pgMt','col-v1':'pgV1','col-v2':'pgV2'};
       ac.forEach(col=>{
         const c=document.createElement('div');
         c.className=`s-cell ${col}${COL_RTL[col]?' rtl-cell':''}`;
-        c.innerHTML=`<div class="s-lbl">${COL_LABELS[col]}</div>${AR(row[COL_KEYS[col]])}`;
+        const pgKey=PAGE_KEYS[col]; const pgVal=pgKey&&row[pgKey]?`<span class="pg-badge">p.${AR(row[pgKey])}</span>`:'';
+        c.innerHTML=`<div class="s-lbl">${COL_LABELS[col]}</div>${AR(row[COL_KEYS[col]])}${pgVal}`;
         cells.appendChild(c);
       });
       d.appendChild(cells);
@@ -4309,10 +4341,10 @@ function renderFlowSide(rows){
   const wrap=document.createElement('div'); wrap.className='flow-side-wrap';
   ac.forEach(col=>{
     const paragraphs=[]; let cur=[];
-    rows.forEach(r=>{
-      const isEmpty=!r.ot&&!r.mt&&!r.v1&&!r.v2;
-      if(isEmpty){ if(cur.length){paragraphs.push(cur); cur=[];} }
-      else cur.push(r);
+    rows.forEach((r,i)=>{
+      const newPara = i>0 && r.para != null && rows[i-1].para != null && r.para !== rows[i-1].para;
+      if(newPara){ if(cur.length){paragraphs.push(cur); cur=[];} }
+      cur.push(r);
     });
     if(cur.length) paragraphs.push(cur);
     const text=paragraphs.map(p=>p.map(r=>AR(r[COL_KEYS[col]]||'')).filter(Boolean).join(' ')).filter(Boolean).join('<br><br>');
@@ -4338,10 +4370,10 @@ function renderFlowStack(rows){
   }
   ac.forEach(col=>{
     const paragraphs=[]; let cur=[];
-    rows.forEach(r=>{
-      const isEmpty=!r.ot&&!r.mt&&!r.v1&&!r.v2;
-      if(isEmpty){ if(cur.length){paragraphs.push(cur); cur=[];} }
-      else cur.push(r);
+    rows.forEach((r,i)=>{
+      const newPara = i>0 && r.para != null && rows[i-1].para != null && r.para !== rows[i-1].para;
+      if(newPara){ if(cur.length){paragraphs.push(cur); cur=[];} }
+      cur.push(r);
     });
     if(cur.length) paragraphs.push(cur);
     const text=paragraphs.map(p=>p.map(r=>AR(r[COL_KEYS[col]]||'')).filter(Boolean).join(' ')).filter(Boolean).join('<br><br>');
@@ -4362,9 +4394,21 @@ function saveRow(){
   const v2=document.getElementById('i-v2').value.trim();
   if(!ot&&!mt&&!v1&&!v2) return;
   const r=cur(); if(!r) return;
-  r.rows.push({ot,mt,v1,v2});
+  const paraRaw=document.getElementById('i-para').value.trim();
+  const para=paraRaw!==''?parseInt(paraRaw,10)||paraRaw:undefined;
+  const pgOt=document.getElementById('i-pg-ot').value.trim()||undefined;
+  const pgMt=document.getElementById('i-pg-mt').value.trim()||undefined;
+  const pgV1=document.getElementById('i-pg-v1').value.trim()||undefined;
+  const pgV2=document.getElementById('i-pg-v2').value.trim()||undefined;
+  const newRow={ot,mt,v1,v2};
+  if(para!=null) newRow.para=para;
+  if(pgOt) newRow.pgOt=pgOt;
+  if(pgMt) newRow.pgMt=pgMt;
+  if(pgV1) newRow.pgV1=pgV1;
+  if(pgV2) newRow.pgV2=pgV2;
+  r.rows.push(newRow);
   closeM('m-add');
-  ['i-ot','i-mt','i-v1','i-v2'].forEach(id=>document.getElementById(id).value='');
+  ['i-ot','i-mt','i-v1','i-v2','i-para','i-pg-ot','i-pg-mt','i-pg-v1','i-pg-v2'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   render();
   setTimeout(()=>document.getElementById('main').scrollTo({top:1e9,behavior:'smooth'}),100);
   // Find parent book id for the Firestore path
@@ -4405,7 +4449,13 @@ function doImport(mode){
     if(!Array.isArray(data)) throw new Error('Expected a JSON array');
     const clean=data.map((d,i)=>{
       if(typeof d!=='object') throw new Error(`Row ${i+1} is not an object`);
-      return {ot:d.ot||'',mt:d.mt||'',v1:d.v1||'',v2:d.v2||''};
+      const row={ot:d.ot||'',mt:d.mt||'',v1:d.v1||'',v2:d.v2||''};
+      if(d.para!=null) row.para=d.para;
+      if(d.pgOt) row.pgOt=d.pgOt;
+      if(d.pgMt) row.pgMt=d.pgMt;
+      if(d.pgV1) row.pgV1=d.pgV1;
+      if(d.pgV2) row.pgV2=d.pgV2;
+      return row;
     });
     const r=cur();
     if(mode==='replace') r.rows=clean; else r.rows=[...r.rows,...clean];
@@ -4433,7 +4483,15 @@ function doImportAll(){
       risales: Array.isArray(d.risales)?d.risales.map(r=>({
         id:r.id||1, name:r.name||'Risale',
         bookmarked:!!r.bookmarked,
-        rows:Array.isArray(r.rows)?r.rows.map(x=>({ot:x.ot||'',mt:x.mt||'',v1:x.v1||'',v2:x.v2||''})):[]
+        rows:Array.isArray(r.rows)?r.rows.map(x=>{
+          const row={ot:x.ot||'',mt:x.mt||'',v1:x.v1||'',v2:x.v2||''};
+          if(x.para!=null) row.para=x.para;
+          if(x.pgOt) row.pgOt=x.pgOt;
+          if(x.pgMt) row.pgMt=x.pgMt;
+          if(x.pgV1) row.pgV1=x.pgV1;
+          if(x.pgV2) row.pgV2=x.pgV2;
+          return row;
+        }):[]
       })):[]
     }));
     nextBookId=Math.max(...books.map(b=>b.id))+1;
@@ -5244,6 +5302,11 @@ function openEditRow(rowIndex) {
   document.getElementById('edit-mt').value = row.mt;
   document.getElementById('edit-v1').value = row.v1;
   document.getElementById('edit-v2').value = row.v2;
+  document.getElementById('edit-para').value = row.para != null ? row.para : '';
+  document.getElementById('edit-pg-ot').value = row.pgOt || '';
+  document.getElementById('edit-pg-mt').value = row.pgMt || '';
+  document.getElementById('edit-pg-v1').value = row.pgV1 || '';
+  document.getElementById('edit-pg-v2').value = row.pgV2 || '';
   openM('m-edit-row');
   setTimeout(() => document.getElementById('edit-v1').focus(), 80);
 }
@@ -5253,6 +5316,16 @@ function saveEditRow() {
   const row = r.rows[editRowIndex];
   row.v1 = document.getElementById('edit-v1').value;
   row.v2 = document.getElementById('edit-v2').value;
+  const paraRaw = document.getElementById('edit-para').value.trim();
+  if(paraRaw !== '') { row.para = parseInt(paraRaw,10)||paraRaw; } else { delete row.para; }
+  const pgOt = document.getElementById('edit-pg-ot').value.trim();
+  const pgMt = document.getElementById('edit-pg-mt').value.trim();
+  const pgV1 = document.getElementById('edit-pg-v1').value.trim();
+  const pgV2 = document.getElementById('edit-pg-v2').value.trim();
+  if(pgOt) row.pgOt=pgOt; else delete row.pgOt;
+  if(pgMt) row.pgMt=pgMt; else delete row.pgMt;
+  if(pgV1) row.pgV1=pgV1; else delete row.pgV1;
+  if(pgV2) row.pgV2=pgV2; else delete row.pgV2;
   closeM('m-edit-row');
   editRowIndex = -1;
   render();

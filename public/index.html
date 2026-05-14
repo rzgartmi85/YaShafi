@@ -167,8 +167,7 @@ body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectra
 .vseg button.active{background:var(--accent);color:#f5ede0;font-weight:600;}
 /* ie btns */
 .ie-btns{display:flex;flex-direction:column;gap:5px;padding-bottom:4px;}
-.ie-btn.lang-btn.active{background:var(--accent);border-color:var(--accent);color:#1a1000;font-weight:700;}
-background:var(--surface3);border:1px solid var(--border);color:var(--text-dim);font-family:'Spectral',serif;font-size:0.73rem;padding:7px 10px;border-radius:6px;cursor:pointer;transition:all .18s;text-align:left;display:flex;align-items:center;gap:7px;}
+.ie-btn{background:var(--surface3);border:1px solid var(--border);color:var(--text-dim);font-family:'Spectral',serif;font-size:0.73rem;padding:7px 10px;border-radius:6px;cursor:pointer;transition:all .18s;text-align:left;display:flex;align-items:center;gap:7px;}
 .theme-btn-group{display:flex;gap:3px;flex-shrink:0;}
 .theme-mode-btn{padding:3px 8px !important;font-size:0.73rem !important;gap:2px;white-space:nowrap;}
 .theme-btn-label{font-size:0.73rem;}
@@ -2240,313 +2239,10 @@ tr.row-bookmarked {
   transition: all .18s;
 }
 .auth-guest-close-btn:hover { border-color: var(--text-dim); color: var(--text); }
-
-/* ── LANGUAGE SWITCHER ── */
-.lang-btn.active { background: var(--accent) !important; border-color: var(--accent) !important; color: #f5ede0 !important; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-<!-- ══════════════════════════════════════════════════════════════════
-     PHASE I18N — Language System
-     ══════════════════════════════════════════════════════════════════
-     HOW IT WORKS
-     ────────────
-     • TRANSLATIONS holds all UI strings for 3 languages: en / ku / tr
-     • Each key maps to { en, ku, tr }
-     • applyLang(code) walks every [data-i18n] element and sets its
-       textContent / placeholder / title / value as appropriate
-     • currentLang is stored in localStorage under 'rsl_lang'
-     • Dynamic strings (alert messages, placeholders set by JS) are
-       also mapped here so JS code can call T('key') to get the string
-     • Phase 2 will add an in-app editor; Phase 3 adds batch import/export
-     ════════════════════════════════════════════════════════════════ -->
-<script>
-(function(){
-
-/* ── 1. TRANSLATION TABLE ── */
-/* Add your custom translations here.
-   Format: 'key': { en: '...', ku: '...', tr: '...' }
-   Kurdish (ku) is Sorani / RTL.  Turkish (tr) is LTR. */
-var _BASE = {
-  /* ── Topbar ── */
-  'topbar.title':        { en:'Ya Hakeem Risale', ku:'یا حکیم ریساله',       tr:'Ya Hakeem Risale' },
-  'topbar.risales':      { en:'Risales',           ku:'ریساڵەکان',             tr:'Risaleler' },
-  'topbar.home':         { en:'Home',              ku:'ماڵەوە',                tr:'Ana Sayfa' },
-  'topbar.signin':       { en:'☁ Sign in',         ku:'☁ چوونەژوورەوە',        tr:'☁ Giriş yap' },
-  'topbar.signout':      { en:'Sign out',          ku:'چوونەدەرەوە',           tr:'Çıkış yap' },
-  'topbar.bookmarks':    { en:'Bookmarks',         ku:'نیشانەکان',             tr:'Yer İmleri' },
-  'topbar.reflections':  { en:'Reflections',       ku:'ئەندێشەکان',            tr:'Yansımalar' },
-  'topbar.settings':     { en:'Settings',          ku:'ڕێکخستنەکان',           tr:'Ayarlar' },
-  'topbar.language':     { en:'Language',          ku:'زمان',                  tr:'Dil' },
-
-  /* ── Left sidebar ── */
-  'sb.books':            { en:'Books',             ku:'کتێبەکان',              tr:'Kitaplar' },
-  'sb.newBook':          { en:'+ New Book',        ku:'+ کتێبی نوێ',           tr:'+ Yeni Kitap' },
-  'sb.newRisale':        { en:'+ New Risale',      ku:'+ ریساڵەی نوێ',         tr:'+ Yeni Risale' },
-
-  /* ── Right sidebar tabs ── */
-  'tab.settings':        { en:'Settings',          ku:'ڕێکخستن',               tr:'Ayarlar' },
-  'tab.reflections':     { en:'Reflections',       ku:'ئەندێشە',               tr:'Yansımalar' },
-  'tab.bookmarks':       { en:'Bookmarks',         ku:'نیشانە',                tr:'Yer İmleri' },
-
-  /* ── Settings panel ── */
-  'ss.layout':           { en:'Layout',            ku:'ڕووکار',                tr:'Düzen' },
-  'ss.sideBySide':       { en:'Side by Side',      ku:'لای یەکتر',             tr:'Yan Yana' },
-  'ss.stacked':          { en:'Stacked',           ku:'ڕیزکراو',               tr:'Üst Üste' },
-  'ss.flowText':         { en:'Flow Text',         ku:'دەقی ڕەوان',            tr:'Akan Metin' },
-  'ss.flowDesc':         { en:'Merges all rows into one continuous text per column.',
-                           ku:'هەموو ڕیزەکان دەگرێتەوە بە دەقێکی بەردەوام بۆ هەر ستوونێک.',
-                           tr:'Tüm satırları her sütun için tek bir sürekli metinde birleştirir.' },
-  'ss.appearance':       { en:'Appearance',        ku:'خوازراو',               tr:'Görünüm' },
-  'ss.theme':            { en:'Theme',             ku:'ڕووکار',                tr:'Tema' },
-  'ss.dark':             { en:'Dark',              ku:'تاریک',                 tr:'Koyu' },
-  'ss.light':            { en:'Light',             ku:'ڕووناک',                tr:'Açık' },
-  'ss.system':           { en:'System',            ku:'سیستەم',                tr:'Sistem' },
-  'ss.columns':          { en:'Columns',           ku:'ستوونەکان',             tr:'Sütunlar' },
-  'ss.number':           { en:'# Number',          ku:'# ژمارە',               tr:'# Numara' },
-  'ss.ottoman':          { en:'Ottoman Turkish',   ku:'تورکی عوسمانی',         tr:'Osmanlı Türkçesi' },
-  'ss.modern':           { en:'Modern Turkish',    ku:'تورکی نوێ',             tr:'Modern Türkçe' },
-  'ss.kurdishLit':       { en:'Kurdish — Literal', ku:'کوردی — ئەدەبی',        tr:'Kürtçe — Lafzî' },
-  'ss.kurdishFree':      { en:'Kurdish — Free',    ku:'کوردی — ئازاد',         tr:'Kürtçe — Serbest' },
-  'ss.typography':       { en:'Typography',        ku:'تایپۆگرافی',            tr:'Tipografi' },
-  'ss.rows':             { en:'Rows',              ku:'ڕیزەکان',               tr:'Satırlar' },
-  'ss.addRow':           { en:'＋ Add Row',         ku:'＋ ڕیزی نوێ',           tr:'＋ Satır Ekle' },
-  'ss.data':             { en:'Data',              ku:'داتا',                  tr:'Veri' },
-  'ss.exportCurrent':    { en:'⬇ Export current Risale',    ku:'⬇ ئەمەڵەی ڕیساڵەی ئێستا',     tr:'⬇ Mevcut Risaleyi Dışa Aktar' },
-  'ss.importCurrent':    { en:'⬆ Import into current Risale', ku:'⬆ هاوردەکردن بۆ ڕیساڵەی ئێستا', tr:'⬆ Mevcut Risaleye İçe Aktar' },
-  'ss.exportAll':        { en:'📦 Export all Risales',       ku:'📦 هەموو ریساڵەکان هەناردە بکە', tr:'📦 Tüm Risaleleri Dışa Aktar' },
-  'ss.importAll':        { en:'📥 Import all Risales',       ku:'📥 هەموو ریساڵەکان هاوردە بکە', tr:'📥 Tüm Risaleleri İçe Aktar' },
-  'ss.database':         { en:'Database',          ku:'بنکەی داتا',            tr:'Veritabanı' },
-  'ss.seed':             { en:'🌱 Seed Database',  ku:'🌱 داتابەیس پڕ بکەوە',  tr:'🌱 Veritabanını Çekirdekle' },
-  'ss.seedDesc':         { en:'Only seeds if Firestore has no books. Safe to run when empty.',
-                           ku:'تەنها داتا دەنێرد ئەگەر Firestore بووبێتە بۆشایی. ئامینە بۆ ئەجرا کردن.',
-                           tr:'Yalnızca Firestore boşsa çekirdekler. Boşken çalıştırmak güvenlidir.' },
-
-  /* ── Table headers ── */
-  'th.num':              { en:'#',                 ku:'#',                     tr:'#' },
-  'th.ottoman':          { en:'Ottoman Turkish',   ku:'تورکی عوسمانی',         tr:'Osmanlı Türkçesi' },
-  'th.modern':           { en:'Modern Turkish',    ku:'تورکی نوێ',             tr:'Modern Türkçe' },
-  'th.kurdishLit':       { en:'Kurdish — Literal', ku:'کوردی — ئەدەبی',        tr:'Kürtçe — Lafzî' },
-  'th.kurdishFree':      { en:'Kurdish — Free',    ku:'کوردی — ئازاد',         tr:'Kürtçe — Serbest' },
-
-  /* ── Row pill tooltips ── */
-  'pill.edit':           { en:'Edit',              ku:'دەستکاریکردن',          tr:'Düzenle' },
-  'pill.reflections':    { en:'Reflections',       ku:'ئەندێشەکان',            tr:'Yansımalar' },
-  'pill.reflect':        { en:'Reflect',           ku:'ئەندێشە',               tr:'Yansıma' },
-  'pill.bookmark':       { en:'Bookmark',          ku:'نیشانەکردن',            tr:'Yer İmi' },
-  'pill.delete':         { en:'Delete',            ku:'سڕینەوە',               tr:'Sil' },
-
-  /* ── Offline banner ── */
-  'offline':             { en:"⚠ You're offline — changes will sync when reconnected",
-                           ku:'⚠ ئۆفلاینیت — گۆڕانکارییەکان دەگەڕێنرەوە کاتێک دووبارە بەستراوە',
-                           tr:'⚠ Çevrimdışısınız — değişiklikler yeniden bağlandığınızda senkronize edilecek' },
-
-  /* ── Modals ── */
-  'modal.editRow':       { en:'Edit Row',          ku:'دەستکاریکردنی ڕیز',     tr:'Satırı Düzenle' },
-  'modal.editRowNote':   { en:'Ottoman Turkish and Modern Turkish are read-only. Only Kurdish fields can be edited.',
-                           ku:'تورکی عوسمانی و تورکی نوێ تەنها خوێندنەوەیە. تەنها خانەکانی کوردی دەکرێت دەستکاری بکرێت.',
-                           tr:'Osmanlı Türkçesi ve Modern Türkçe salt okunurdur. Yalnızca Kürtçe alanlar düzenlenebilir.' },
-  'modal.addRow':        { en:'Add New Row',       ku:'ڕیزێکی نوێ زیاد بکە',  tr:'Yeni Satır Ekle' },
-  'modal.exportJSON':    { en:'Export JSON — Current Risale', ku:'JSON هەناردەکردن — ڕیساڵەی ئێستا', tr:'JSON Dışa Aktar — Mevcut Risale' },
-  'modal.importJSON':    { en:'Import JSON — Current Risale', ku:'JSON هاوردەکردن — ڕیساڵەی ئێستا', tr:'JSON İçe Aktar — Mevcut Risale' },
-  'modal.importAll':     { en:'Import All Books',  ku:'هەموو کتێبەکان هاوردە بکە', tr:'Tüm Kitapları İçe Aktar' },
-  'modal.newRisale':     { en:'New Risale',        ku:'ریساڵەی نوێ',           tr:'Yeni Risale' },
-  'modal.newBook':       { en:'New Book',          ku:'کتێبی نوێ',             tr:'Yeni Kitap' },
-  'modal.renameRisale':  { en:'Rename Risale',     ku:'ناوی ریساڵەکە بگۆڕە',   tr:'Risaleyi Yeniden Adlandır' },
-  'modal.newGroup':      { en:'New Group',         ku:'گروپی نوێ',             tr:'Yeni Grup' },
-  'modal.signIn':        { en:'☁ Sign in to save your work',
-                           ku:'☁ چوونەژوورەوە بۆ پاراستنی کارەکانت',
-                           tr:'☁ Çalışmanızı kaydetmek için giriş yapın' },
-  'modal.signInBody':    { en:'Your bookmarks, reflections, and Ders are saved locally. Sign in to sync across devices and keep your data safe.',
-                           ku:'نیشانەکانت، ئەندێشەکانت و دەرسەکانت لەسەر ئامێرەکەت پاراستراون. چوونەژوورەوە بۆ ئەوەی لەسەر هەموو ئامێرەکان هاوکێشە بکرێن.',
-                           tr:'Yer imleri, yansımalar ve Dersler yerel olarak kaydedilir. Cihazlar arasında senkronize etmek için giriş yapın.' },
-  'modal.googleBtn':     { en:'Continue with Google', ku:'بەردەوام بە Google',  tr:'Google ile Devam Et' },
-  'modal.guestBtn':      { en:'Continue as Guest',    ku:'بەردەوام بە میوان',  tr:'Misafir olarak devam et' },
-  'modal.visitHistory':  { en:'🕐 Visit History',      ku:'🕐 مێژووی سەردان',    tr:'🕐 Ziyaret Geçmişi' },
-  'modal.exportDers':    { en:'Export Ders',           ku:'دەرسەکە هەناردە بکە', tr:'Dersi Dışa Aktar' },
-
-  /* ── Buttons shared ── */
-  'btn.cancel':          { en:'Cancel',            ku:'پاشگەزبوونەوە',         tr:'İptal' },
-  'btn.save':            { en:'Save Changes',      ku:'گۆڕانکارییەکان پاشەکەوت بکە', tr:'Değişiklikleri Kaydet' },
-  'btn.create':          { en:'Create',            ku:'دروستکردن',             tr:'Oluştur' },
-  'btn.close':           { en:'Close',             ku:'داخستن',                tr:'Kapat' },
-  'btn.copy':            { en:'Copy',              ku:'کۆپیکردن',              tr:'Kopyala' },
-  'btn.download':        { en:'Download .json',    ku:'.json داگرتن',          tr:'.json İndir' },
-  'btn.appendRows':      { en:'Append Rows',       ku:'ڕیزەکان زیاد بکە',     tr:'Satır Ekle' },
-  'btn.replaceAll':      { en:'Replace All',       ku:'هەموویان بگۆڕە',        tr:'Tümünü Değiştir' },
-  'btn.replaceRisales':  { en:'Replace All Risales', ku:'هەموو ریساڵەکان بگۆڕە', tr:'Tüm Risaleleri Değiştir' },
-  'btn.addRow':          { en:'Add Row',           ku:'ڕیز زیاد بکە',         tr:'Satır Ekle' },
-  'btn.add':             { en:'Add',               ku:'زیادکردن',              tr:'Ekle' },
-  'btn.exportText':      { en:'Export Text',       ku:'دەقەکە هەناردە بکە',   tr:'Metni Dışa Aktar' },
-  'btn.exportHTML':      { en:'Export HTML',       ku:'HTML هەناردە بکە',      tr:'HTML Dışa Aktar' },
-  'btn.newGroup':        { en:'＋ New Group',       ku:'＋ گروپی نوێ',          tr:'＋ Yeni Grup' },
-  'btn.backToBooksTitle':{ en:'Back to books',     ku:'گەڕانەوە بۆ کتێبەکان',  tr:'Kitaplara geri dön' },
-  'btn.back':            { en:'← Back',            ku:'← گەڕانەوە',            tr:'← Geri' },
-  'btn.seedDB':          { en:'🌱 Seed Database',  ku:'🌱 داتابەیس پڕ بکەوە',  tr:'🌱 Veritabanını Çekirdekle' },
-
-  /* ── Labels (form/modal) ── */
-  'lbl.name':            { en:'Name',              ku:'ناو',                   tr:'Ad' },
-  'lbl.type':            { en:'Type',              ku:'جۆر',                   tr:'Tür' },
-  'lbl.color':           { en:'Color',             ku:'ڕەنگ',                  tr:'Renk' },
-  'lbl.ottoman':         { en:'Ottoman Turkish',   ku:'تورکی عوسمانی',         tr:'Osmanlı Türkçesi' },
-  'lbl.modern':          { en:'Modern Turkish',    ku:'تورکی نوێ',             tr:'Modern Türkçe' },
-  'lbl.kurdishLit':      { en:'Kurdish — Literal', ku:'کوردی — ئەدەبی',        tr:'Kürtçe — Lafzî' },
-  'lbl.kurdishFree':     { en:'Kurdish — Free',    ku:'کوردی — ئازاد',         tr:'Kürtçe — Serbest' },
-  'lbl.json':            { en:'JSON (copy or download)', ku:'JSON (کۆپی بکە یان داگرە)', tr:'JSON (kopyala veya indir)' },
-  'lbl.pasteJSON':       { en:'Paste JSON',        ku:'JSON پەیست بکە',        tr:'JSON Yapıştır' },
-
-  /* ── Notes/hints ── */
-  'note.importCurrent':  { en:"Paste a JSON array of objects with keys ot, mt, v1, v2. Choose to append or replace all rows.",
-                           ku:'ئەرەیەکی JSON بدرووشمێنە لەگەڵ کلیلەکانی ot، mt، v1، v2. هەڵبژێرە کە زیاد بکەیت یان هەموویان بگۆڕیت.',
-                           tr:"ot, mt, v1, v2 anahtarlı JSON nesneleri dizisi yapıştırın. Eklemek veya tüm satırları değiştirmek için seçin." },
-  'note.importAll':      { en:'Paste the full exported JSON (array of Book objects with nested risales). This will replace all current Books and Risales.',
-                           ku:'JSON-ی هەناردەکراوی تەواوی پەیست بکە (ئەرەیێک لە تەختەکانی کتێب لەگەڵ ریساڵەی تێخراو). ئەمە هەموو کتێب و ریساڵەکانی ئێستا جێگۆڕدەکات.',
-                           tr:"Dışa aktarılan tam JSON'u yapıştırın (iç içe risaleli Kitap nesneleri dizisi). Bu, tüm mevcut Kitap ve Risalelerin yerini alacak." },
-
-  /* ── Reflections panel ── */
-  'ref.viewing':         { en:'Viewing:',          ku:'بینین:',                tr:'Görüntüleme:' },
-  'ref.wholeRisalah':    { en:'Whole Risalah',     ku:'تەواوی ریساڵە',         tr:'Tüm Risale' },
-  'ref.placeholder':     { en:'Add a reflection, link, or note…', ku:'ئەندێشە، بەستەر یان تێبینییەک زیاد بکە…', tr:'Bir yansıma, bağlantı veya not ekleyin…' },
-  'ref.papers':          { en:'Papers',            ku:'تومارەکان',             tr:'Makaleler' },
-  'ref.videos':          { en:'Videos',            ku:'ڤیدیۆکان',              tr:'Videolar' },
-  'ref.audio':           { en:'Audio',             ku:'دەنگ',                  tr:'Ses' },
-  'ref.related':         { en:'Related Risalahs',  ku:'ریساڵەکانی پەیوەندیدار', tr:'İlgili Risaleler' },
-  'ref.myRef':           { en:'My Reflections',    ku:'ئەندێشەکانم',           tr:'Yansımalarım' },
-  'ref.thisRow':         { en:'This Row',          ku:'ئەم ڕیزە',              tr:'Bu Satır' },
-
-  /* ── Ders editor ── */
-  'ders.back':           { en:'← Back',            ku:'← گەڕانەوە',            tr:'← Geri' },
-  'ders.untitled':       { en:'Untitled Ders…',    ku:'دەرسی بێناو…',          tr:'Adsız Ders…' },
-  'ders.words':          { en:'words',             ku:'وشە',                   tr:'kelime' },
-  'ders.placeholder':    { en:'Begin your Ders here — insert a vacize from the sidebar, then write your reflection…',
-                           ku:'دەرسەکەت لێرەوە دەستبکە — ڤەجیزەیەک لە لاپەڕەی لادی دابنێ، پاشان ئەندێشەکەت بنووسە…',
-                           tr:'Dersinize buradan başlayın — kenar çubuğundan bir vacize ekleyin, ardından yansımanızı yazın…' },
-  'ders.sources':        { en:'📚 Sources',         ku:'📚 سەرچاوەکان',          tr:'📚 Kaynaklar' },
-
-  /* ── Bookmarks panel ── */
-  'bk.tags':             { en:'Tags',              ku:'تاگەکان',               tr:'Etiketler' },
-  'bk.newGroup':         { en:'＋ New Group',       ku:'＋ گروپی نوێ',          tr:'＋ Yeni Grup' },
-  'bk.reading':          { en:'📖 Reading',         ku:'📖 خوێندنەوە',           tr:'📖 Okuma' },
-  'bk.darsler':          { en:'📚 Darsler',         ku:'📚 دارسلەر',             tr:'📚 Darsler' },
-
-  /* ── Home page dynamic labels ── */
-  'home.allBookmarks':   { en:'All bookmarks →',   ku:'هەموو نیشانەکان ←',     tr:'Tüm yer imleri →' },
-  'home.seeAll':         { en:'See all →',         ku:'هەموویان ببینە ←',      tr:'Tümünü gör →' },
-  'home.darslerEmpty':   { en:'Create a Darsler group to organise your study bookmarks.',
-                           ku:'گروپێکی دارسلەر دروست بکە بۆ ڕێکخستنی نیشانەکانی خوێندنەکەت.',
-                           tr:'Çalışma yer imlerinizi düzenlemek için bir Darsler grubu oluşturun.' },
-  'home.reflEmpty':      { en:'Your reflections will appear here.',
-                           ku:'ئەندێشەکانت لێرەدا دەکەوێنەوە.',
-                           tr:'Yansımalarınız burada görünecek.' },
-
-  /* ── Language switcher ── */
-  'lang.en':             { en:'EN', ku:'EN',        tr:'EN' },
-  'lang.ku':             { en:'KU', ku:'KU',        tr:'KU' },
-  'lang.tr':             { en:'TR', ku:'TR',        tr:'TR' },
-  'lang.tooltip':        { en:'Switch language',    ku:'زمان بگۆڕە',            tr:'Dil değiştir' },
-};
-
-/* ── 2. MERGE WITH USER-SAVED TRANSLATIONS (Phase 2 & 3 will write here) ── */
-try {
-  var _saved = JSON.parse(localStorage.getItem('rsl_translations') || '{}');
-  Object.keys(_saved).forEach(function(k){
-    if (!_BASE[k]) _BASE[k] = {};
-    Object.assign(_BASE[k], _saved[k]);
-  });
-} catch(e) {}
-
-window.TRANSLATIONS = _BASE;
-
-/* ── 3. CURRENT LANGUAGE ── */
-window.currentLang = localStorage.getItem('rsl_lang') || 'en';
-
-/* ── 4. T() helper — get a translated string ── */
-window.T = function(key, lang) {
-  lang = lang || window.currentLang;
-  var entry = window.TRANSLATIONS[key];
-  if (!entry) return key;
-  return entry[lang] || entry['en'] || key;
-};
-
-/* ── 5. applyLang() — patch all [data-i18n] elements ── */
-window.applyLang = function(lang) {
-  lang = lang || window.currentLang;
-  window.currentLang = lang;
-  localStorage.setItem('rsl_lang', lang);
-
-  /* Direction: Kurdish is RTL for UI text, but the app layout is always LTR */
-  /* (content columns handle their own direction; only interface changes here) */
-
-  /* Walk all elements with data-i18n */
-  document.querySelectorAll('[data-i18n]').forEach(function(el) {
-    var key = el.getAttribute('data-i18n');
-    var mode = el.getAttribute('data-i18n-attr') || 'text';
-    var val = T(key, lang);
-    if (mode === 'placeholder') {
-      el.placeholder = val;
-    } else if (mode === 'title') {
-      el.title = val;
-    } else if (mode === 'html') {
-      el.innerHTML = val;
-    } else {
-      el.textContent = val;
-    }
-  });
-
-  /* Update lang switcher active state */
-  document.querySelectorAll('.lang-btn').forEach(function(b) {
-    b.classList.toggle('active', b.getAttribute('data-lang') === lang);
-  });
-
-  /* Patch dynamic strings that JS builds at runtime */
-  _patchDynamicStrings(lang);
-};
-
-/* ── 6. PATCH DYNAMIC STRINGS ── */
-/* Some UI text is set by JS (.textContent = "..."). We re-patch known IDs. */
-function _patchDynamicStrings(lang) {
-  function set(id, key) {
-    var el = document.getElementById(id);
-    if (el && el.textContent !== undefined) {
-      var t = T(key, lang);
-      if (t) el.textContent = t;
-    }
-  }
-  function setPlaceholder(id, key) {
-    var el = document.getElementById(id);
-    if (el) el.placeholder = T(key, lang);
-  }
-  function setTitle(id, key) {
-    var el = document.getElementById(id);
-    if (el) el.title = T(key, lang);
-  }
-
-  setPlaceholder('ref-top-text',    'ref.placeholder');
-  setPlaceholder('ders-title-input','ders.untitled');
-  setTitle('btn-tl',                'topbar.risales');
-  setTitle('btn-home',              'topbar.home');
-  setTitle('btn-bk',                'topbar.bookmarks');
-  setTitle('btn-reflect',           'topbar.reflections');
-  setTitle('btn-tr',                'topbar.settings');
-
-  /* Offline banner */
-  var ob = document.getElementById('offline-banner');
-  if (ob) ob.textContent = T('offline', lang);
-
-  /* Ders placeholder */
-  var dc = document.getElementById('ders-editor-content');
-  if (dc) dc.setAttribute('data-placeholder', T('ders.placeholder', lang));
-}
-
-/* ── 7. APPLY ON LOAD (after DOM ready) ── */
-document.addEventListener('DOMContentLoaded', function() {
-  window.applyLang(window.currentLang);
-});
-
-})();
-</script>
 </head>
 <body>
 
@@ -2557,7 +2253,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div id="topbar-title">Ya Hakeem Risale</div>
   <div class="tb-right">
     <!-- Auth: guest button (anonymous) -->
-    <button id="auth-guest-btn" onclick="openAuthModal()" title="Sign in to sync your data" data-i18n="topbar.signin">☁ Sign in</button>
+    <button id="auth-guest-btn" onclick="openAuthModal()" title="Sign in to sync your data">☁ Sign in</button>
     <!-- Auth: signed-in Google user -->
     <div id="auth-user-wrap">
       <button id="auth-user-trigger" onclick="toggleAuthDropdown()" title="Account options">
@@ -2566,12 +2262,12 @@ document.addEventListener('DOMContentLoaded', function() {
         <span style="font-size:0.6rem;color:var(--text-faint);">▾</span>
       </button>
       <div id="auth-user-dropdown">
-        <button class="auth-dd-btn danger" onclick="doSignOut()" data-i18n="topbar.signout">Sign out</button>
+        <button class="auth-dd-btn danger" onclick="doSignOut()">Sign out</button>
       </div>
     </div>
-    <button class="tb-btn" id="btn-bk" onclick="openBookmarksTab()" title="Bookmarks" data-i18n-attr="title" data-i18n="topbar.bookmarks">🔖</button>
-    <button class="tb-btn" id="btn-reflect" onclick="openReflectionsTab()" title="Reflections" data-i18n-attr="title" data-i18n="topbar.reflections">📝</button>
-    <button class="tb-btn" id="btn-tr" onclick="openSettingsTab()" title="Settings" data-i18n-attr="title" data-i18n="topbar.settings">⚙</button>
+    <button class="tb-btn" id="btn-bk" onclick="openBookmarksTab()" title="Bookmarks">🔖</button>
+    <button class="tb-btn" id="btn-reflect" onclick="openReflectionsTab()" title="Reflections">📝</button>
+    <button class="tb-btn" id="btn-tr" onclick="openSettingsTab()" title="Settings">⚙</button>
   </div>
 </div>
 
@@ -2582,18 +2278,18 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="sidebar" id="sb-left">
     <!-- Level 1: Book list -->
     <div id="sb-level1" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
-      <div class="sb-head"><h2 data-i18n="sb.books">Books</h2></div>
+      <div class="sb-head"><h2>Books</h2></div>
       <div class="sb-body" id="book-list"></div>
-      <button class="sb-add" onclick="openNewBook()" data-i18n="sb.newBook">+ New Book</button>
+      <button class="sb-add" onclick="openNewBook()">+ New Book</button>
     </div>
     <!-- Level 2: Risale list inside a book -->
     <div id="sb-level2" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
       <div class="sb-back-bar">
-        <button class="sb-back-btn" onclick="navToBookList()" title="Back to books" data-i18n="btn.backToBooksTitle" data-i18n-attr="title">←</button>
+        <button class="sb-back-btn" onclick="navToBookList()" title="Back to books">←</button>
         <span class="sb-back-title" id="sb-book-title"></span>
       </div>
       <div class="sb-body" id="risale-list"></div>
-      <button class="sb-add" onclick="openNewRisale()" data-i18n="sb.newRisale">+ New Risale</button>
+      <button class="sb-add" onclick="openNewRisale()">+ New Risale</button>
     </div>
   </div>
 
@@ -2608,17 +2304,17 @@ document.addEventListener('DOMContentLoaded', function() {
   <!-- MAIN -->
   <div id="main">
     <!-- Offline banner -->
-    <div id="offline-banner" data-i18n="offline">⚠ You're offline — changes will sync when reconnected</div>
+    <div id="offline-banner">⚠ You're offline — changes will sync when reconnected</div>
     <div class="c-pad">
       <!-- Side-by-side table view -->
       <div id="side-view">
         <table id="main-table">
           <thead><tr>
-            <th class="col-num" data-i18n="th.num">#</th>
-            <th class="col-ot rtl-col" data-i18n="th.ottoman">Ottoman Turkish</th>
-            <th class="col-mt" data-i18n="th.modern">Modern Turkish</th>
-            <th class="col-v1 rtl-col" data-i18n="th.kurdishLit">Kurdish — Literal</th>
-            <th class="col-v2 rtl-col" data-i18n="th.kurdishFree">Kurdish — Free</th>
+            <th class="col-num">#</th>
+            <th class="col-ot rtl-col">Ottoman Turkish</th>
+            <th class="col-mt">Modern Turkish</th>
+            <th class="col-v1 rtl-col">Kurdish — Literal</th>
+            <th class="col-v2 rtl-col">Kurdish — Free</th>
             <th class="col-action"></th>
           </tr></thead>
           <tbody id="tbody"></tbody>
@@ -2638,9 +2334,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- Tab bar -->
     <div class="sb-tabs">
-      <button class="sb-tab active" id="tab-settings" onclick="switchRightTab('settings')" data-i18n="tab.settings">Settings</button>
-      <button class="sb-tab" id="tab-reflections" onclick="switchRightTab('reflections')" data-i18n="tab.reflections">Reflections</button>
-      <button class="sb-tab" id="tab-bookmarks" onclick="switchRightTab('bookmarks')" data-i18n="tab.bookmarks">Bookmarks</button>
+      <button class="sb-tab active" id="tab-settings" onclick="switchRightTab('settings')">Settings</button>
+      <button class="sb-tab" id="tab-reflections" onclick="switchRightTab('reflections')">Reflections</button>
+      <button class="sb-tab" id="tab-bookmarks" onclick="switchRightTab('bookmarks')">Bookmarks</button>
     </div>
 
     <!-- SETTINGS PANEL -->
@@ -2648,96 +2344,76 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="sb-body">
 
         <div class="ss">
-          <div class="ss-label" data-i18n="ss.layout">Layout</div>
+          <div class="ss-label">Layout</div>
           <div class="vseg">
-            <button id="vs-side" class="active" onclick="setView('side')" data-i18n="ss.sideBySide">Side by Side</button>
-            <button id="vs-stack" onclick="setView('stack')" data-i18n="ss.stacked">Stacked</button>
+            <button id="vs-side" class="active" onclick="setView('side')">Side by Side</button>
+            <button id="vs-stack" onclick="setView('stack')">Stacked</button>
           </div>
           <div class="ct-row" style="margin-top:4px;">
-            <span class="ct-name" data-i18n="ss.flowText">Flow Text</span>
+            <span class="ct-name">Flow Text</span>
             <label class="sw"><input type="checkbox" id="sw-flow" onchange="toggleFlow(this.checked)"><div class="sw-t"></div></label>
           </div>
-          <div style="font-size:0.66rem;color:var(--text-faint);margin-top:4px;line-height:1.5;" data-i18n="ss.flowDesc">Merges all rows into one continuous text per column.</div>
+          <div style="font-size:0.66rem;color:var(--text-faint);margin-top:4px;line-height:1.5;">Merges all rows into one continuous text per column.</div>
         </div>
 
         <div class="ss">
-          <div class="ss-label" data-i18n="ss.appearance">Appearance</div>
+          <div class="ss-label">Appearance</div>
           <div class="ct-row">
-            <span class="ct-name theme-ct-label" data-i18n="ss.theme">Theme</span>
+            <span class="ct-name theme-ct-label">Theme</span>
             <div class="theme-btn-group">
-              <button class="ie-btn theme-mode-btn" id="theme-btn-dark"   onclick="setThemeMode('dark')"  >🌙<span class="theme-btn-label" data-i18n="ss.dark"> Dark</span></button>
-              <button class="ie-btn theme-mode-btn" id="theme-btn-light"  onclick="setThemeMode('light')" >☀<span class="theme-btn-label" data-i18n="ss.light"> Light</span></button>
-              <button class="ie-btn theme-mode-btn" id="theme-btn-system" onclick="setThemeMode('system')">⚙<span class="theme-btn-label" data-i18n="ss.system"> System</span></button>
+              <button class="ie-btn theme-mode-btn" id="theme-btn-dark"   onclick="setThemeMode('dark')"  >🌙<span class="theme-btn-label"> Dark</span></button>
+              <button class="ie-btn theme-mode-btn" id="theme-btn-light"  onclick="setThemeMode('light')" >☀<span class="theme-btn-label"> Light</span></button>
+              <button class="ie-btn theme-mode-btn" id="theme-btn-system" onclick="setThemeMode('system')">⚙<span class="theme-btn-label"> System</span></button>
             </div>
           </div>
         </div>
 
         <div class="ss">
-          <div class="ss-label" data-i18n="ss.columns">Columns</div>
-          <div class="ct-row"><span class="ct-name" data-i18n="ss.number"># Number</span>
+          <div class="ss-label">Columns</div>
+          <div class="ct-row"><span class="ct-name"># Number</span>
             <label class="sw"><input type="checkbox" id="sw-num" checked onchange="toggleCol('col-num',this.checked)"><div class="sw-t"></div></label>
           </div>
-          <div class="ct-row"><span class="ct-name" data-i18n="ss.ottoman">Ottoman Turkish</span>
+          <div class="ct-row"><span class="ct-name">Ottoman Turkish</span>
             <label class="sw"><input type="checkbox" id="sw-ot" onchange="toggleCol('col-ot',this.checked)"><div class="sw-t"></div></label>
           </div>
-          <div class="ct-row"><span class="ct-name" data-i18n="ss.modern">Modern Turkish</span>
+          <div class="ct-row"><span class="ct-name">Modern Turkish</span>
             <label class="sw"><input type="checkbox" id="sw-mt" onchange="toggleCol('col-mt',this.checked)"><div class="sw-t"></div></label>
           </div>
-          <div class="ct-row"><span class="ct-name" data-i18n="ss.kurdishLit">Kurdish — Literal</span>
+          <div class="ct-row"><span class="ct-name">Kurdish — Literal</span>
             <label class="sw"><input type="checkbox" id="sw-v1" checked onchange="toggleCol('col-v1',this.checked)"><div class="sw-t"></div></label>
           </div>
-          <div class="ct-row"><span class="ct-name" data-i18n="ss.kurdishFree">Kurdish — Free</span>
+          <div class="ct-row"><span class="ct-name">Kurdish — Free</span>
             <label class="sw"><input type="checkbox" id="sw-v2" onchange="toggleCol('col-v2',this.checked)"><div class="sw-t"></div></label>
           </div>
         </div>
 
         <!-- TYPOGRAPHY GROUPS -->
         <div class="ss" style="padding-bottom:0;border-bottom:none;">
-          <div class="ss-label" data-i18n="ss.typography">Typography</div>
+          <div class="ss-label">Typography</div>
         </div>
         <div id="typo-groups"></div>
 
         <div class="ss" style="margin-top:2px;">
-          <div class="ss-label" data-i18n="ss.rows">Rows</div>
-          <button class="add-row-btn" onclick="openAdd()" data-i18n="ss.addRow">＋ Add Row</button>
+          <div class="ss-label">Rows</div>
+          <button class="add-row-btn" onclick="openAdd()">＋ Add Row</button>
         </div>
 
         <div class="ss">
-          <div class="ss-label" data-i18n="ss.language">Language</div>
-          <div style="display:flex;gap:4px;align-items:center;">
-            <button class="ie-btn lang-btn" data-lang="en" onclick="applyLang('en')" style="flex:1;font-size:0.8rem;letter-spacing:.06em;font-weight:600;">EN</button>
-            <button class="ie-btn lang-btn" data-lang="ku" onclick="applyLang('ku')" style="flex:1;font-size:0.8rem;letter-spacing:.06em;font-weight:600;">KU</button>
-            <button class="ie-btn lang-btn" data-lang="tr" onclick="applyLang('tr')" style="flex:1;font-size:0.8rem;letter-spacing:.06em;font-weight:600;">TR</button>
-          </div>
-          <div style="font-size:0.66rem;color:var(--text-faint);margin-top:4px;line-height:1.5;" data-i18n="ss.langDesc">Select the interface language. Kurdish uses Sorani script.</div>
-        </div>
-
-        <div class="ss">
-          <div class="ss-label" data-i18n="ss.translations">Translations</div>
+          <div class="ss-label">Data</div>
           <div class="ie-btns">
-            <button class="ie-btn" onclick="exportTranslations()" data-i18n="ss.exportTranslations">⬇ Export translations (JSON)</button>
-            <button class="ie-btn" onclick="openImportTranslations()" data-i18n="ss.importTranslations">⬆ Import translations (JSON)</button>
-            <button class="ie-btn" onclick="exportTranslationsCSV()" data-i18n="ss.exportTranslationsCSV">⬇ Export translations (CSV)</button>
-          </div>
-          <div style="font-size:0.66rem;color:var(--text-faint);margin-top:4px;line-height:1.5;" data-i18n="ss.translationsDesc">Export all UI labels for external translation, then import the finished file to apply changes instantly.</div>
-        </div>
-
-        <div class="ss">
-          <div class="ss-label" data-i18n="ss.data">Data</div>
-          <div class="ie-btns">
-            <button class="ie-btn" onclick="openExport()" data-i18n="ss.exportCurrent">⬇ Export current Risale</button>
-            <button class="ie-btn" onclick="openImport()" data-i18n="ss.importCurrent">⬆ Import into current Risale</button>
-            <button class="ie-btn" onclick="exportAll()" data-i18n="ss.exportAll">📦 Export all Risales</button>
-            <button class="ie-btn" onclick="openImportAll()" data-i18n="ss.importAll">📥 Import all Risales</button>
+            <button class="ie-btn" onclick="openExport()">⬇ Export current Risale</button>
+            <button class="ie-btn" onclick="openImport()">⬆ Import into current Risale</button>
+            <button class="ie-btn" onclick="exportAll()">📦 Export all Risales</button>
+            <button class="ie-btn" onclick="openImportAll()">📥 Import all Risales</button>
           </div>
         </div>
 
         <div class="ss" id="ss-seed" style="display:none;">
-          <div class="ss-label" data-i18n="ss.database">Database</div>
+          <div class="ss-label">Database</div>
           <div class="ie-btns">
-            <button class="ie-btn" onclick="seedFirestore()" data-i18n="ss.seed">🌱 Seed Database</button>
+            <button class="ie-btn" onclick="seedFirestore()" title="Write hardcoded data to Firestore if the database is empty">🌱 Seed Database</button>
           </div>
-          <div style="font-size:0.66rem;color:var(--text-faint);margin-top:4px;line-height:1.5;" data-i18n="ss.seedDesc">Only seeds if Firestore has no books. Safe to run when empty.</div>
+          <div style="font-size:0.66rem;color:var(--text-faint);margin-top:4px;line-height:1.5;">Only seeds if Firestore has no books. Safe to run when empty.</div>
         </div>
 
       </div>
@@ -2748,30 +2424,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
       <!-- Mode bar -->
       <div class="ref-mode-bar" id="ref-mode-bar">
-        <span class="ref-mode-label" data-i18n="ref.viewing">Viewing:</span>
-        <span class="ref-mode-val" id="ref-mode-val" data-i18n="ref.wholeRisalah">Whole Risalah</span>
+        <span class="ref-mode-label">Viewing:</span>
+        <span class="ref-mode-val" id="ref-mode-val">Whole Risalah</span>
         <button class="ref-mode-x" id="ref-mode-x" onclick="resetReflectionsMode()" title="Reset to Whole Risalah" style="display:none;">×</button>
       </div>
 
       <!-- Top input area -->
       <div class="ref-input-area" id="ref-top-input">
-        <textarea id="ref-top-text" rows="2" placeholder="Add a reflection, link, or note…" data-i18n="ref.placeholder" data-i18n-attr="placeholder"></textarea>
+        <textarea id="ref-top-text" rows="2" placeholder="Add a reflection, link, or note…"></textarea>
         <div class="ref-row">
           <select class="ref-select" id="ref-top-type">
-            <option value="Papers" data-i18n="ref.papers">Papers</option>
-            <option value="Videos" data-i18n="ref.videos">Videos</option>
-            <option value="Audio" data-i18n="ref.audio">Audio</option>
-            <option value="Related Risalahs" data-i18n="ref.related">Related Risalahs</option>
-            <option value="My Reflections" selected data-i18n="ref.myRef">My Reflections</option>
+            <option value="Papers">Papers</option>
+            <option value="Videos">Videos</option>
+            <option value="Audio">Audio</option>
+            <option value="Related Risalahs">Related Risalahs</option>
+            <option value="My Reflections" selected>My Reflections</option>
           </select>
         </div>
         <div class="ref-row" style="margin-top:5px;">
           <div class="ref-scope-wrap">
-            <button class="ref-scope-btn active" id="ref-top-scope-whole" onclick="setTopScope('whole')" data-i18n="ref.wholeRisalah">Whole Risalah</button>
-            <button class="ref-scope-btn" id="ref-top-scope-row" onclick="setTopScope('row')" data-i18n="ref.thisRow">This Row</button>
+            <button class="ref-scope-btn active" id="ref-top-scope-whole" onclick="setTopScope('whole')">Whole Risalah</button>
+            <button class="ref-scope-btn" id="ref-top-scope-row" onclick="setTopScope('row')">This Row</button>
             <input type="number" class="ref-row-num" id="ref-top-rownum" min="1" value="1" style="display:none;">
           </div>
-          <button class="ref-submit" onclick="submitTopReflection()" data-i18n="btn.add">Add</button>
+          <button class="ref-submit" onclick="submitTopReflection()">Add</button>
         </div>
       </div>
 
@@ -2792,7 +2468,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
       <div class="bk-list" id="bk-list"></div>
       <div class="bk-footer">
-        <button class="bk-new-group-btn" onclick="openNewGroupModal()" data-i18n="bk.newGroup">＋ New Group</button>
+        <button class="bk-new-group-btn" onclick="openNewGroupModal()">＋ New Group</button>
       </div>
     </div><!-- /panel-bookmarks -->
 
@@ -2804,13 +2480,13 @@ document.addEventListener('DOMContentLoaded', function() {
 <div id="ders-editor-page">
   <!-- Ders topbar -->
   <div id="ders-topbar">
-    <button id="ders-back-btn" onclick="closeDersEditor()" data-i18n="ders.back">← Back</button>
-    <input id="ders-title-input" type="text" placeholder="Untitled Ders…" data-i18n="ders.untitled" data-i18n-attr="placeholder" oninput="dersTitleChanged()" />
+    <button id="ders-back-btn" onclick="closeDersEditor()">← Back</button>
+    <input id="ders-title-input" type="text" placeholder="Untitled Ders…" oninput="dersTitleChanged()" />
     <div class="ders-tb-right">
       <span id="ders-wc">0 words</span>
       <span class="ders-autosave-indicator" id="ders-autosave-label"></span>
-      <button class="ders-tb-btn" onclick="openDersExport('text')" data-i18n="btn.exportText">Export Text</button>
-      <button class="ders-tb-btn" onclick="openDersExport('html')" data-i18n="btn.exportHTML">Export HTML</button>
+      <button class="ders-tb-btn" onclick="openDersExport('text')">Export Text</button>
+      <button class="ders-tb-btn" onclick="openDersExport('html')">Export HTML</button>
     </div>
   </div>
 
@@ -2820,8 +2496,8 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- LEFT: Sources sidebar (desktop/tablet) -->
     <div id="ders-sources-sidebar">
       <div class="ders-src-tabs">
-        <button class="ders-src-tab active" id="ders-stab-bk" onclick="dersSwitchSrcTab('bookmarks')" data-i18n="tab.bookmarks">Bookmarks</button>
-        <button class="ders-src-tab" id="ders-stab-rf" onclick="dersSwitchSrcTab('reflections')" data-i18n="tab.reflections">Reflections</button>
+        <button class="ders-src-tab active" id="ders-stab-bk" onclick="dersSwitchSrcTab('bookmarks')">Bookmarks</button>
+        <button class="ders-src-tab" id="ders-stab-rf" onclick="dersSwitchSrcTab('reflections')">Reflections</button>
       </div>
       <div class="ders-src-filter" id="ders-src-filter-bar"></div>
       <div id="ders-src-list"></div>
@@ -2842,7 +2518,7 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 
   <!-- Mobile FAB: open sources sheet -->
-  <button id="ders-mobile-fab" onclick="openDersMobileSheet()" data-i18n="ders.sources">📚 Sources</button>
+  <button id="ders-mobile-fab" onclick="openDersMobileSheet()">📚 Sources</button>
 
   <!-- Mobile overlay -->
   <div class="mob-ov ders-ov" id="ders-mob-ov" onclick="closeDersMobileSheet()"></div>
@@ -2851,8 +2527,8 @@ document.addEventListener('DOMContentLoaded', function() {
   <div id="ders-mobile-sources-sheet">
     <div id="ders-sheet-handle" onclick="closeDersMobileSheet()"></div>
     <div class="ders-src-tabs" style="flex-shrink:0;">
-      <button class="ders-src-tab active" id="ders-stab-bk-m" onclick="dersSwitchSrcTab('bookmarks',true)" data-i18n="tab.bookmarks">Bookmarks</button>
-      <button class="ders-src-tab" id="ders-stab-rf-m" onclick="dersSwitchSrcTab('reflections',true)" data-i18n="tab.reflections">Reflections</button>
+      <button class="ders-src-tab active" id="ders-stab-bk-m" onclick="dersSwitchSrcTab('bookmarks',true)">Bookmarks</button>
+      <button class="ders-src-tab" id="ders-stab-rf-m" onclick="dersSwitchSrcTab('reflections',true)">Reflections</button>
     </div>
     <div class="ders-src-filter" id="ders-src-filter-bar-m"></div>
     <div id="ders-src-list-m" style="flex:1;overflow-y:auto;"></div>
@@ -2862,11 +2538,11 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- DERS EXPORT MODAL -->
 <div class="modal-bg" id="m-ders-export">
   <div class="modal" style="max-width:560px;">
-    <h2 id="ders-export-title" data-i18n="modal.exportDers">Export Ders</h2>
+    <h2 id="ders-export-title">Export Ders</h2>
     <textarea id="ders-export-ta" readonly></textarea>
     <div class="ma">
-      <button class="btn btn-ghost" onclick="closeM('m-ders-export')" data-i18n="btn.close">Close</button>
-      <button class="btn btn-sec" onclick="copyDersExport()" data-i18n="btn.copy">Copy</button>
+      <button class="btn btn-ghost" onclick="closeM('m-ders-export')">Close</button>
+      <button class="btn btn-sec" onclick="copyDersExport()">Copy</button>
     </div>
   </div>
 </div>
@@ -2875,38 +2551,38 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="row-pill hidden" id="row-pill" role="toolbar" aria-label="Row actions">
   <button class="pill-btn pill-edit" id="pill-edit" aria-label="Edit row" tabindex="0">
     <span aria-hidden="true">✎</span>
-    <span class="pill-tip" aria-hidden="true" data-i18n="pill.edit">Edit</span>
-    <span class="pill-mobile-label" aria-hidden="true" data-i18n="pill.edit">Edit</span>
+    <span class="pill-tip" aria-hidden="true">Edit</span>
+    <span class="pill-mobile-label" aria-hidden="true">Edit</span>
   </button>
   <button class="pill-btn pill-reflect" id="pill-reflect" aria-label="Open reflections for this row" tabindex="0">
     <span aria-hidden="true">📝</span>
-    <span class="pill-tip" aria-hidden="true" data-i18n="pill.reflections">Reflections</span>
-    <span class="pill-mobile-label" aria-hidden="true" data-i18n="pill.reflect">Reflect</span>
+    <span class="pill-tip" aria-hidden="true">Reflections</span>
+    <span class="pill-mobile-label" aria-hidden="true">Reflect</span>
   </button>
   <button class="pill-btn pill-bookmark" id="pill-bookmark" aria-label="Bookmark this row" tabindex="0">
     <span aria-hidden="true">🔖</span>
-    <span class="pill-tip" aria-hidden="true" data-i18n="pill.bookmark">Bookmark</span>
-    <span class="pill-mobile-label" aria-hidden="true" data-i18n="pill.bookmark">Bookmark</span>
+    <span class="pill-tip" aria-hidden="true">Bookmark</span>
+    <span class="pill-mobile-label" aria-hidden="true">Bookmark</span>
   </button>
   <button class="pill-btn pill-delete" id="pill-delete" aria-label="Delete this row" tabindex="0">
     <span aria-hidden="true">🗑</span>
-    <span class="pill-tip" aria-hidden="true" data-i18n="pill.delete">Delete</span>
-    <span class="pill-mobile-label" aria-hidden="true" data-i18n="pill.delete">Delete</span>
+    <span class="pill-tip" aria-hidden="true">Delete</span>
+    <span class="pill-mobile-label" aria-hidden="true">Delete</span>
   </button>
 </div>
 
 <!-- MODAL: Edit Row -->
 <div class="modal-bg" id="m-edit-row" role="dialog" aria-modal="true" aria-label="Edit Row">
   <div class="modal">
-    <h2 data-i18n="modal.editRow">Edit Row</h2>
-    <p class="fg-readonly-note" data-i18n="modal.editRowNote">Ottoman Turkish and Modern Turkish are read-only. Only Kurdish fields can be edited.</p>
-    <div class="fg fg-readonly"><label data-i18n="lbl.ottoman">Ottoman Turkish</label><textarea class="rtl" id="edit-ot" rows="3" readonly tabindex="-1"></textarea></div>
-    <div class="fg fg-readonly"><label data-i18n="lbl.modern">Modern Turkish</label><textarea class="ltr" id="edit-mt" rows="3" readonly tabindex="-1"></textarea></div>
-    <div class="fg"><label data-i18n="lbl.kurdishLit">Kurdish — Literal</label><textarea class="rtl" id="edit-v1" rows="3"></textarea></div>
-    <div class="fg"><label data-i18n="lbl.kurdishFree">Kurdish — Free</label><textarea class="rtl" id="edit-v2" rows="3"></textarea></div>
+    <h2>Edit Row</h2>
+    <p class="fg-readonly-note">Ottoman Turkish and Modern Turkish are read-only. Only Kurdish fields can be edited.</p>
+    <div class="fg fg-readonly"><label>Ottoman Turkish</label><textarea class="rtl" id="edit-ot" rows="3" readonly tabindex="-1"></textarea></div>
+    <div class="fg fg-readonly"><label>Modern Turkish</label><textarea class="ltr" id="edit-mt" rows="3" readonly tabindex="-1"></textarea></div>
+    <div class="fg"><label>Kurdish — Literal</label><textarea class="rtl" id="edit-v1" rows="3"></textarea></div>
+    <div class="fg"><label>Kurdish — Free</label><textarea class="rtl" id="edit-v2" rows="3"></textarea></div>
     <div class="ma">
-      <button class="btn btn-ghost" onclick="closeM('m-edit-row')" data-i18n="btn.cancel">Cancel</button>
-      <button class="btn btn-pri" onclick="saveEditRow()" data-i18n="btn.save">Save Changes</button>
+      <button class="btn btn-ghost" onclick="closeM('m-edit-row')">Cancel</button>
+      <button class="btn btn-pri" onclick="saveEditRow()">Save Changes</button>
     </div>
   </div>
 </div>
@@ -2914,14 +2590,14 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- MODAL: Add Row -->
 <div class="modal-bg" id="m-add" role="dialog" aria-modal="true" aria-label="Add New Row">
   <div class="modal">
-    <h2 data-i18n="modal.addRow">Add New Row</h2>
-    <div class="fg"><label data-i18n="lbl.ottoman">Ottoman Turkish</label><textarea class="rtl" id="i-ot" rows="3" placeholder="نص عثماني..."></textarea></div>
-    <div class="fg"><label data-i18n="lbl.modern">Modern Turkish</label><textarea class="ltr" id="i-mt" rows="3" placeholder="Modern Türkçe..."></textarea></div>
-    <div class="fg"><label data-i18n="lbl.kurdishLit">Kurdish — Literal</label><textarea class="rtl" id="i-v1" rows="3" placeholder="کوردی — ئەدەبی..."></textarea></div>
-    <div class="fg"><label data-i18n="lbl.kurdishFree">Kurdish — Free</label><textarea class="rtl" id="i-v2" rows="3" placeholder="کوردی — ئازاد..."></textarea></div>
+    <h2>Add New Row</h2>
+    <div class="fg"><label>Ottoman Turkish</label><textarea class="rtl" id="i-ot" rows="3" placeholder="نص عثماني..."></textarea></div>
+    <div class="fg"><label>Modern Turkish</label><textarea class="ltr" id="i-mt" rows="3" placeholder="Modern Türkçe..."></textarea></div>
+    <div class="fg"><label>Kurdish — Literal</label><textarea class="rtl" id="i-v1" rows="3" placeholder="کوردی — ئەدەبی..."></textarea></div>
+    <div class="fg"><label>Kurdish — Free</label><textarea class="rtl" id="i-v2" rows="3" placeholder="کوردی — ئازاد..."></textarea></div>
     <div class="ma">
-      <button class="btn btn-ghost" onclick="closeM('m-add')" data-i18n="btn.cancel">Cancel</button>
-      <button class="btn btn-pri" onclick="saveRow()" data-i18n="btn.addRow">Add Row</button>
+      <button class="btn btn-ghost" onclick="closeM('m-add')">Cancel</button>
+      <button class="btn btn-pri" onclick="saveRow()">Add Row</button>
     </div>
   </div>
 </div>
@@ -2929,12 +2605,12 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- MODAL: Export -->
 <div class="modal-bg" id="m-export" role="dialog" aria-modal="true" aria-label="Export JSON">
   <div class="modal">
-    <h2 data-i18n="modal.exportJSON">Export JSON — Current Risale</h2>
-    <div class="fg"><label data-i18n="lbl.json">JSON (copy or download)</label><textarea class="mono" id="exp-ta" rows="14" readonly></textarea></div>
+    <h2>Export JSON — Current Risale</h2>
+    <div class="fg"><label>JSON (copy or download)</label><textarea class="mono" id="exp-ta" rows="14" readonly></textarea></div>
     <div class="ma">
-      <button class="btn btn-ghost" onclick="closeM('m-export')" data-i18n="btn.close">Close</button>
-      <button class="btn btn-sec" onclick="copyExp()" data-i18n="btn.copy">Copy</button>
-      <button class="btn btn-pri" onclick="dlExp()" data-i18n="btn.download">Download .json</button>
+      <button class="btn btn-ghost" onclick="closeM('m-export')">Close</button>
+      <button class="btn btn-sec" onclick="copyExp()">Copy</button>
+      <button class="btn btn-pri" onclick="dlExp()">Download .json</button>
     </div>
   </div>
 </div>
@@ -2942,14 +2618,14 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- MODAL: Import current -->
 <div class="modal-bg" id="m-import" role="dialog" aria-modal="true" aria-label="Import JSON">
   <div class="modal">
-    <h2 data-i18n="modal.importJSON">Import JSON — Current Risale</h2>
-    <p class="note" data-i18n="note.importCurrent">Paste a JSON array of objects with keys <code>ot</code>, <code>mt</code>, <code>v1</code>, <code>v2</code>. Choose to <strong>append</strong> or <strong>replace</strong> all rows.</p>
-    <div class="fg"><label data-i18n="lbl.pasteJSON">Paste JSON</label><textarea class="mono" id="imp-ta" rows="12" placeholder='[{"ot":"...","mt":"...","v1":"...","v2":"..."}]'></textarea></div>
+    <h2>Import JSON — Current Risale</h2>
+    <p class="note">Paste a JSON array of objects with keys <code>ot</code>, <code>mt</code>, <code>v1</code>, <code>v2</code>. Choose to <strong>append</strong> or <strong>replace</strong> all rows.</p>
+    <div class="fg"><label>Paste JSON</label><textarea class="mono" id="imp-ta" rows="12" placeholder='[{"ot":"...","mt":"...","v1":"...","v2":"..."}]'></textarea></div>
     <div class="fb" id="imp-fb"></div>
     <div class="ma">
-      <button class="btn btn-ghost" onclick="closeM('m-import')" data-i18n="btn.cancel">Cancel</button>
-      <button class="btn btn-sec" onclick="doImport('append')" data-i18n="btn.appendRows">Append Rows</button>
-      <button class="btn btn-pri" onclick="doImport('replace')" data-i18n="btn.replaceAll">Replace All</button>
+      <button class="btn btn-ghost" onclick="closeM('m-import')">Cancel</button>
+      <button class="btn btn-sec" onclick="doImport('append')">Append Rows</button>
+      <button class="btn btn-pri" onclick="doImport('replace')">Replace All</button>
     </div>
   </div>
 </div>
@@ -2957,13 +2633,13 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- MODAL: Import all -->
 <div class="modal-bg" id="m-import-all" role="dialog" aria-modal="true" aria-label="Import All Books">
   <div class="modal">
-    <h2 data-i18n="modal.importAll">Import All Books</h2>
-    <p class="note" data-i18n="note.importAll">Paste the full exported JSON (array of Book objects with nested risales). This will <strong>replace all</strong> current Books and Risales.</p>
-    <div class="fg"><label data-i18n="lbl.pasteJSON">Paste JSON</label><textarea class="mono" id="imp-all-ta" rows="12" placeholder='[{"id":1,"name":"Sözler","risales":[{"id":1,"name":"...","rows":[...]}]}]'></textarea></div>
+    <h2>Import All Books</h2>
+    <p class="note">Paste the full exported JSON (array of Book objects with nested risales). This will <strong>replace all</strong> current Books and Risales.</p>
+    <div class="fg"><label>Paste JSON</label><textarea class="mono" id="imp-all-ta" rows="12" placeholder='[{"id":1,"name":"Sözler","risales":[{"id":1,"name":"...","rows":[...]}]}]'></textarea></div>
     <div class="fb" id="imp-all-fb"></div>
     <div class="ma">
-      <button class="btn btn-ghost" onclick="closeM('m-import-all')" data-i18n="btn.cancel">Cancel</button>
-      <button class="btn btn-pri" onclick="doImportAll()" data-i18n="btn.replaceRisales">Replace All Risales</button>
+      <button class="btn btn-ghost" onclick="closeM('m-import-all')">Cancel</button>
+      <button class="btn btn-pri" onclick="doImportAll()">Replace All Risales</button>
     </div>
   </div>
 </div>
@@ -2971,11 +2647,11 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- MODAL: New Risale -->
 <div class="modal-bg" id="m-new-risale" role="dialog" aria-modal="true" aria-label="New Risale">
   <div class="modal" style="max-width:380px">
-    <h2 data-i18n="modal.newRisale">New Risale</h2>
-    <div class="fg"><label data-i18n="lbl.name">Name</label><input type="text" id="i-rname" placeholder="e.g. The First Word" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
+    <h2>New Risale</h2>
+    <div class="fg"><label>Name</label><input type="text" id="i-rname" placeholder="e.g. The First Word" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
     <div class="ma">
-      <button class="btn btn-ghost" onclick="closeM('m-new-risale')" data-i18n="btn.cancel">Cancel</button>
-      <button class="btn btn-pri" onclick="confirmNewRisale()" data-i18n="btn.create">Create</button>
+      <button class="btn btn-ghost" onclick="closeM('m-new-risale')">Cancel</button>
+      <button class="btn btn-pri" onclick="confirmNewRisale()">Create</button>
     </div>
   </div>
 </div>
@@ -2983,11 +2659,11 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- MODAL: New Book -->
 <div class="modal-bg" id="m-new-book" role="dialog" aria-modal="true" aria-label="New Book">
   <div class="modal" style="max-width:380px">
-    <h2 data-i18n="modal.newBook">New Book</h2>
-    <div class="fg"><label data-i18n="lbl.name">Name</label><input type="text" id="i-bkname" placeholder="e.g. Lem'alar" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
+    <h2>New Book</h2>
+    <div class="fg"><label>Name</label><input type="text" id="i-bkname" placeholder="e.g. Lem'alar" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
     <div class="ma">
-      <button class="btn btn-ghost" onclick="closeM('m-new-book')" data-i18n="btn.cancel">Cancel</button>
-      <button class="btn btn-pri" onclick="confirmNewBook()" data-i18n="btn.create">Create</button>
+      <button class="btn btn-ghost" onclick="closeM('m-new-book')">Cancel</button>
+      <button class="btn btn-pri" onclick="confirmNewBook()">Create</button>
     </div>
   </div>
 </div>
@@ -2995,11 +2671,11 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- MODAL: Rename Risale -->
 <div class="modal-bg" id="m-rename-risale" role="dialog" aria-modal="true" aria-label="Rename">
   <div class="modal" style="max-width:380px">
-    <h2 data-i18n="modal.renameRisale">Rename Risale</h2>
-    <div class="fg"><label data-i18n="lbl.name">Name</label><input type="text" id="i-rename" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
+    <h2>Rename Risale</h2>
+    <div class="fg"><label>Name</label><input type="text" id="i-rename" style="font-family:'Spectral',serif;font-size:0.9rem;"></div>
     <div class="ma">
-      <button class="btn btn-ghost" onclick="closeM('m-rename-risale')" data-i18n="btn.cancel">Cancel</button>
-      <button class="btn btn-pri" onclick="confirmRename()" data-i18n="btn.save">Save</button>
+      <button class="btn btn-ghost" onclick="closeM('m-rename-risale')">Cancel</button>
+      <button class="btn btn-pri" onclick="confirmRename()">Save</button>
     </div>
   </div>
 </div>
@@ -3007,25 +2683,25 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- NEW GROUP MODAL -->
 <div class="modal-bg" id="m-new-group">
   <div class="modal" style="max-width:400px;">
-    <h2 data-i18n="modal.newGroup">New Group</h2>
+    <h2>New Group</h2>
     <div class="fg">
-      <label data-i18n="lbl.name">Name</label>
+      <label>Name</label>
       <input type="text" id="ng-name" placeholder="e.g. Morning Ders" style="font-family:'Spectral',serif;font-size:0.9rem;">
     </div>
     <div class="fg">
-      <label data-i18n="lbl.type">Type</label>
+      <label>Type</label>
       <div class="vseg" id="ng-type-seg">
-        <button class="active" data-val="reading" onclick="setNgType('reading')" data-i18n="bk.reading">📖 Reading</button>
-        <button data-val="darsler" onclick="setNgType('darsler')" data-i18n="bk.darsler">📚 Darsler</button>
+        <button class="active" data-val="reading" onclick="setNgType('reading')">📖 Reading</button>
+        <button data-val="darsler" onclick="setNgType('darsler')">📚 Darsler</button>
       </div>
     </div>
     <div class="fg">
-      <label data-i18n="lbl.color">Color</label>
+      <label>Color</label>
       <div class="bk-ng-color-row" id="ng-color-row"></div>
     </div>
     <div class="ma">
-      <button class="btn btn-ghost" onclick="closeM('m-new-group')" data-i18n="btn.cancel">Cancel</button>
-      <button class="btn btn-pri" onclick="confirmNewGroup()" data-i18n="btn.create">Create</button>
+      <button class="btn btn-ghost" onclick="closeM('m-new-group')">Cancel</button>
+      <button class="btn btn-pri" onclick="confirmNewGroup()">Create</button>
     </div>
   </div>
 </div>
@@ -3033,14 +2709,14 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- MODAL: Auth / Sign In -->
 <div class="modal-bg" id="m-auth" onclick="if(event.target===this)closeM('m-auth')">
   <div class="modal">
-    <h2 data-i18n="modal.signIn">☁ Sign in to save your work</h2>
-    <p class="auth-modal-body" data-i18n="modal.signInBody">Your bookmarks, reflections, and Ders are saved locally. Sign in to sync across devices and keep your data safe.</p>
+    <h2>☁ Sign in to save your work</h2>
+    <p class="auth-modal-body">Your bookmarks, reflections, and Ders are saved locally. Sign in to sync across devices and keep your data safe.</p>
     <div class="auth-modal-btns">
       <button class="auth-google-btn" onclick="signInWithGoogle()">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
-        <span data-i18n="modal.googleBtn">Continue with Google</span>
+        Continue with Google
       </button>
-      <button class="auth-guest-close-btn" onclick="closeM('m-auth')" data-i18n="modal.guestBtn">Continue as Guest</button>
+      <button class="auth-guest-close-btn" onclick="closeM('m-auth')">Continue as Guest</button>
     </div>
   </div>
 </div>
@@ -3049,7 +2725,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="modal-bg" id="m-visit-history" onclick="if(event.target===this)closeM('m-visit-history')">
   <div class="modal" style="max-width:500px;max-height:70vh;display:flex;flex-direction:column;">
     <div class="mh">
-      <span class="mh-title" data-i18n="modal.visitHistory">🕐 Visit History</span>
+      <span class="mh-title">🕐 Visit History</span>
       <button class="modal-x" onclick="closeM('m-visit-history')">×</button>
     </div>
     <div id="visit-history-list" style="flex:1;overflow-y:auto;padding:8px 0;"></div>
@@ -8297,185 +7973,6 @@ function buildReflectionsSidebar() {
 
 
 
-/* ── PHASE 3: TRANSLATION EXPORT / IMPORT ── */
-
-window.exportTranslations = function() {
-  var langs = ['en', 'ku', 'tr'];
-  var out = {};
-  Object.keys(window.TRANSLATIONS).forEach(function(key) {
-    var entry = window.TRANSLATIONS[key];
-    out[key] = {};
-    langs.forEach(function(l) { out[key][l] = entry[l] || ''; });
-  });
-  var json = JSON.stringify(out, null, 2);
-  var blob = new Blob([json], {type: 'application/json'});
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  a.href   = url;
-  a.download = 'rsl_translations.json';
-  a.click();
-  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
-};
-
-window.exportTranslationsCSV = function() {
-  var langs = ['en', 'ku', 'tr'];
-  var rows  = [['key', 'en', 'ku', 'tr']];
-  Object.keys(window.TRANSLATIONS).sort().forEach(function(key) {
-    var entry = window.TRANSLATIONS[key];
-    rows.push([
-      key,
-      (entry.en || '').replace(/"/g, '""'),
-      (entry.ku || '').replace(/"/g, '""'),
-      (entry.tr || '').replace(/"/g, '""')
-    ]);
-  });
-  var csv = rows.map(function(r){ return r.map(function(c){ return '"'+c+'"'; }).join(','); }).join('\r\n');
-  var blob = new Blob(['\uFEFF'+csv], {type: 'text/csv;charset=utf-8'});
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  a.href   = url;
-  a.download = 'rsl_translations.csv';
-  a.click();
-  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
-};
-
-window.openImportTranslations = function() {
-  document.getElementById('m-import-translations').style.display = 'flex';
-  document.getElementById('trans-import-status').textContent = '';
-  document.getElementById('trans-import-file').value = '';
-};
-
-window.closeImportTranslations = function() {
-  document.getElementById('m-import-translations').style.display = 'none';
-};
-
-window.doImportTranslations = function() {
-  var file = document.getElementById('trans-import-file').files[0];
-  var status = document.getElementById('trans-import-status');
-  if (!file) { status.textContent = 'Please select a file first.'; status.style.color = 'var(--danger)'; return; }
-
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      var imported;
-      if (file.name.endsWith('.csv')) {
-        imported = _parseTranslationCSV(e.target.result);
-      } else {
-        imported = JSON.parse(e.target.result);
-      }
-      /* Validate shape */
-      if (typeof imported !== 'object' || Array.isArray(imported)) throw new Error('Invalid format');
-      var count = 0;
-      Object.keys(imported).forEach(function(key) {
-        var entry = imported[key];
-        if (typeof entry === 'object') {
-          if (!window.TRANSLATIONS[key]) window.TRANSLATIONS[key] = {};
-          ['en','ku','tr'].forEach(function(l){
-            if (entry[l] !== undefined) window.TRANSLATIONS[key][l] = entry[l];
-          });
-          count++;
-        }
-      });
-      /* Persist overrides */
-      var saved = {};
-      Object.keys(imported).forEach(function(key){ saved[key] = window.TRANSLATIONS[key]; });
-      localStorage.setItem('rsl_translations', JSON.stringify(saved));
-      /* Re-apply current language */
-      window.applyLang(window.currentLang);
-      /* Update lang-btn active state */
-      _refreshLangBtns();
-      status.style.color = 'var(--accent2)';
-      status.textContent = '✓ Imported ' + count + ' translation keys successfully.';
-    } catch(err) {
-      status.style.color = 'var(--danger)';
-      status.textContent = '✗ Error: ' + err.message;
-    }
-  };
-  reader.readAsText(file, 'utf-8');
-};
-
-function _parseTranslationCSV(text) {
-  var lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
-  var out = {};
-  /* skip header row */
-  for (var i = 1; i < lines.length; i++) {
-    var line = lines[i].trim();
-    if (!line) continue;
-    var cells = _csvRow(line);
-    if (cells.length < 4) continue;
-    out[cells[0]] = { en: cells[1], ku: cells[2], tr: cells[3] };
-  }
-  return out;
-}
-function _csvRow(line) {
-  var result = [], cur = '', inQ = false;
-  for (var i = 0; i < line.length; i++) {
-    var c = line[i];
-    if (c === '"') {
-      if (inQ && line[i+1] === '"') { cur += '"'; i++; }
-      else inQ = !inQ;
-    } else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
-    else cur += c;
-  }
-  result.push(cur);
-  return result;
-}
-
-function _refreshLangBtns() {
-  document.querySelectorAll('.lang-btn').forEach(function(b) {
-    b.classList.toggle('active', b.getAttribute('data-lang') === window.currentLang);
-  });
-}
-
-/* Patch applyLang to also refresh settings lang buttons */
-(function(){
-  var _origApply = window.applyLang;
-  window.applyLang = function(lang) {
-    _origApply(lang);
-    _refreshLangBtns();
-  };
-})();
-
-/* Add new translation strings */
-(function(){
-  var extras = {
-    'ss.language':              { en:'Language',                   ku:'زمان',                          tr:'Dil' },
-    'ss.langDesc':              { en:'Select the interface language. Kurdish uses Sorani script.',
-                                  ku:'زمانی ڕووکار هەڵبژێرە. کوردی خەتی سۆرانی بەکاردەهێنێت.',
-                                  tr:'Arayüz dilini seçin. Kürtçe, Sorani alfabesini kullanır.' },
-    'ss.translations':          { en:'Translations',               ku:'وەرگێڕانەکان',                   tr:'Çeviriler' },
-    'ss.exportTranslations':    { en:'⬇ Export translations (JSON)', ku:'⬇ هەناردەی وەرگێڕان (JSON)',  tr:'⬇ Çevirileri dışa aktar (JSON)' },
-    'ss.importTranslations':    { en:'⬆ Import translations (JSON)', ku:'⬆ هاوردەی وەرگێڕان (JSON)',  tr:'⬆ Çevirileri içe aktar (JSON)' },
-    'ss.exportTranslationsCSV': { en:'⬇ Export translations (CSV)',  ku:'⬇ هەناردەی وەرگێڕان (CSV)',  tr:'⬇ Çevirileri dışa aktar (CSV)' },
-    'ss.translationsDesc':      { en:'Export all UI labels for external translation, then import the finished file to apply changes instantly.',
-                                  ku:'هەموو ناوچەکانی ڕووکار هەناردە بکە بۆ وەرگێڕانی دەرەکی، پاشان فایلی تەواوبووی هاوردە بکە بۆ جێبەجێکردنی گۆڕانکاریەکان.',
-                                  tr:'Tüm arayüz etiketlerini dış çeviri için dışa aktarın, ardından bitmiş dosyayı değişiklikleri anında uygulamak için içe aktarın.' },
-    'modal.importTranslations': { en:'Import Translations',         ku:'هاوردەی وەرگێڕان',              tr:'Çevirileri İçe Aktar' },
-    'modal.importTransDesc':    { en:'Select a previously exported JSON or CSV file. Matching keys will be updated immediately and saved to your browser.',
-                                  ku:'فایلێکی JSON یان CSV هەڵبژێرە کە پێشتر هەناردەت کردووە. کلیلەی هاوتا یەکسەر نوێ دەکرێنەوە و لە گەڕەکەکەت پاشەکەوت دەبن.',
-                                  tr:'Daha önce dışa aktarılan bir JSON veya CSV dosyası seçin. Eşleşen anahtarlar hemen güncellenip tarayıcınıza kaydedilir.' },
-  };
-  Object.keys(extras).forEach(function(k){
-    if (!window.TRANSLATIONS[k]) window.TRANSLATIONS[k] = {};
-    Object.assign(window.TRANSLATIONS[k], extras[k]);
-  });
-})();
-
 </script>
-
-<!-- IMPORT TRANSLATIONS MODAL -->
-<div class="modal-bg" id="m-import-translations" style="display:none;" onclick="if(event.target===this)closeImportTranslations()">
-  <div class="modal" style="max-width:460px;">
-    <h2 data-i18n="modal.importTranslations">Import Translations</h2>
-    <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:12px;line-height:1.6;" data-i18n="modal.importTransDesc">Select a previously exported JSON or CSV file. Matching keys will be updated immediately and saved to your browser.</p>
-    <input type="file" id="trans-import-file" accept=".json,.csv" style="width:100%;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.82rem;margin-bottom:10px;">
-    <div id="trans-import-status" style="font-size:0.8rem;min-height:1.4em;margin-bottom:10px;"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button class="ie-btn" onclick="closeImportTranslations()" style="flex:0 0 auto;">Cancel</button>
-      <button class="ie-btn" onclick="doImportTranslations()" style="flex:0 0 auto;background:var(--accent);color:#1a1000;border-color:var(--accent);font-weight:600;">Import</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>

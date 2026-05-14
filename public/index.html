@@ -14,9 +14,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Scheherazade+New:wght@400;500;600;700&family=Lateef:wght@400;700&family=Spectral:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 :root {
   --bg:#0e0c0a; --bg2:#13110e; --surface:#181410; --surface2:#211d18; --surface3:#2a241e;
@@ -2049,163 +2046,10 @@ tr.row-bookmarked {
   /* Topbar: tighten spacing */
   #topbar { padding: 0 8px; gap: 6px; }
 }
-
-/* ── Firestore loading spinner ── */
-@keyframes fs-spin { to { transform: rotate(360deg); } }
-.fs-spinner {
-  width: 36px; height: 36px;
-  border: 3px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: fs-spin .7s linear infinite;
-}
-
-/* ── Loading skeleton ── */
-@keyframes sk-pulse {
-  0%,100% { opacity: .45; }
-  50%      { opacity: .9; }
-}
-.sk-wrap { padding: 14px 18px; }
-.sk-row {
-  display: flex; gap: 10px; margin-bottom: 12px; align-items: center;
-}
-.sk-cell {
-  height: 14px; border-radius: 4px;
-  background: var(--surface2);
-  animation: sk-pulse 1.4s ease-in-out infinite;
-}
-.sk-cell:nth-child(2) { animation-delay: .1s; }
-.sk-cell:nth-child(3) { animation-delay: .2s; }
-.sk-cell:nth-child(4) { animation-delay: .3s; }
-.sk-cell:nth-child(5) { animation-delay: .4s; }
-.sk-num  { width: 28px; flex-shrink: 0; }
-.sk-ot   { flex: 2; }
-.sk-mt   { flex: 1.5; }
-.sk-v1   { flex: 1.8; }
-.sk-v2   { flex: 1.8; }
-.sk-hdr-row { margin-bottom: 18px; }
-.sk-hdr-row .sk-cell { height: 10px; background: var(--border); animation: none; opacity: .6; }
-
-/* ── Offline banner ── */
-#offline-banner {
-  display: none;
-  height: 32px;
-  background: rgba(200,160,64,.18);
-  color: var(--warn);
-  font-size: 0.75rem;
-  font-family: 'Spectral', serif;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  flex-shrink: 0;
-  letter-spacing: .02em;
-  border-bottom: 1px solid rgba(200,160,64,.25);
-}
-#offline-banner.visible { display: flex; }
-
-/* ── Auth UI ── */
-#auth-signed-out {
-  font-size: 0.76rem;
-  padding: 4px 11px;
-  gap: 4px;
-  border-style: dashed;
-  color: var(--text-faint);
-}
-#auth-signed-out:hover { border-color: var(--accent); color: var(--accent); border-style: solid; }
-
-/* Google user widget */
-#auth-user-widget {
-  display: none;
-  position: relative;
-}
-#auth-user-chip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 4px 9px;
-  transition: border-color .18s;
-  background: none;
-  font-family: 'Spectral', serif;
-}
-#auth-user-chip:hover { border-color: var(--accent); }
-#auth-avatar {
-  width: 24px; height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-  display: none;
-}
-#auth-name {
-  font-size: 0.78rem;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-.auth-dropdown {
-  display: none;
-  position: absolute;
-  right: 0; top: calc(100% + 6px);
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  min-width: 130px;
-  z-index: 400;
-  box-shadow: 0 6px 20px rgba(0,0,0,.4);
-  overflow: hidden;
-}
-.auth-dropdown.open { display: block; }
-.auth-dd-btn {
-  display: block; width: 100%;
-  background: none; border: none;
-  color: var(--text-dim);
-  font-family: 'Spectral', serif;
-  font-size: 0.76rem;
-  padding: 9px 14px;
-  text-align: left;
-  cursor: pointer;
-  transition: background .12s, color .12s;
-}
-.auth-dd-btn:hover { background: var(--surface3); color: var(--danger); }
-
-/* ── Auth modal (m-auth) ── */
-#m-auth .modal { max-width: 380px; text-align: center; }
-#m-auth .modal h2 { font-size: 1rem; margin-bottom: 10px; }
-#m-auth .modal .auth-modal-body { font-size: 0.8rem; color: var(--text-dim); line-height: 1.65; margin-bottom: 20px; }
-.auth-google-btn {
-  width: 100%;
-  background: var(--accent);
-  border: none;
-  color: #1a1208;
-  font-family: 'Spectral', serif;
-  font-size: 0.82rem;
-  font-weight: 600;
-  padding: 10px 18px;
-  border-radius: 7px;
-  cursor: pointer;
-  transition: filter .18s;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.auth-google-btn:hover { filter: brightness(1.1); }
-.auth-guest-btn {
-  width: 100%;
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  font-family: 'Spectral', serif;
-  font-size: 0.78rem;
-  padding: 8px 18px;
-  border-radius: 7px;
-  cursor: pointer;
-  transition: border-color .18s, color .18s;
-}
-.auth-guest-btn:hover { border-color: var(--text-dim); color: var(--text); }
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -2215,17 +2059,42 @@ tr.row-bookmarked {
   <button class="tb-btn" id="btn-home" onclick="toggleHomePage()" title="Home">⌂</button>
   <div id="topbar-title">Ya Hakeem Risale</div>
   <div class="tb-right">
-    <!-- Anonymous / signed-out: ghost sign-in button -->
-    <button class="tb-btn" id="auth-signed-out" onclick="openAuthModal()" title="Sign in to sync your work" style="display:none;">☁ Sign in</button>
-    <!-- Google signed-in: avatar chip + dropdown -->
-    <div id="auth-user-widget">
-      <button id="auth-user-chip" onclick="toggleAuthDropdown()" title="Account">
-        <img id="auth-avatar" src="" alt="">
-        <span id="auth-name"></span>
-        <span style="font-size:0.6rem;color:var(--text-faint);">▾</span>
-      </button>
-      <div class="auth-dropdown" id="auth-dropdown">
-        <button class="auth-dd-btn" onclick="signOut()">Sign out</button>
+    <!-- Auth area -->
+    <!-- Anonymous / signed-out: ghost "Sign in" button -->
+    <button id="auth-guest-btn" onclick="openM('m-auth')" title="Sign in to sync across devices"
+      style="display:none;align-items:center;gap:5px;font-size:0.75rem;padding:4px 10px;
+             border:1px solid var(--border);border-radius:6px;background:none;
+             color:var(--text-dim);cursor:pointer;font-family:'Spectral',serif;
+             white-space:nowrap;transition:border-color .18s,color .18s;"
+      onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+      onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
+      ☁ Sign in
+    </button>
+    <!-- Google-signed-in user: avatar + name + dropdown -->
+    <div id="auth-user-area" style="display:none;position:relative;">
+      <span id="auth-signed-in"
+        onclick="toggleAuthDropdown()"
+        style="display:flex;align-items:center;gap:6px;cursor:pointer;
+               border:1px solid var(--border);border-radius:6px;padding:4px 9px;
+               transition:border-color .18s;"
+        onmouseover="this.style.borderColor='var(--accent)'"
+        onmouseout="this.style.borderColor='var(--border)'">
+        <img id="auth-avatar" src="" alt=""
+          style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+        <span id="auth-name"
+          style="font-size:0.78rem;color:var(--text-dim);font-family:'Spectral',serif;white-space:nowrap;"></span>
+        <span style="font-size:0.6rem;color:var(--text-dim);margin-left:1px;">▾</span>
+      </span>
+      <div id="auth-dropdown"
+        style="display:none;position:absolute;right:0;top:calc(100% + 6px);
+               background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+               padding:4px;min-width:130px;z-index:600;box-shadow:0 4px 16px rgba(0,0,0,.28);">
+        <button onclick="signOut()"
+          style="width:100%;text-align:left;background:none;border:none;
+                 color:var(--text-dim);font-family:'Spectral',serif;font-size:0.82rem;
+                 padding:7px 12px;cursor:pointer;border-radius:5px;transition:background .15s;"
+          onmouseover="this.style.background='var(--surface3)'"
+          onmouseout="this.style.background='none'">Sign out</button>
       </div>
     </div>
     <button class="tb-btn" id="btn-bk" onclick="openBookmarksTab()" title="Bookmarks">🔖</button>
@@ -2233,8 +2102,6 @@ tr.row-bookmarked {
     <button class="tb-btn" id="btn-tr" onclick="openSettingsTab()" title="Settings">⚙</button>
   </div>
 </div>
-<!-- OFFLINE BANNER -->
-<div id="offline-banner">⚡ You're offline — changes will sync when reconnected</div>
 
 <!-- LAYOUT -->
 <div id="layout">
@@ -2371,11 +2238,12 @@ tr.row-bookmarked {
           </div>
         </div>
 
-        <div class="ss" style="border-bottom:none;">
+        <div class="ss" id="ss-seed" style="display:none;">
           <div class="ss-label">Database</div>
           <div class="ie-btns">
-            <button class="ie-btn" id="btn-seed-db" onclick="seedFirestore()" style="opacity:0.5;font-size:0.68rem;">🌱 Seed Firestore (runs once if empty)</button>
+            <button class="ie-btn" onclick="seedFirestore()" title="Write hardcoded data to Firestore if the database is empty">🌱 Seed Database</button>
           </div>
+          <div style="font-size:0.66rem;color:var(--text-faint);margin-top:4px;line-height:1.5;">Only seeds if Firestore has no books. Safe to run when empty.</div>
         </div>
 
       </div>
@@ -2549,19 +2417,6 @@ tr.row-bookmarked {
   </div>
 </div>
 
-<!-- MODAL: Sign in (m-auth) -->
-<div class="modal-bg" id="m-auth" role="dialog" aria-modal="true" aria-label="Sign in" onclick="if(event.target===this)closeM('m-auth')">
-  <div class="modal">
-    <h2>Sign in to save your work</h2>
-    <p class="auth-modal-body">Your bookmarks, reflections, and Ders are saved locally. Sign in with Google to sync them across all your devices.</p>
-    <button class="auth-google-btn" onclick="signIn()">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
-      Continue with Google
-    </button>
-    <button class="auth-guest-btn" onclick="closeM('m-auth')">Continue as Guest</button>
-  </div>
-</div>
-
 <!-- MODAL: Add Row -->
 <div class="modal-bg" id="m-add" role="dialog" aria-modal="true" aria-label="Add New Row">
   <div class="modal">
@@ -2692,6 +2547,55 @@ tr.row-bookmarked {
   </div>
 </div>
 
+<!-- OFFLINE BANNER (injected into #main by JS) -->
+<template id="tpl-offline-banner">
+  <div id="offline-banner" style="display:flex;width:100%;height:32px;
+    background:rgba(200,160,64,0.18);color:var(--warn);
+    font-size:0.75rem;font-family:'Spectral',serif;
+    align-items:center;justify-content:center;gap:6px;
+    border-bottom:1px solid rgba(200,160,64,0.25);flex-shrink:0;">
+    ⚡ You're offline — changes will sync when reconnected
+  </div>
+</template>
+
+<!-- AUTH MODAL -->
+<div class="modal-bg" id="m-auth" onclick="if(event.target===this)closeM('m-auth')"
+  role="dialog" aria-modal="true" aria-label="Sign in">
+  <div class="modal" style="max-width:380px;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:8px;">☁</div>
+    <h2 style="margin-bottom:8px;">Sign in to save your work</h2>
+    <p class="note" style="margin-bottom:20px;">
+      Your bookmarks, reflections, and Ders are saved locally.
+      Sign in to sync across devices and keep your data safe.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button onclick="signIn()" style="
+        display:flex;align-items:center;justify-content:center;gap:10px;
+        width:100%;padding:11px 16px;border-radius:8px;cursor:pointer;
+        background:var(--accent);border:none;color:#1a1208;
+        font-family:'Spectral',serif;font-size:0.92rem;font-weight:600;
+        transition:filter .18s;" onmouseover="this.style.filter='brightness(1.12)'"
+        onmouseout="this.style.filter=''">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#34A853"/>
+          <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+      <button onclick="closeM('m-auth')" style="
+        width:100%;padding:10px 16px;border-radius:8px;cursor:pointer;
+        background:none;border:1px solid var(--border);color:var(--text-dim);
+        font-family:'Spectral',serif;font-size:0.88rem;transition:border-color .18s;"
+        onmouseover="this.style.borderColor='var(--accent-dim)'"
+        onmouseout="this.style.borderColor='var(--border)'">
+        Continue as Guest
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ── DATA ── */
 const D8 = [
@@ -2712,24 +2616,7 @@ const D8 = [
   {ot:"أخلاقسز و سرسرى اولان ديگر قارداش، صِرف سربستلك ايچون صول يولى ترجيح ايتدى.",mt:"Ahlâksız ve serseri olan diğer kardeş, sırf serbestlik için sol yolu tercih etti.",v1:"برای تری اخلاق‌نزم و سەرەڕۆ، تەنها بۆ سربستی، ڕێگای دەستە چەپی ترجیح کرد.",v2:"ئەو برایەی تریان کە بێڕەوشت و سەرەڕۆ بوو، تەنها لەبەر ئازادی، ڕێگای دەستە چەپی هەڵبژارد."}
 ];
 
-let books = [
-  {
-    id: 1,
-    name: "Sözler",
-    risales: [{id:1, name:"The Eighth Word — Sekizinci Söz", rows: JSON.parse(JSON.stringify(D8)), bookmarked:false}]
-  },
-  { id: 2, name: "Mektubat", risales: [] },
-  { id: 3, name: "Lemalar",  risales: [] },
-  { id: 4, name: "Şualar",   risales: [] }
-];
-let nextBookId = 5;
-let activeBookId = 1;   // which book is open in Level 2
-let activeId = 1;       // active risale id (global across books)
-let nextId = 2;
-
-/* ══════════════════════════════════════════════════════════════
-   FIREBASE — Auth + Firestore
-   ══════════════════════════════════════════════════════════════ */
+/* ── FIREBASE AUTH ── */
 const firebaseConfig = {
   apiKey: "AIzaSyCXJfLwtrI7em4Luf_zLpvXMhSyt79KhCk",
   authDomain: "yahakeemrisale-59cb2.firebaseapp.com",
@@ -2740,7 +2627,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const db   = firebase.firestore();
+const db = firebase.firestore();
 let currentUser = null;
 
 auth.onAuthStateChanged(user => {
@@ -2753,39 +2640,30 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-/* ── ANONYMOUS AUTH on load ── */
-async function initAuth() {
-  if (!auth.currentUser) {
-    try {
-      await auth.signInAnonymously();
-    } catch(e) {
-      console.warn('Anonymous sign-in failed:', e);
-    }
-  }
+/* ── ANONYMOUS AUTH on load (called just before loadBooksFromFirestore) ── */
+function ensureAnonymousAuth() {
+  if (auth.currentUser) return Promise.resolve(auth.currentUser);
+  return auth.signInAnonymously().catch(e => console.warn('Anonymous sign-in failed:', e));
 }
 
-/* ── SIGN IN (link anon account → Google, or fall back to normal sign-in) ── */
+/* ── SIGN IN: link anon → Google, or fall back to normal popup ── */
 function signIn() {
   closeM('m-auth');
   const provider = new firebase.auth.GoogleAuthProvider();
-  if (auth.currentUser) {
-    auth.currentUser.linkWithPopup(provider)
-      .then(result => {
-        currentUser = result.user;
-        updateAuthUI();
-        showToast('Signed in and account linked ✓', 2200);
-      })
+  const current = auth.currentUser;
+  if (current && current.isAnonymous) {
+    current.linkWithPopup(provider)
       .catch(err => {
         if (err.code === 'auth/credential-already-in-use' ||
             err.code === 'auth/email-already-in-use') {
-          // Already has Google account — sign in normally
-          auth.signInWithPopup(provider).catch(e => console.warn('signInWithPopup error:', e));
-        } else {
-          console.warn('linkWithPopup error:', err);
+          // Already has a Google account — sign in normally
+          // (anon data stays under its UID — acceptable v1 behaviour)
+          return auth.signInWithPopup(provider);
         }
+        console.error('linkWithPopup error:', err);
       });
   } else {
-    auth.signInWithPopup(provider).catch(e => console.warn('signInWithPopup error:', e));
+    auth.signInWithPopup(provider).catch(e => console.error('signInWithPopup error:', e));
   }
 }
 
@@ -2798,339 +2676,444 @@ function signOut() {
 function toggleAuthDropdown() {
   const dd = document.getElementById('auth-dropdown');
   if (!dd) return;
-  dd.classList.toggle('open');
+  const open = dd.style.display === 'block';
+  dd.style.display = open ? 'none' : 'block';
+  if (!open) {
+    // close on next outside click
+    setTimeout(() => {
+      document.addEventListener('click', closeAuthDropdown, { once: true });
+    }, 0);
+  }
 }
 function closeAuthDropdown() {
   const dd = document.getElementById('auth-dropdown');
-  if (dd) dd.classList.remove('open');
-}
-document.addEventListener('click', e => {
-  const widget = document.getElementById('auth-user-widget');
-  if (widget && !widget.contains(e.target)) closeAuthDropdown();
-});
-
-/* ── OPEN AUTH MODAL ── */
-function openAuthModal() {
-  openM('m-auth');
-}
-
-/* ── AUTO-PROMPT: show auth modal if anon user has created data ── */
-function maybePromptAuth() {
-  if (!currentUser || !currentUser.isAnonymous) return;
-  const hasData = bookmarksStore.length > 0 || getAllReflections().length > 0;
-  if (!hasData) return;
-  const PROMPT_KEY = 'rsl_auth_prompted';
-  if (localStorage.getItem(PROMPT_KEY)) return;
-  localStorage.setItem(PROMPT_KEY, '1');
-  setTimeout(() => openAuthModal(), 600);
+  if (dd) dd.style.display = 'none';
 }
 
 /* ── UPDATE AUTH UI ── */
 function updateAuthUI() {
-  const signedOut = document.getElementById('auth-signed-out');
-  const userWidget = document.getElementById('auth-user-widget');
+  const guestBtn   = document.getElementById('auth-guest-btn');
+  const userArea   = document.getElementById('auth-user-area');
   const avatar     = document.getElementById('auth-avatar');
   const authName   = document.getElementById('auth-name');
-  if (!signedOut || !userWidget) return;
+  const seedSection = document.getElementById('ss-seed');
+  if (!guestBtn || !userArea) return;
 
   if (currentUser && !currentUser.isAnonymous) {
-    // Google (or linked) user
-    signedOut.style.display = 'none';
-    userWidget.style.display = '';
+    // Signed in with Google (or other real provider)
+    guestBtn.style.display = 'none';
+    userArea.style.display = 'block';
     const firstName = (currentUser.displayName || '').split(' ')[0] || 'User';
     authName.textContent = firstName;
-    if (currentUser.photoURL) {
-      avatar.src = currentUser.photoURL;
-      avatar.style.display = 'inline-block';
-    } else {
-      avatar.style.display = 'none';
-    }
+    avatar.src = currentUser.photoURL || '';
+    avatar.style.display = currentUser.photoURL ? 'inline-block' : 'none';
+    if (seedSection) seedSection.style.display = '';
   } else if (currentUser && currentUser.isAnonymous) {
-    // Anonymous user: show ghost sign-in button
-    signedOut.style.display = 'flex';
-    userWidget.style.display = 'none';
+    // Anonymous session
+    guestBtn.style.display = 'flex';
+    userArea.style.display = 'none';
+    if (seedSection) seedSection.style.display = '';
+    // Auto-open sign-in modal once user has created data
+    _maybePromptSignIn();
   } else {
-    // Signed out (transitional)
-    signedOut.style.display = 'flex';
-    userWidget.style.display = 'none';
+    // Fully signed out (brief state before anon sign-in completes)
+    guestBtn.style.display = 'none';
+    userArea.style.display = 'none';
+    if (seedSection) seedSection.style.display = 'none';
   }
 }
 
-/* ── USER DATA PERSISTENCE ── */
+/* ── AUTO-PROMPT: open auth modal when anon user has bookmarks/reflections ── */
+const _AUTH_PROMPT_KEY = 'yh-auth-prompted';
+function _maybePromptSignIn() {
+  if (localStorage.getItem(_AUTH_PROMPT_KEY)) return; // already shown once
+  const hasData = bookmarksStore.length > 0 ||
+    Object.values(reflectionsStore).some(arr => arr && arr.length > 0);
+  if (!hasData) return;
+  localStorage.setItem(_AUTH_PROMPT_KEY, '1');
+  setTimeout(() => openM('m-auth'), 1200); // slight delay so UI settles first
+}
+
+/* ── FIRESTORE USER DATA LOAD / CLEAR ── */
+
+function _showLoadingToast(msg) {
+  let t = document.getElementById('_load-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = '_load-toast';
+    t.style.cssText = 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);' +
+      'background:rgba(0,0,0,0.72);color:#fff;padding:6px 18px;border-radius:20px;' +
+      'font-size:13px;z-index:99999;pointer-events:none;transition:opacity .3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+}
+function _hideLoadingToast() {
+  const t = document.getElementById('_load-toast');
+  if (t) { t.style.opacity = '0'; setTimeout(() => { if(t.parentNode) t.parentNode.removeChild(t); }, 350); }
+}
 
 const BUILTIN_GROUPS = [
   { id: 'vecize',      name: 'Vecize',      type: 'vecize',      color: '#c8a96e', icon: '✦',  builtIn: true, singleton: true,  createdAt: 0 },
-  { id: 'reflections', name: 'Reflections', type: 'reflections', color: '#b090e0', icon: '💭', builtIn: true, singleton: true,  createdAt: 0 },
+  { id: 'reflections', name: 'Reflections', type: 'reflections', color: '#b090e0', icon: '💭', builtIn: true, singleton: true,  createdAt: 0 }
 ];
 
-function showToast(msg, duration = 2500) {
-  let toast = document.getElementById('yh-toast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'yh-toast';
-    toast.style.cssText = [
-      'position:fixed','bottom:72px','left:50%','transform:translateX(-50%)',
-      'background:var(--surface2,#2a2a2a)','color:var(--text,#e0e0e0)',
-      'padding:8px 18px','border-radius:20px','font-size:0.8rem',
-      'box-shadow:0 2px 10px rgba(0,0,0,.35)','z-index:9999',
-      'opacity:0','transition:opacity .2s','pointer-events:none'
-    ].join(';');
-    document.body.appendChild(toast);
-  }
-  toast.textContent = msg;
-  toast.style.opacity = '1';
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => { toast.style.opacity = '0'; }, duration);
-}
-
 async function loadUserData(uid) {
-  showToast('Loading your data…', 4000);
+  _showLoadingToast('Loading your data…');
   try {
-    await loadPrefsFromFirestore(uid);
-    const uRef = db.collection('users').doc(uid);
+    const userRef = db.collection('users').doc(uid);
 
-    // ── Bookmarks ──
-    const bmSnap = await uRef.collection('bookmarks').get();
+    // ── Load Prefs first so UI reflects correct theme/layout while data loads ──
+    await loadPrefsFromFirestore(uid);
+
+    // ── Load Bookmarks ──
+    const bmSnap = await userRef.collection('bookmarks').get();
+    // Clear in-memory stores
     bookmarksStore.length = 0;
     Object.keys(rowBookmarks).forEach(k => delete rowBookmarks[k]);
-    nextBmId = 1;
+    let maxBmId = 0;
     bmSnap.forEach(doc => {
       const bm = doc.data();
-      if (typeof bm.id === 'number' && bm.id >= nextBmId) nextBmId = bm.id + 1;
+      if (!bm.id) return;
       bookmarksStore.push(bm);
       if (!rowBookmarks[bm.risaleId]) rowBookmarks[bm.risaleId] = {};
       rowBookmarks[bm.risaleId][bm.rowIndex] = bm;
+      if (bm.id > maxBmId) maxBmId = bm.id;
     });
+    nextBmId = maxBmId + 1;
 
-    // ── Bookmark groups ──
-    const grpSnap = await uRef.collection('bookmarkGroups').get();
-    bookmarkGroups.length = 0;
-    BUILTIN_GROUPS.forEach(g => bookmarkGroups.push({ ...g }));
-    nextGroupId = 100;
+    // ── Load Bookmark Groups ──
+    const grpSnap = await userRef.collection('bookmarkGroups').get();
+    // Start with built-ins, then append non-built-in groups from Firestore
+    const firestoreGroups = [];
+    let maxGrpId = 99;
     grpSnap.forEach(doc => {
       const g = doc.data();
-      if (g.builtIn) return;
-      if (!bookmarkGroups.find(x => x.id === g.id)) bookmarkGroups.push(g);
-      const num = parseInt(String(g.id).replace(/\D/g, ''));
-      if (!isNaN(num) && num >= nextGroupId) nextGroupId = num + 1;
+      if (!g.builtIn) {
+        firestoreGroups.push(g);
+        const numPart = parseInt((g.id || '').replace('g-', '')) || 0;
+        if (numPart > maxGrpId) maxGrpId = numPart;
+      }
     });
+    bookmarkGroups.length = 0;
+    BUILTIN_GROUPS.forEach(g => bookmarkGroups.push(Object.assign({}, g)));
+    firestoreGroups.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    firestoreGroups.forEach(g => bookmarkGroups.push(g));
+    nextGroupId = maxGrpId + 1;
 
-    // ── Reflections ──
-    const refSnap = await uRef.collection('reflections').get();
+    // ── Load Reflections ──
+    const refSnap = await userRef.collection('reflections').get();
     Object.keys(reflectionsStore).forEach(k => delete reflectionsStore[k]);
-    refNextId = 1;
+    let maxRefId = 0;
     refSnap.forEach(doc => {
       const r = doc.data();
-      if (typeof r.id === 'number' && r.id >= refNextId) refNextId = r.id + 1;
-      const rid = r.risaleId;
-      if (!rid) return;
-      if (!reflectionsStore[rid]) reflectionsStore[rid] = [];
-      reflectionsStore[rid].push({ id: r.id, text: r.text, type: r.type, scope: r.scope, rowNum: r.rowNum });
+      if (!r.id || !r.risaleId) return;
+      if (!reflectionsStore[r.risaleId]) reflectionsStore[r.risaleId] = [];
+      reflectionsStore[r.risaleId].push(r);
+      if (r.id > maxRefId) maxRefId = r.id;
     });
+    // Sort each risale's reflections by id
+    Object.keys(reflectionsStore).forEach(k => reflectionsStore[k].sort((a, b) => a.id - b.id));
+    refNextId = maxRefId + 1;
 
-    // ── Ders ──
-    const dersSnap = await uRef.collection('ders').orderBy('updatedAt', 'desc').get();
+    // ── Load Ders ──
+    const dersSnap = await userRef.collection('ders').orderBy('updatedAt', 'desc').get();
     dersStore = [];
-    nextDersId = 1;
+    let maxDersId = 0;
     dersSnap.forEach(doc => {
       const d = doc.data();
-      if (typeof d.id === 'number' && d.id >= nextDersId) nextDersId = d.id + 1;
-      dersStore.push(d);
+      if (d && d.id) { dersStore.push(d); if (d.id > maxDersId) maxDersId = d.id; }
     });
+    nextDersId = maxDersId + 1;
 
-    showToast('Data loaded ✓', 1800);
-
-    renderList();
+    // ── Re-render ──
+    if (typeof renderList === 'function') renderList();
+    if (typeof renderBookmarksPanel === 'function') {
+      const sbRight = document.getElementById('sb-right');
+      const bkTab = document.getElementById('tab-bookmarks');
+      if (sbRight && bkTab && bkTab.classList.contains('active')) renderBookmarksPanel();
+    }
+    const refTab = document.getElementById('tab-reflections');
     const sbRight = document.getElementById('sb-right');
-    const isOpen = mob() ? sbRight.classList.contains('mob-open') : !sbRight.classList.contains('collapsed');
-    if (isOpen && document.getElementById('tab-reflections').classList.contains('active')) renderReflections();
-    if (homeActive) renderHomePage();
+    if (sbRight && refTab && refTab.classList.contains('active') && typeof renderReflections === 'function') renderReflections();
+    if (homeActive && typeof renderHomePage === 'function') renderHomePage();
 
-  } catch(e) {
+  } catch (e) {
     console.error('loadUserData error:', e);
-    showToast('Could not load data: ' + e.message, 4000);
+  } finally {
+    _hideLoadingToast();
   }
 }
 
 function clearUserData() {
+  // Reset bookmarks
   bookmarksStore.length = 0;
   Object.keys(rowBookmarks).forEach(k => delete rowBookmarks[k]);
+  // Reset reflections
   Object.keys(reflectionsStore).forEach(k => delete reflectionsStore[k]);
+  refNextId = 1;
+  nextBmId = 1;
+  // Reset bookmark groups to built-ins only
   bookmarkGroups.length = 0;
-  BUILTIN_GROUPS.forEach(g => bookmarkGroups.push({ ...g }));
-  dersStore = [];
-  nextDersId = 1;
-  renderList();
-  const sbRight = document.getElementById('sb-right');
-  const isOpen = sbRight && (mob() ? sbRight.classList.contains('mob-open') : !sbRight.classList.contains('collapsed'));
-  if (isOpen && document.getElementById('tab-reflections') && document.getElementById('tab-reflections').classList.contains('active')) renderReflections();
-  if (homeActive) renderHomePage();
+  BUILTIN_GROUPS.forEach(g => bookmarkGroups.push(Object.assign({}, g)));
+  nextGroupId = 100;
+  // Re-render
+  if (typeof renderList === 'function') renderList();
+  if (typeof renderBookmarksPanel === 'function') renderBookmarksPanel();
+  if (typeof renderReflections === 'function') renderReflections();
+  if (homeActive && typeof renderHomePage === 'function') renderHomePage();
 }
 
-/* ── LOADING / ERROR UI ── */
-function showMainSkeleton() {
-  const main = document.getElementById('main');
-  const rows = [1, 0.9, 0.75, 1, 0.85, 0.95, 0.7, 1];
-  const rowsHtml = rows.map((_, i) => `
-    <div class="sk-row">
-      <div class="sk-cell sk-num" style="width:${20 + Math.random()*10|0}px"></div>
-      <div class="sk-cell sk-ot"  style="width:${55+Math.random()*30|0}%"></div>
-      <div class="sk-cell sk-mt"  style="width:${40+Math.random()*25|0}%"></div>
-      <div class="sk-cell sk-v1"  style="width:${45+Math.random()*25|0}%"></div>
-      <div class="sk-cell sk-v2"  style="width:${38+Math.random()*28|0}%"></div>
-    </div>`).join('');
-  main.innerHTML = `
-    <div class="sk-wrap">
-      <div class="sk-row sk-hdr-row">
-        <div class="sk-cell sk-num"></div>
-        <div class="sk-cell sk-ot" style="width:22%"></div>
-        <div class="sk-cell sk-mt" style="width:16%"></div>
-        <div class="sk-cell sk-v1" style="width:20%"></div>
-        <div class="sk-cell sk-v2" style="width:20%"></div>
-      </div>
-      ${rowsHtml}
-    </div>`;
+/* ── FIRESTORE PREFS: SAVE ── */
+function savePrefsToFirestore() {
+  if (!currentUser) return;
+  const prefsDoc = {
+    theme: localStorage.getItem(THEME_KEY) || 'system',
+    vis: Object.assign({}, vis),
+    view: view,
+    typoState: JSON.parse(JSON.stringify(
+      Object.fromEntries(Object.entries(typoState).map(([k, v]) => [k, { font: v.font, size: v.size }]))
+    )),
+    visitHistory: loadVisitHistory()
+  };
+  db.collection('users').doc(currentUser.uid).collection('prefs').doc('settings').set(prefsDoc)
+    .catch(e => console.error('savePrefsToFirestore error:', e));
 }
 
-function showMainSpinner() { showMainSkeleton(); }
-
-function showMainError(msg) {
-  const main = document.getElementById('main');
-  main.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;padding:24px;text-align:center;">
-      <div style="font-size:2rem;">⚠️</div>
-      <div style="font-size:0.9rem;color:var(--danger);font-family:'Spectral',serif;">${msg}</div>
-      <button class="ie-btn" onclick="loadBooksFromFirestore()" style="margin-top:4px;">↺ Retry</button>
-    </div>`;
-}
-
-function restoreMainContent() {
-  const main = document.getElementById('main');
-  // Restore the standard content pane (views are hidden/shown by render())
-  main.innerHTML = `
-    <div class="c-pad">
-      <div id="side-view"><table id="main-table">
-        <thead><tr>
-          <th class="col-num">#</th>
-          <th class="col-ot rtl-col">Ottoman Turkish</th>
-          <th class="col-mt">Modern Turkish</th>
-          <th class="col-v1 rtl-col">Kurdish — Literal</th>
-          <th class="col-v2 rtl-col">Kurdish — Free</th>
-          <th class="col-action"></th>
-        </tr></thead>
-        <tbody id="tbody"></tbody>
-      </table></div>
-      <div id="stack-view"><div id="stacked"></div></div>
-      <div id="flow-side-view"><div id="flow-side-inner"></div></div>
-      <div id="flow-stack-view"><div id="flow-stack-inner"></div></div>
-    </div>`;
-}
-
-/* ── SEED FIRESTORE ── */
-async function seedFirestore() {
-  const btn = document.getElementById('btn-seed-db');
+/* ── FIRESTORE PREFS: LOAD ── */
+async function loadPrefsFromFirestore(uid) {
   try {
-    if (btn) { btn.disabled = true; btn.textContent = '🌱 Checking Firestore…'; }
+    const doc = await db.collection('users').doc(uid).collection('prefs').doc('settings').get();
+    if (!doc.exists) return;
+    const prefs = doc.data();
+
+    // Theme
+    if (prefs.theme) {
+      localStorage.setItem(THEME_KEY, prefs.theme);
+      applyTheme(prefs.theme);
+    }
+
+    // Column visibility
+    if (prefs.vis && typeof prefs.vis === 'object') {
+      Object.assign(vis, prefs.vis);
+      // Sync checkboxes if settings panel exists
+      Object.keys(vis).forEach(col => {
+        const cb = document.getElementById('cb-' + col);
+        if (cb) cb.checked = vis[col];
+      });
+    }
+
+    // View mode
+    if (prefs.view) {
+      view = prefs.view;
+      const btnSide  = document.getElementById('vs-side');
+      const btnStack = document.getElementById('vs-stack');
+      if (btnSide)  btnSide.classList.toggle('active', view === 'side');
+      if (btnStack) btnStack.classList.toggle('active', view === 'stack');
+    }
+
+    // Typography
+    if (prefs.typoState && typeof prefs.typoState === 'object') {
+      Object.entries(prefs.typoState).forEach(([key, val]) => {
+        if (typoState[key]) {
+          if (val.font) typoState[key].font = val.font;
+          if (val.size) typoState[key].size = val.size;
+        }
+      });
+      if (typeof applyAllTypo === 'function') applyAllTypo();
+    }
+
+    // Visit history
+    if (Array.isArray(prefs.visitHistory)) {
+      try { localStorage.setItem(VISIT_HISTORY_KEY, JSON.stringify(prefs.visitHistory)); } catch(e) {}
+    }
+
+    // Re-render to reflect loaded prefs
+    if (typeof render === 'function') render();
+    if (typeof applyAllTypo === 'function') applyAllTypo();
+
+  } catch (e) {
+    console.error('loadPrefsFromFirestore error:', e);
+  }
+}
+
+/* ── HARDCODED FALLBACK (used as seed data if Firestore is empty) ── */
+const FALLBACK_BOOKS = [
+  {
+    id: 1,
+    name: "Sözler",
+    risales: [{id:1, name:"The Eighth Word — Sekizinci Söz", rows: JSON.parse(JSON.stringify(D8)), bookmarked:false}]
+  },
+  { id: 2, name: "Mektubat", risales: [] },
+  { id: 3, name: "Lemalar",  risales: [] },
+  { id: 4, name: "Şualar",   risales: [] }
+];
+
+/* ── FIRESTORE: SEED ── */
+async function seedFirestore() {
+  try {
     const snap = await db.collection('books').limit(1).get();
     if (!snap.empty) {
-      if (btn) { btn.disabled = false; btn.textContent = '🌱 Seed Firestore (runs once if empty)'; }
       alert('Firestore already has data. Seed skipped.');
       return;
     }
-    if (btn) { btn.textContent = '🌱 Seeding…'; }
-
-    // Use the hardcoded books array (already in memory as fallback)
-    const SEED_BOOKS = [
-      { id: 1, name: "Sözler",   risales: [{id:1, name:"The Eighth Word — Sekizinci Söz", rows: JSON.parse(JSON.stringify(D8)), bookmarked:false}] },
-      { id: 2, name: "Mektubat", risales: [] },
-      { id: 3, name: "Lemalar",  risales: [] },
-      { id: 4, name: "Şualar",   risales: [] }
-    ];
-
-    for (let bi = 0; bi < SEED_BOOKS.length; bi++) {
-      const bk = SEED_BOOKS[bi];
-      await db.collection('books').doc(String(bk.id)).set({
-        name: bk.name,
-        order: bi,
-        createdAt: Date.now()
+    const batch = db.batch();
+    FALLBACK_BOOKS.forEach((book, bIdx) => {
+      const bookRef = db.collection('books').doc(String(book.id));
+      batch.set(bookRef, { name: book.name, order: bIdx, createdAt: Date.now() });
+      book.risales.forEach((risale, rIdx) => {
+        const risaleRef = bookRef.collection('risales').doc(String(risale.id));
+        batch.set(risaleRef, {
+          name: risale.name,
+          order: rIdx,
+          bookmarked: false,
+          rows: risale.rows,
+          createdAt: Date.now()
+        });
       });
-      for (let ri = 0; ri < bk.risales.length; ri++) {
-        const rs = bk.risales[ri];
-        await db.collection('books').doc(String(bk.id))
-          .collection('risales').doc(String(rs.id)).set({
-            name: rs.name,
-            order: ri,
-            bookmarked: false,
-            rows: rs.rows,
-            createdAt: Date.now()
-          });
-      }
-    }
-
-    if (btn) { btn.disabled = false; btn.textContent = '✓ Seeded! Loading…'; }
-    await loadBooksFromFirestore();
-  } catch(e) {
-    console.error('seedFirestore error:', e);
-    if (btn) { btn.disabled = false; btn.textContent = '🌱 Seed Firestore (runs once if empty)'; }
+    });
+    await batch.commit();
+    console.log('Firestore seeded successfully.');
+    loadBooksFromFirestore();
+  } catch (e) {
+    console.error('Seed failed:', e);
     alert('Seed failed: ' + e.message);
   }
 }
 
-/* ── LOAD BOOKS FROM FIRESTORE ── */
+/* ── FIRESTORE: LOAD ── */
+function showMainSpinner() {
+  let ov = document.getElementById('fs-loading-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'fs-loading-overlay';
+    ov.style.cssText = 'position:absolute;inset:0;background:var(--bg);z-index:50;overflow:hidden;padding:16px 20px;box-sizing:border-box;';
+    // Skeleton pulse animation + rows
+    ov.innerHTML = `<style>
+      @keyframes rsl-pulse{0%,100%{opacity:.45}50%{opacity:1}}
+      .sk-row{display:flex;gap:12px;align-items:center;margin-bottom:14px;}
+      .sk-bar{background:var(--surface2);border-radius:5px;animation:rsl-pulse 1.6s ease-in-out infinite;}
+    </style>
+    ${[
+      [32, '5%', '28%', '38%', '22%'],
+      [28, '5%', '38%', '30%', '20%'],
+      [44, '4%', '22%', '42%', '26%'],
+      [28, '5%', '32%', '35%', '22%'],
+    ].map(([h, w0, w1, w2, w3], i) => `
+      <div class="sk-row" style="animation-delay:${i * 0.12}s">
+        <div class="sk-bar" style="width:${w0};height:${h}px;flex-shrink:0;animation-delay:${i*0.12}s"></div>
+        <div class="sk-bar" style="width:${w1};height:${h}px;animation-delay:${i*0.12+0.1}s"></div>
+        <div class="sk-bar" style="width:${w2};height:${h}px;animation-delay:${i*0.12+0.2}s"></div>
+        <div class="sk-bar" style="width:${w3};height:${h}px;animation-delay:${i*0.12+0.3}s"></div>
+      </div>`).join('')}`;
+    const main = document.getElementById('main');
+    main.style.position = 'relative';
+    main.appendChild(ov);
+  }
+  ov.style.display = 'block';
+}
+
+function hideMainSpinner() {
+  const ov = document.getElementById('fs-loading-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
+function showMainError(msg) {
+  let ov = document.getElementById('fs-loading-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'fs-loading-overlay';
+    ov.style.cssText = 'position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;z-index:50;';
+    const main = document.getElementById('main');
+    main.style.position = 'relative';
+    main.appendChild(ov);
+  }
+  ov.style.display = 'flex';
+  ov.innerHTML = `<div style="font-size:2rem;">⚠️</div>
+    <div style="font-size:0.9rem;color:var(--danger);font-family:'Spectral',serif;text-align:center;">${msg}</div>
+    <button onclick="loadBooksFromFirestore()" style="background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:6px 14px;cursor:pointer;font-size:0.85rem;">↺ Retry</button>`;
+}
+
 async function loadBooksFromFirestore() {
   showMainSpinner();
   try {
     const booksSnap = await db.collection('books').orderBy('order').get();
-
     if (booksSnap.empty) {
-      // Firestore empty — fall back to hardcoded data, then offer seed
-      restoreMainContent();
+      // Firestore empty — fall back to hardcoded data
+      books = FALLBACK_BOOKS.map(b => ({
+        ...b,
+        risales: b.risales.map(r => ({ ...r, rows: JSON.parse(JSON.stringify(r.rows)) }))
+      }));
+      nextBookId = Math.max(...books.map(b => b.id)) + 1;
+      const allRisales = books.flatMap(b => b.risales);
+      nextId = allRisales.length > 0 ? Math.max(...allRisales.map(r => r.id)) + 1 : 1;
+      hideMainSpinner();
+      renderList();
       navToRisaleList(activeBookId);
       selectRisale(activeId);
       return;
     }
 
     const loaded = [];
-    for (const bDoc of booksSnap.docs) {
-      const bData = bDoc.data();
-      const risalesSnap = await bDoc.ref.collection('risales').orderBy('order').get();
-      const risales = risalesSnap.docs.map(rDoc => {
-        const rd = rDoc.data();
+    for (const bookDoc of booksSnap.docs) {
+      const bd = bookDoc.data();
+      const risalesSnap = await bookDoc.ref.collection('risales').orderBy('order').get();
+      const risales = risalesSnap.docs.map(rd => {
+        const r = rd.data();
         return {
-          id:         Number(rDoc.id),
-          name:       rd.name || '',
-          bookmarked: !!rd.bookmarked,
-          rows:       Array.isArray(rd.rows) ? rd.rows : []
+          id: parseInt(rd.id, 10),
+          name: r.name,
+          bookmarked: !!r.bookmarked,
+          rows: Array.isArray(r.rows) ? r.rows : []
         };
       });
-      loaded.push({ id: Number(bDoc.id), name: bData.name || '', risales });
+      loaded.push({ id: parseInt(bookDoc.id, 10), name: bd.name, risales });
     }
 
     books = loaded;
+    const allIds = books.map(b => b.id);
+    nextBookId = allIds.length > 0 ? Math.max(...allIds) + 1 : 1;
+    const allRisaleIds = books.flatMap(b => b.risales).map(r => r.id);
+    nextId = allRisaleIds.length > 0 ? Math.max(...allRisaleIds) + 1 : 1;
 
-    // Recalculate counters
-    const allBookIds    = books.map(b => b.id);
-    const allRisaleIds  = books.flatMap(b => b.risales.map(r => r.id));
-    nextBookId = allBookIds.length   ? Math.max(...allBookIds)   + 1 : 1;
-    nextId     = allRisaleIds.length ? Math.max(...allRisaleIds) + 1 : 1;
+    // Restore active selection if it still exists, else default to first available
+    const allRisales = books.flatMap(b => b.risales);
+    const activeStillExists = allRisales.some(r => r.id === activeId);
+    if (!activeStillExists) {
+      const first = allRisales[0];
+      if (first) {
+        activeId = first.id;
+        const pb = books.find(b => b.risales.includes(first));
+        if (pb) activeBookId = pb.id;
+      } else {
+        activeId = null;
+      }
+    }
 
-    // Determine a valid activeId / activeBookId
-    const firstBook   = books[0];
-    const firstRisale = books.flatMap(b => b.risales)[0];
-    if (firstBook)   activeBookId = firstBook.id;
-    if (firstRisale) activeId     = firstRisale.id;
-    else             activeId     = null;
-
-    restoreMainContent();
+    hideMainSpinner();
     renderList();
-    if (activeId) selectRisale(activeId);
-    else document.getElementById('topbar-title').innerHTML = 'Ya Hakeem Risale';
-
-  } catch(e) {
-    console.error('loadBooksFromFirestore error:', e);
-    showMainError('Could not load from Firestore: ' + e.message);
+    if (activeId) {
+      navToRisaleList(activeBookId);
+      selectRisale(activeId);
+    } else {
+      renderBookList();
+      document.getElementById('topbar-title').innerHTML = 'Ya Hakeem Risale';
+    }
+  } catch (e) {
+    console.error('loadBooksFromFirestore failed:', e);
+    showMainError('Could not load data from Firestore.<br>' + e.message);
   }
 }
+
+let books = FALLBACK_BOOKS.map(b => ({
+  ...b,
+  risales: b.risales.map(r => ({ ...r, rows: JSON.parse(JSON.stringify(r.rows)) }))
+}));
+let nextBookId = 5;
+let activeBookId = 1;   // which book is open in Level 2
+let activeId = 1;       // active risale id (global across books)
+let nextId = 2;
 let sidebarLevel = 1;   // 1 = book list, 2 = risale list
 let vis = {'col-num':true,'col-ot':false,'col-mt':false,'col-v1':true,'col-v2':false};
 let view = 'side';
@@ -3179,76 +3162,6 @@ function setThemeMode(mode) {
 }
 
 function toggleTheme() { /* legacy — no-op, buttons used instead */ }
-
-/* ── PREFERENCES PERSISTENCE ── */
-
-function savePrefsToFirestore() {
-  if (!currentUser) return;
-  const prefsDoc = {
-    theme: localStorage.getItem(THEME_KEY) || 'system',
-    vis: { ...vis },
-    view,
-    typoState: JSON.parse(JSON.stringify(
-      Object.fromEntries(Object.entries(typoState).map(([k, v]) => [k, { font: v.font, size: v.size }]))
-    )),
-    visitHistory: loadVisitHistory()
-  };
-  db.collection('users').doc(currentUser.uid).collection('prefs').doc('settings').set(prefsDoc)
-    .catch(e => console.warn('Firestore prefs write failed:', e));
-}
-
-async function loadPrefsFromFirestore(uid) {
-  try {
-    const doc = await db.collection('users').doc(uid).collection('prefs').doc('settings').get();
-    if (!doc.exists) return;
-    const p = doc.data();
-
-    // Theme
-    if (p.theme) {
-      localStorage.setItem(THEME_KEY, p.theme);
-      applyTheme(p.theme);
-    }
-
-    // Column visibility
-    if (p.vis && typeof p.vis === 'object') {
-      Object.assign(vis, p.vis);
-      // Sync checkboxes
-      Object.entries(vis).forEach(([col, on]) => {
-        const sw = document.getElementById('sw-' + col.replace('col-', ''));
-        if (sw) sw.checked = on;
-      });
-    }
-
-    // View mode
-    if (p.view) {
-      view = p.view;
-      const vsS = document.getElementById('vs-side');
-      const vsT = document.getElementById('vs-stack');
-      if (vsS) vsS.classList.toggle('active', p.view === 'side');
-      if (vsT) vsT.classList.toggle('active', p.view === 'stack');
-    }
-
-    // Typography
-    if (p.typoState && typeof p.typoState === 'object') {
-      Object.entries(p.typoState).forEach(([key, val]) => {
-        if (typoState[key]) {
-          if (val.font) typoState[key].font = val.font;
-          if (typeof val.size === 'number') typoState[key].size = val.size;
-        }
-      });
-      applyAllTypo();
-    }
-
-    // Visit history
-    if (Array.isArray(p.visitHistory)) {
-      try { localStorage.setItem(VISIT_HISTORY_KEY, JSON.stringify(p.visitHistory)); } catch(e) {}
-    }
-
-    render();
-  } catch(e) {
-    console.warn('loadPrefsFromFirestore error:', e);
-  }
-}
 
 function initTheme() {
   const saved = localStorage.getItem(THEME_KEY) || 'system';
@@ -3414,29 +3327,28 @@ function submitInlineReflection(){
 }
 
 function addReflection(text,type,scope,rowNum){
-  const rid = activeId;
-  const refObj = {id:refNextId++, text, type, scope, rowNum};
-  getReflections().push(refObj);
+  const risaleId = activeId;
+  const ref = cur();
+  const risalahName = ref ? ref.name : '';
+  const newRef = { id: refNextId++, text, type, scope, rowNum, risaleId, risalahName };
+  getReflections().push(newRef);
+  if (currentUser) {
+    db.collection('users').doc(currentUser.uid).collection('reflections').doc(String(newRef.id)).set(newRef)
+      .catch(e => console.error('Firestore set reflection error:', e));
+  }
   // Auto-bookmark the row if it has row scope
   if (scope === 'row' && rowNum != null) {
-    autoBookmarkForReflection(rid, rowNum - 1);
+    autoBookmarkForReflection(activeId, rowNum - 1);
   }
   // Auto-assign the bookmark (if any) for this risale+row to the Reflections singleton group
-  assignBookmarkToReflectionsGroup(rid, scope === 'row' ? rowNum : null);
-  maybePromptAuth();
-  if (currentUser) {
-    const r = cur();
-    const fsObj = { ...refObj, risaleId: rid, risalahName: r ? r.name : '' };
-    db.collection('users').doc(currentUser.uid).collection('reflections').doc(String(refObj.id)).set(fsObj)
-      .catch(e => console.warn('Firestore reflection write failed:', e));
-  }
+  assignBookmarkToReflectionsGroup(activeId, scope === 'row' ? rowNum : null);
 }
 
 function deleteReflection(id){
   if(reflectionsStore[activeId]) reflectionsStore[activeId]=reflectionsStore[activeId].filter(r=>r.id!==id);
   if (currentUser) {
     db.collection('users').doc(currentUser.uid).collection('reflections').doc(String(id)).delete()
-      .catch(e => console.warn('Firestore reflection delete failed:', e));
+      .catch(e => console.error('Firestore delete reflection error:', e));
   }
   renderReflections();
 }
@@ -3715,12 +3627,10 @@ function moveBook(id, dir){
   const [item]=books.splice(idx,1);
   books.splice(newIdx,0,item);
   renderBookList();
-  // Firestore: update order for affected books
-  const batch = db.batch();
-  books.forEach((b,i) => {
-    batch.update(db.collection('books').doc(String(b.id)), { order: i });
+  // Update order fields in Firestore
+  books.forEach((b, i) => {
+    db.collection('books').doc(String(b.id)).update({ order: i }).catch(console.error);
   });
-  batch.commit().catch(console.error);
 }
 
 function deleteBook(id){
@@ -3739,13 +3649,14 @@ function deleteBook(id){
     if(activeId) { render(); } else { document.getElementById('topbar-title').innerHTML='Ya Hakeem Risale'; }
   }
   navToBookList();
-  // Firestore: delete risales subcollection docs then book doc
+  // Firestore: delete all risales in subcollection, then the book doc
   (async () => {
     try {
-      const rsSnap = await db.collection('books').doc(String(id)).collection('risales').get();
+      const bookRef = db.collection('books').doc(String(id));
+      const risalesSnap = await bookRef.collection('risales').get();
       const batch = db.batch();
-      rsSnap.docs.forEach(d => batch.delete(d.ref));
-      batch.delete(db.collection('books').doc(String(id)));
+      risalesSnap.docs.forEach(d => batch.delete(d.ref));
+      batch.delete(bookRef);
       await batch.commit();
     } catch(e) { console.error('deleteBook Firestore error:', e); }
   })();
@@ -3759,13 +3670,11 @@ function openNewBook(){
 function confirmNewBook(){
   const n=document.getElementById('i-bkname').value.trim(); if(!n) return;
   const id = nextBookId;
-  const order = books.length;
   books.push({id, name:n, risales:[]});
   closeM('m-new-book');
   renderBookList();
   nextBookId++;
-  // Firestore: fire-and-forget
-  db.collection('books').doc(String(id)).set({ name:n, order, createdAt:Date.now() }).catch(console.error);
+  db.collection('books').doc(String(id)).set({ name: n, order: books.length - 1, createdAt: Date.now() }).catch(console.error);
 }
 
 function openRenameBook(id){
@@ -3912,12 +3821,11 @@ function moveRisale(id, dir){
   const [item]=risales.splice(idx,1);
   risales.splice(newIdx,0,item);
   renderRisaleList();
-  // Firestore: update order for affected risales
-  const batch = db.batch();
-  risales.forEach((r,i) => {
-    batch.update(db.collection('books').doc(String(b.id)).collection('risales').doc(String(r.id)), { order: i });
+  // Update order fields in Firestore
+  const bookRef = db.collection('books').doc(String(b.id));
+  risales.forEach((r, i) => {
+    bookRef.collection('risales').doc(String(r.id)).update({ order: i }).catch(console.error);
   });
-  batch.commit().catch(console.error);
 }
 
 function toggleBookmark(id){
@@ -3942,22 +3850,15 @@ function confirmRename(){
     closeM('m-rename-risale');
     renderBookList();
     if(sidebarLevel===2&&activeBookId===renameTargetId) document.getElementById('sb-book-title').textContent=n;
-    // Firestore
-    db.collection('books').doc(String(renameTargetId)).update({ name:n }).catch(console.error);
+    db.collection('books').doc(String(renameTargetId)).update({ name: n }).catch(console.error);
   } else {
     let parentBookId = null;
-    for(const b of books){
-      const r=b.risales.find(r=>r.id===renameTargetId);
-      if(r){ r.name=n; parentBookId=b.id; break; }
-    }
+    for(const b of books){ const r=b.risales.find(r=>r.id===renameTargetId); if(r){ r.name=n; parentBookId=b.id; break; } }
     closeM('m-rename-risale');
     renderRisaleList();
     if(activeId===renameTargetId) render();
-    // Firestore
-    if(parentBookId != null) {
-      db.collection('books').doc(String(parentBookId))
-        .collection('risales').doc(String(renameTargetId))
-        .update({ name:n }).catch(console.error);
+    if(parentBookId !== null) {
+      db.collection('books').doc(String(parentBookId)).collection('risales').doc(String(renameTargetId)).update({ name: n }).catch(console.error);
     }
   }
 }
@@ -3976,10 +3877,7 @@ function deleteRisale(id){
     if(first){ selectRisale(first.id); } else { activeId=null; document.getElementById('topbar-title').innerHTML='Ya Hakeem Risale'; }
   }
   renderRisaleList();
-  // Firestore: fire-and-forget
-  db.collection('books').doc(String(b.id))
-    .collection('risales').doc(String(id))
-    .delete().catch(console.error);
+  db.collection('books').doc(String(b.id)).collection('risales').doc(String(id)).delete().catch(console.error);
 }
 
 function selectRisale(id){
@@ -4002,16 +3900,15 @@ function openNewRisale(){
 function confirmNewRisale(){
   const n=document.getElementById('i-rname').value.trim(); if(!n) return;
   const b=curBook(); if(!b) return;
-  const id = nextId;
-  const order = b.risales.length;
-  b.risales.push({id, name:n, rows:[], bookmarked:false});
+  const newId = nextId;
+  const newOrder = b.risales.length;
+  b.risales.push({id:newId, name:n, rows:[], bookmarked:false});
   closeM('m-new-risale');
-  selectRisale(nextId++);
-  // Firestore: fire-and-forget
-  db.collection('books').doc(String(b.id))
-    .collection('risales').doc(String(id))
-    .set({ name:n, order, bookmarked:false, rows:[], createdAt:Date.now() })
-    .catch(console.error);
+  selectRisale(newId);
+  nextId++;
+  db.collection('books').doc(String(b.id)).collection('risales').doc(String(newId)).set({
+    name: n, order: newOrder, bookmarked: false, rows: [], createdAt: Date.now()
+  }).catch(console.error);
 }
 
 /* ── VIEW ── */
@@ -4218,21 +4115,17 @@ function saveRow(){
   const v1=document.getElementById('i-v1').value.trim();
   const v2=document.getElementById('i-v2').value.trim();
   if(!ot&&!mt&&!v1&&!v2) return;
-  const r=cur();
+  const r=cur(); if(!r) return;
   r.rows.push({ot,mt,v1,v2});
   closeM('m-add');
   ['i-ot','i-mt','i-v1','i-v2'].forEach(id=>document.getElementById(id).value='');
   render();
   setTimeout(()=>document.getElementById('main').scrollTo({top:1e9,behavior:'smooth'}),100);
-  // Firestore: fire-and-forget
-  (()=>{
-    let parentBookId=null;
-    for(const b of books){ if(b.risales.find(x=>x.id===activeId)){ parentBookId=b.id; break; } }
-    if(parentBookId!=null)
-      db.collection('books').doc(String(parentBookId))
-        .collection('risales').doc(String(activeId))
-        .update({ rows: r.rows }).catch(console.error);
-  })();
+  // Find parent book id for the Firestore path
+  for(const b of books){ if(b.risales.find(x=>x.id===activeId)){
+    db.collection('books').doc(String(b.id)).collection('risales').doc(String(activeId)).update({ rows: r.rows }).catch(console.error);
+    break;
+  }}
 }
 
 /* ── EXPORT ── */
@@ -4363,9 +4256,8 @@ function getOrCreateBookmark(risaleId, rowIndex) {
   rowBookmarks[risaleId][rowIndex] = bm;
   if (currentUser) {
     db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(bm.id)).set(bm)
-      .catch(e => console.warn('Firestore bookmark write failed:', e));
+      .catch(e => console.error('Firestore set bookmark error:', e));
   }
-  maybePromptAuth();
   return bm;
 }
 
@@ -4378,7 +4270,7 @@ function toggleRowBookmark(rowIndex) {
     delete rowBookmarks[activeId][rowIndex];
     if (currentUser) {
       db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(bm.id)).delete()
-        .catch(e => console.warn('Firestore bookmark delete failed:', e));
+        .catch(e => console.error('Firestore delete bookmark error:', e));
     }
   } else {
     getOrCreateBookmark(activeId, rowIndex);
@@ -4458,16 +4350,16 @@ function addTagToBookmark(bmId, tag) {
   if (!tag || bm.tags.includes(tag)) return;
   bm.tags.push(tag);
   if (currentUser) {
-    db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(bmId)).update({ tags: bm.tags })
-      .catch(e => console.warn('Firestore tag update failed:', e));
+    db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(bmId))
+      .update({ tags: bm.tags }).catch(e => console.error('Firestore update tags error:', e));
   }
 }
 function removeTagFromBookmark(bmId, tag) {
   const bm = bookmarksStore.find(b => b.id === bmId); if (!bm) return;
   bm.tags = bm.tags.filter(t => t !== tag);
   if (currentUser) {
-    db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(bmId)).update({ tags: bm.tags })
-      .catch(e => console.warn('Firestore tag update failed:', e));
+    db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(bmId))
+      .update({ tags: bm.tags }).catch(e => console.error('Firestore update tags error:', e));
   }
 }
 
@@ -4476,16 +4368,16 @@ function assignGroupToBookmark(bmId, groupId) {
   const bm = bookmarksStore.find(b => b.id === bmId); if (!bm) return;
   if (!bm.groups.includes(groupId)) bm.groups.push(groupId);
   if (currentUser) {
-    db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(bmId)).update({ groups: bm.groups })
-      .catch(e => console.warn('Firestore group assign failed:', e));
+    db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(bmId))
+      .update({ groups: bm.groups }).catch(e => console.error('Firestore update groups error:', e));
   }
 }
 function unassignGroupFromBookmark(bmId, groupId) {
   const bm = bookmarksStore.find(b => b.id === bmId); if (!bm) return;
   bm.groups = bm.groups.filter(g => g !== groupId);
   if (currentUser) {
-    db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(bmId)).update({ groups: bm.groups })
-      .catch(e => console.warn('Firestore group unassign failed:', e));
+    db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(bmId))
+      .update({ groups: bm.groups }).catch(e => console.error('Firestore update groups error:', e));
   }
 }
 
@@ -4503,7 +4395,7 @@ function shiftBookmarksAfterDelete(risaleId, deletedIdx) {
       if (currentUser) {
         db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(newBm[ki - 1].id))
           .update({ rowIndex: ki - 1, rowNumber: ki })
-          .catch(e => console.warn('Firestore shift update failed:', e));
+          .catch(e => console.error('Firestore shift bookmark error:', e));
       }
     }
     // ki === deletedIdx — already removed from store by toggleRowBookmark if needed
@@ -4739,12 +4631,13 @@ function buildBkItem(bm) {
     // Remove via toggleRowBookmark logic
     const ri = bm.risaleId;
     const idx = bm.rowIndex;
+    const bmId = bm.id;
     const storeIdx = bookmarksStore.indexOf(bm);
     if (storeIdx > -1) bookmarksStore.splice(storeIdx, 1);
     if (rowBookmarks[ri]) delete rowBookmarks[ri][idx];
     if (currentUser) {
-      db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(bm.id)).delete()
-        .catch(e => console.warn('Firestore bookmark delete failed:', e));
+      db.collection('users').doc(currentUser.uid).collection('bookmarks').doc(String(bmId)).delete()
+        .catch(e => console.error('Firestore delete bookmark error:', e));
     }
     renderBookmarksPanel();
     // Re-render main view to update row bookmark indicators
@@ -4811,7 +4704,7 @@ function confirmNewGroup() {
   bookmarkGroups.push(newGroup);
   if (currentUser) {
     db.collection('users').doc(currentUser.uid).collection('bookmarkGroups').doc(newGroup.id).set(newGroup)
-      .catch(e => console.warn('Firestore group write failed:', e));
+      .catch(e => console.error('Firestore set group error:', e));
   }
   closeM('m-new-group');
   renderBookmarksPanel();
@@ -5070,15 +4963,10 @@ function deleteRow(rowIndex) {
   // Shift bookmarks
   shiftBookmarksAfterDelete(activeId, rowIndex);
   render();
-  // Firestore: fire-and-forget
-  (()=>{
-    let parentBookId=null;
-    for(const b of books){ if(b.risales.find(x=>x.id===activeId)){ parentBookId=b.id; break; } }
-    if(parentBookId!=null)
-      db.collection('books').doc(String(parentBookId))
-        .collection('risales').doc(String(activeId))
-        .update({ rows: r.rows }).catch(console.error);
-  })();
+  for(const b of books){ if(b.risales.find(x=>x.id===activeId)){
+    db.collection('books').doc(String(b.id)).collection('risales').doc(String(activeId)).update({ rows: r.rows }).catch(console.error);
+    break;
+  }}
 }
 
 /* ── EDIT ROW ── */
@@ -5104,15 +4992,10 @@ function saveEditRow() {
   closeM('m-edit-row');
   editRowIndex = -1;
   render();
-  // Firestore: fire-and-forget
-  (()=>{
-    let parentBookId=null;
-    for(const b of books){ if(b.risales.find(x=>x.id===activeId)){ parentBookId=b.id; break; } }
-    if(parentBookId!=null)
-      db.collection('books').doc(String(parentBookId))
-        .collection('risales').doc(String(activeId))
-        .update({ rows: r.rows }).catch(console.error);
-  })();
+  for(const b of books){ if(b.risales.find(x=>x.id===activeId)){
+    db.collection('books').doc(String(b.id)).collection('risales').doc(String(activeId)).update({ rows: r.rows }).catch(console.error);
+    break;
+  }}
 }
 
 /* ── MAKE DOTS BUTTON (row action trigger) ── */
@@ -6181,26 +6064,35 @@ function openM(id) {
   });
 }
 
-loadBooksFromFirestore();
+// ── Startup: ensure an auth session (anon if not signed in), then load books ──
+ensureAnonymousAuth().then(() => {
+  loadBooksFromFirestore();
+});
+
+// ── Offline / online banner ──
+(function initOfflineBanner() {
+  function showOfflineBanner() {
+    if (document.getElementById('offline-banner')) return;
+    const tpl = document.getElementById('tpl-offline-banner');
+    if (!tpl) return;
+    const clone = tpl.content.cloneNode(true);
+    const main = document.getElementById('main');
+    if (main) main.insertBefore(clone, main.firstChild);
+  }
+  function hideOfflineBanner() {
+    const b = document.getElementById('offline-banner');
+    if (b) b.remove();
+  }
+  window.addEventListener('online',  hideOfflineBanner);
+  window.addEventListener('offline', showOfflineBanner);
+  if (!navigator.onLine) showOfflineBanner();
+})();
+
 setView('side');
 renderTypoGroups();
 ensureReflectionsGroup();
 backfillReflectionsGroup();
 initTheme();
-
-/* ── ANONYMOUS AUTH bootstrap ── */
-initAuth();
-
-/* ── OFFLINE BANNER ── */
-(function() {
-  const banner = document.getElementById('offline-banner');
-  function updateOnline() {
-    if (banner) banner.classList.toggle('visible', !navigator.onLine);
-  }
-  window.addEventListener('online',  updateOnline);
-  window.addEventListener('offline', updateOnline);
-  updateOnline(); // check immediately
-})();
 
 // Click outside right sidebar (desktop) → close it
 ['main', 'home-page'].forEach(id => {
@@ -6235,7 +6127,24 @@ let dersDirty = false;
 const DERS_AS_KEY = 'yh-ders-store-v1';
 
 function dersLoadFromStorage() {
-  // localStorage always loaded as offline fallback / initial state
+  if (currentUser) {
+    // Firestore path — async, updates in-memory and re-renders when ready
+    db.collection('users').doc(currentUser.uid).collection('ders')
+      .orderBy('updatedAt', 'desc').get()
+      .then(snap => {
+        dersStore = [];
+        let maxId = 0;
+        snap.forEach(doc => {
+          const d = doc.data();
+          if (d && d.id) { dersStore.push(d); if (d.id > maxId) maxId = d.id; }
+        });
+        nextDersId = maxId + 1;
+        if (homeActive && typeof renderHomePage === 'function') renderHomePage();
+      })
+      .catch(e => console.error('dersLoadFromStorage Firestore error:', e));
+    return; // don't fall through to localStorage while signed in
+  }
+  // No currentUser — localStorage fallback
   try {
     const raw = localStorage.getItem(DERS_AS_KEY);
     if (raw) {
@@ -6243,36 +6152,20 @@ function dersLoadFromStorage() {
       if (parsed.store) { dersStore = parsed.store; nextDersId = parsed.nextId || 1; }
     }
   } catch(e) {}
-  // If signed in, override with Firestore data (async, non-blocking)
-  if (currentUser) {
-    db.collection('users').doc(currentUser.uid).collection('ders')
-      .orderBy('updatedAt', 'desc').get()
-      .then(snap => {
-        if (snap.empty) return;
-        dersStore = [];
-        nextDersId = 1;
-        snap.forEach(doc => {
-          const d = doc.data();
-          if (typeof d.id === 'number' && d.id >= nextDersId) nextDersId = d.id + 1;
-          dersStore.push(d);
-        });
-        if (homeActive) renderHomePage();
-      })
-      .catch(e => console.warn('dersLoadFromStorage Firestore error:', e));
-  }
 }
 
 function dersSaveToStorage() {
-  // Always write to localStorage as offline fallback
+  // Always keep localStorage as offline fallback
   try {
     localStorage.setItem(DERS_AS_KEY, JSON.stringify({ store: dersStore, nextId: nextDersId }));
   } catch(e) {}
-  // If signed in, also write the active ders document to Firestore
+  // Also write active Ders to Firestore when signed in
   if (currentUser && activeDersId != null) {
     const activeDers = dersStore.find(d => d.id === activeDersId);
     if (activeDers) {
-      db.collection('users').doc(currentUser.uid).collection('ders').doc(String(activeDersId)).set(activeDers)
-        .catch(e => console.warn('Firestore ders write failed:', e));
+      db.collection('users').doc(currentUser.uid).collection('ders')
+        .doc(String(activeDersId)).set(activeDers)
+        .catch(e => console.error('dersSaveToStorage Firestore error:', e));
     }
   }
 }
@@ -6413,8 +6306,9 @@ function newDers() {
   dersStore.unshift(ders);
   dersSaveToStorage();
   if (currentUser) {
-    db.collection('users').doc(currentUser.uid).collection('ders').doc(String(ders.id)).set(ders)
-      .catch(e => console.warn('Firestore newDers write failed:', e));
+    db.collection('users').doc(currentUser.uid).collection('ders')
+      .doc(String(ders.id)).set(ders)
+      .catch(e => console.error('newDers Firestore error:', e));
   }
   openDersEditor(ders.id);
 }
@@ -6426,8 +6320,9 @@ function deleteDers(id) {
   nextDersId = dersStore.length ? Math.max(...dersStore.map(d => d.id)) + 1 : 1;
   dersSaveToStorage();
   if (currentUser) {
-    db.collection('users').doc(currentUser.uid).collection('ders').doc(String(id)).delete()
-      .catch(e => console.warn('Firestore deleteDers failed:', e));
+    db.collection('users').doc(currentUser.uid).collection('ders')
+      .doc(String(id)).delete()
+      .catch(e => console.error('deleteDers Firestore error:', e));
   }
   if (homeActive) renderHomePage();
 }

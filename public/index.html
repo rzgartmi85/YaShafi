@@ -3100,8 +3100,17 @@ async function loadPrefsFromFirestore(uid) {
     if (prefs.vis && typeof prefs.vis === 'object') {
       Object.assign(vis, prefs.vis);
       // Sync checkboxes if settings panel exists
+      // Map col keys (e.g. 'col-ot') to their checkbox IDs (e.g. 'sw-ot')
+      const COL_TO_CB = {
+        'col-num': 'sw-num',
+        'col-ot':  'sw-ot',
+        'col-mt':  'sw-mt',
+        'col-v1':  'sw-v1',
+        'col-v2':  'sw-v2',
+      };
       Object.keys(vis).forEach(col => {
-        const cb = document.getElementById('cb-' + col);
+        const cbId = COL_TO_CB[col];
+        const cb = cbId ? document.getElementById(cbId) : null;
         if (cb) cb.checked = vis[col];
       });
     }
@@ -4338,6 +4347,7 @@ function renderFlowStack(rows){
     const text=paragraphs.map(p=>p.map(r=>AR(r[COL_KEYS[col]]||'')).filter(Boolean).join(' ')).filter(Boolean).join('<br><br>');
     if(!text) return;
     const colDiv=document.createElement('div');
+    colDiv.className=`flow-stack-col ${col}${COL_RTL[col]?' rtl-cell':''}`;
     colDiv.innerHTML=`<div class="flow-col-lbl">${COL_LABELS[col]}</div>${text}`;
     el.appendChild(colDiv);
   });

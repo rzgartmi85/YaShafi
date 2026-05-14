@@ -31,12 +31,11 @@
   --danger:#a04040; --warn:#9a7010;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-html{height:100%;/* allow document-level scroll so mobile browsers can hide their address bar */}
-body{height:100dvh;/* dvh = dynamic viewport height, shrinks when address bar hides */overflow:hidden;background:var(--bg);color:var(--text);font-family:'Spectral',Georgia,serif;display:flex;flex-direction:column;}
-@supports not (height:100dvh){body{height:100vh;}}
+html{height:100%;}
+body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectral',Georgia,serif;display:flex;flex-direction:column;}
 
 /* ── TOPBAR ── */
-#topbar{height:var(--topbar-h);min-height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;z-index:200;flex-shrink:0;}
+#topbar{height:var(--topbar-h);min-height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;z-index:200;flex-shrink:0;position:sticky;top:0;}
 .tb-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:5px 9px;cursor:pointer;font-size:1rem;line-height:1;transition:all .18s;display:flex;align-items:center;justify-content:center;}
 .tb-btn:hover{border-color:var(--accent);color:var(--accent);}
 .tb-btn.active{background:var(--accent);border-color:var(--accent);color:#f5ede0;}
@@ -45,7 +44,7 @@ body{height:100dvh;/* dvh = dynamic viewport height, shrinks when address bar hi
 .tb-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
 
 /* ── LAYOUT ── */
-#layout{display:flex;flex:1;overflow:hidden;}
+#layout{display:flex;flex:1;overflow:hidden;height:calc(100dvh - var(--topbar-h));}
 
 /* ── SIDEBARS ── */
 .sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg2);border-style:solid;border-color:var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .25s ease,min-width .25s ease,opacity .2s;flex-shrink:0;container-type:inline-size;container-name:sidebar;}
@@ -2759,12 +2758,46 @@ const firebaseConfig = {
   authDomain: "yahakeemrisale-59cb2.firebaseapp.com",
   projectId: "yahakeemrisale-59cb2",
   storageBucket: "yahakeemrisale-59cb2.firebasestorage.app",
-  messagingSenderId: "832235504266",
+  messagingSenderId: "832235504226",
   appId: "1:832235504266:web:82e5e990e1151cdda1a373"
 };
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+
+/* Stub auth/db used when Firebase CDN fails to load (offline / blocked network) */
+const _authStub = {
+  currentUser: null,
+  onAuthStateChanged(cb) { setTimeout(() => cb(null), 0); return () => {}; },
+  signInAnonymously() { return Promise.resolve(); },
+  signInWithPopup() { return Promise.reject(new Error('Firebase unavailable')); },
+  signOut() { return Promise.resolve(); },
+  auth: { GoogleAuthProvider: class {} }
+};
+const _dbStub = {
+  collection() { return this; },
+  doc() { return this; },
+  get() { return Promise.resolve({ exists: false, data: () => ({}) }); },
+  set() { return Promise.resolve(); },
+  update() { return Promise.resolve(); },
+  delete() { return Promise.resolve(); },
+  onSnapshot(cb) { cb({ docs: [], forEach() {} }); return () => {}; }
+};
+
+let auth, db;
+if (typeof firebase !== 'undefined') {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+  } catch(e) {
+    console.warn('Firebase init failed:', e);
+    auth = _authStub;
+    db = _dbStub;
+  }
+} else {
+  console.warn('Firebase SDK not loaded — running in local-only mode.');
+  auth = _authStub;
+  db = _dbStub;
+}
+
 let currentUser = null;
 
 auth.onAuthStateChanged(user => {
@@ -6275,29 +6308,6 @@ function addDropdownKeyboardNav(dotsBtn, dd) {
 /* ── INIT ── */
 // Anonymous auth on load — give every visitor a persistent UID before loading books
 ensureAnonymousAuth();
-
-// ── MOBILE ADDRESS-BAR COLLAPSE ──
-// On the first touch, momentarily allow the document to scroll 1 px then restore.
-// This satisfies mobile browsers (Safari, Chrome) that only hide the address bar
-// in response to a document-level scroll event.
-(function() {
-  if (!('ontouchstart' in window)) return; // desktop — nothing to do
-  var triggered = false;
-  document.addEventListener('touchstart', function nudge() {
-    if (triggered) return;
-    triggered = true;
-    document.removeEventListener('touchstart', nudge);
-    // Temporarily allow document scroll
-    document.documentElement.style.overflow = 'auto';
-    document.documentElement.style.height = 'auto';
-    window.scrollTo(0, 1);
-    requestAnimationFrame(function() {
-      window.scrollTo(0, 0);
-      document.documentElement.style.overflow = '';
-      document.documentElement.style.height = '';
-    });
-  }, { passive: true });
-})();
 
 // Offline / online banner
 (function() {

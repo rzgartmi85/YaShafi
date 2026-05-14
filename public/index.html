@@ -3006,6 +3006,14 @@ function clearUserData() {
   bookmarkGroups.length = 0;
   BUILTIN_GROUPS.forEach(g => bookmarkGroups.push(Object.assign({}, g)));
   nextGroupId = 100;
+  // Reset Ders — clear in-memory store and close editor if open
+  dersStore = [];
+  nextDersId = 1;
+  activeDersId = null;
+  const dersPage = document.getElementById('ders-editor-page');
+  if (dersPage && dersPage.classList.contains('active')) {
+    dersPage.classList.remove('active');
+  }
   // Re-render
   if (typeof renderList === 'function') renderList();
   if (typeof renderBookmarksPanel === 'function') renderBookmarksPanel();

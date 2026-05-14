@@ -2643,6 +2643,7 @@ function showToast(msg, duration = 2500) {
 async function loadUserData(uid) {
   showToast('Loading your data…', 4000);
   try {
+    await loadPrefsFromFirestore(uid);
     const uRef = db.collection('users').doc(uid);
 
     // ── Bookmarks ──
@@ -2660,13 +2661,12 @@ async function loadUserData(uid) {
 
     // ── Bookmark groups ──
     const grpSnap = await uRef.collection('bookmarkGroups').get();
-    // Keep built-ins, replace non-built-ins with Firestore data
     bookmarkGroups.length = 0;
     BUILTIN_GROUPS.forEach(g => bookmarkGroups.push({ ...g }));
     nextGroupId = 100;
     grpSnap.forEach(doc => {
       const g = doc.data();
-      if (g.builtIn) return; // skip – we already have built-ins
+      if (g.builtIn) return;
       if (!bookmarkGroups.find(x => x.id === g.id)) bookmarkGroups.push(g);
       const num = parseInt(String(g.id).replace(/\D/g, ''));
       if (!isNaN(num) && num >= nextGroupId) nextGroupId = num + 1;
@@ -2685,9 +2685,18 @@ async function loadUserData(uid) {
       reflectionsStore[rid].push({ id: r.id, text: r.text, type: r.type, scope: r.scope, rowNum: r.rowNum });
     });
 
+    // ── Ders ──
+    const dersSnap = await uRef.collection('ders').orderBy('updatedAt', 'desc').get();
+    dersStore = [];
+    nextDersId = 1;
+    dersSnap.forEach(doc => {
+      const d = doc.data();
+      if (typeof d.id === 'number' && d.id >= nextDersId) nextDersId = d.id + 1;
+      dersStore.push(d);
+    });
+
     showToast('Data loaded ✓', 1800);
 
-    // Re-render affected UI
     renderList();
     const sbRight = document.getElementById('sb-right');
     const isOpen = mob() ? sbRight.classList.contains('mob-open') : !sbRight.classList.contains('collapsed');
@@ -2706,6 +2715,8 @@ function clearUserData() {
   Object.keys(reflectionsStore).forEach(k => delete reflectionsStore[k]);
   bookmarkGroups.length = 0;
   BUILTIN_GROUPS.forEach(g => bookmarkGroups.push({ ...g }));
+  dersStore = [];
+  nextDersId = 1;
   renderList();
   const sbRight = document.getElementById('sb-right');
   const isOpen = sbRight && (mob() ? sbRight.classList.contains('mob-open') : !sbRight.classList.contains('collapsed'));
@@ -2904,9 +2915,80 @@ function applyTheme(mode) {
 function setThemeMode(mode) {
   localStorage.setItem(THEME_KEY, mode);
   applyTheme(mode);
+  savePrefsToFirestore();
 }
 
 function toggleTheme() { /* legacy — no-op, buttons used instead */ }
+
+/* ── PREFERENCES PERSISTENCE ── */
+
+function savePrefsToFirestore() {
+  if (!currentUser) return;
+  const prefsDoc = {
+    theme: localStorage.getItem(THEME_KEY) || 'system',
+    vis: { ...vis },
+    view,
+    typoState: JSON.parse(JSON.stringify(
+      Object.fromEntries(Object.entries(typoState).map(([k, v]) => [k, { font: v.font, size: v.size }]))
+    )),
+    visitHistory: loadVisitHistory()
+  };
+  db.collection('users').doc(currentUser.uid).collection('prefs').doc('settings').set(prefsDoc)
+    .catch(e => console.warn('Firestore prefs write failed:', e));
+}
+
+async function loadPrefsFromFirestore(uid) {
+  try {
+    const doc = await db.collection('users').doc(uid).collection('prefs').doc('settings').get();
+    if (!doc.exists) return;
+    const p = doc.data();
+
+    // Theme
+    if (p.theme) {
+      localStorage.setItem(THEME_KEY, p.theme);
+      applyTheme(p.theme);
+    }
+
+    // Column visibility
+    if (p.vis && typeof p.vis === 'object') {
+      Object.assign(vis, p.vis);
+      // Sync checkboxes
+      Object.entries(vis).forEach(([col, on]) => {
+        const sw = document.getElementById('sw-' + col.replace('col-', ''));
+        if (sw) sw.checked = on;
+      });
+    }
+
+    // View mode
+    if (p.view) {
+      view = p.view;
+      const vsS = document.getElementById('vs-side');
+      const vsT = document.getElementById('vs-stack');
+      if (vsS) vsS.classList.toggle('active', p.view === 'side');
+      if (vsT) vsT.classList.toggle('active', p.view === 'stack');
+    }
+
+    // Typography
+    if (p.typoState && typeof p.typoState === 'object') {
+      Object.entries(p.typoState).forEach(([key, val]) => {
+        if (typoState[key]) {
+          if (val.font) typoState[key].font = val.font;
+          if (typeof val.size === 'number') typoState[key].size = val.size;
+        }
+      });
+      applyAllTypo();
+    }
+
+    // Visit history
+    if (Array.isArray(p.visitHistory)) {
+      try { localStorage.setItem(VISIT_HISTORY_KEY, JSON.stringify(p.visitHistory)); } catch(e) {}
+    }
+
+    render();
+  } catch(e) {
+    console.warn('loadPrefsFromFirestore error:', e);
+  }
+}
 
 function initTheme() {
   const saved = localStorage.getItem(THEME_KEY) || 'system';
@@ -3081,7 +3163,6 @@ function addReflection(text,type,scope,rowNum){
   }
   // Auto-assign the bookmark (if any) for this risale+row to the Reflections singleton group
   assignBookmarkToReflectionsGroup(rid, scope === 'row' ? rowNum : null);
-  // Persist to Firestore
   if (currentUser) {
     const r = cur();
     const fsObj = { ...refObj, risaleId: rid, risalahName: r ? r.name : '' };
@@ -3678,6 +3759,7 @@ function setView(v){
   document.getElementById('vs-side').classList.toggle('active',v==='side');
   document.getElementById('vs-stack').classList.toggle('active',v==='stack');
   render();
+  savePrefsToFirestore();
 }
 
 function toggleFlow(on){
@@ -3686,7 +3768,7 @@ function toggleFlow(on){
 }
 
 /* ── COLUMNS ── */
-function toggleCol(col,on){ vis[col]=on; render(); }
+function toggleCol(col,on){ vis[col]=on; render(); savePrefsToFirestore(); }
 
 /* ── RENDER ── */
 function render(){
@@ -4808,6 +4890,7 @@ function loadVisitHistory() {
 }
 function saveVisitHistory(hist) {
   try { localStorage.setItem(VISIT_HISTORY_KEY, JSON.stringify(hist)); } catch(e) {}
+  savePrefsToFirestore();
 }
 
 function trackRecentRisale(id) {
@@ -5628,6 +5711,7 @@ function setTypoFont(key, font) {
   typoState[key].font = font;
   applyTypoCol(key);
   updateTypoGroupHeader(key);
+  savePrefsToFirestore();
 }
 
 function setTypoSize(key, delta) {
@@ -5640,6 +5724,7 @@ function setTypoSize(key, delta) {
   // update displayed size value in stepper
   const valEl = document.getElementById(`typo-size-val-${key}`);
   if (valEl) valEl.textContent = next + 'px';
+  savePrefsToFirestore();
 }
 
 function updateTypoGroupHeader(key) {
@@ -5874,6 +5959,7 @@ let dersDirty = false;
 const DERS_AS_KEY = 'yh-ders-store-v1';
 
 function dersLoadFromStorage() {
+  // localStorage always loaded as offline fallback / initial state
   try {
     const raw = localStorage.getItem(DERS_AS_KEY);
     if (raw) {
@@ -5881,12 +5967,38 @@ function dersLoadFromStorage() {
       if (parsed.store) { dersStore = parsed.store; nextDersId = parsed.nextId || 1; }
     }
   } catch(e) {}
+  // If signed in, override with Firestore data (async, non-blocking)
+  if (currentUser) {
+    db.collection('users').doc(currentUser.uid).collection('ders')
+      .orderBy('updatedAt', 'desc').get()
+      .then(snap => {
+        if (snap.empty) return;
+        dersStore = [];
+        nextDersId = 1;
+        snap.forEach(doc => {
+          const d = doc.data();
+          if (typeof d.id === 'number' && d.id >= nextDersId) nextDersId = d.id + 1;
+          dersStore.push(d);
+        });
+        if (homeActive) renderHomePage();
+      })
+      .catch(e => console.warn('dersLoadFromStorage Firestore error:', e));
+  }
 }
 
 function dersSaveToStorage() {
+  // Always write to localStorage as offline fallback
   try {
     localStorage.setItem(DERS_AS_KEY, JSON.stringify({ store: dersStore, nextId: nextDersId }));
   } catch(e) {}
+  // If signed in, also write the active ders document to Firestore
+  if (currentUser && activeDersId != null) {
+    const activeDers = dersStore.find(d => d.id === activeDersId);
+    if (activeDers) {
+      db.collection('users').doc(currentUser.uid).collection('ders').doc(String(activeDersId)).set(activeDers)
+        .catch(e => console.warn('Firestore ders write failed:', e));
+    }
+  }
 }
 
 dersLoadFromStorage();
@@ -6024,6 +6136,10 @@ function newDers() {
   };
   dersStore.unshift(ders);
   dersSaveToStorage();
+  if (currentUser) {
+    db.collection('users').doc(currentUser.uid).collection('ders').doc(String(ders.id)).set(ders)
+      .catch(e => console.warn('Firestore newDers write failed:', e));
+  }
   openDersEditor(ders.id);
 }
 
@@ -6033,6 +6149,10 @@ function deleteDers(id) {
   dersStore = dersStore.filter(d => d.id !== id);
   nextDersId = dersStore.length ? Math.max(...dersStore.map(d => d.id)) + 1 : 1;
   dersSaveToStorage();
+  if (currentUser) {
+    db.collection('users').doc(currentUser.uid).collection('ders').doc(String(id)).delete()
+      .catch(e => console.warn('Firestore deleteDers failed:', e));
+  }
   if (homeActive) renderHomePage();
 }
 

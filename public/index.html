@@ -3064,6 +3064,8 @@ function savePrefsToFirestore() {
     theme: localStorage.getItem(THEME_KEY) || 'system',
     vis: Object.assign({}, vis),
     view: view,
+    activeId: activeId,
+    activeBookId: activeBookId,
     typoState: JSON.parse(JSON.stringify(
       Object.fromEntries(Object.entries(typoState).map(([k, v]) => [k, { font: v.font, size: v.size }]))
     )),
@@ -3104,6 +3106,10 @@ async function loadPrefsFromFirestore(uid) {
       if (btnSide)  btnSide.classList.toggle('active', view === 'side');
       if (btnStack) btnStack.classList.toggle('active', view === 'stack');
     }
+
+    // Last active risale
+    if (prefs.activeId != null)     activeId     = prefs.activeId;
+    if (prefs.activeBookId != null) activeBookId = prefs.activeBookId;
 
     // Typography
     if (prefs.typoState && typeof prefs.typoState === 'object') {
@@ -4109,6 +4115,7 @@ function selectRisale(id){
   trackRecentRisale(id);
   if(homeActive) hideHomePage();
   renderRisaleList(); render();
+  savePrefsToFirestore();
   if(mob()) closeAll();
 }
 
@@ -4195,7 +4202,7 @@ function renderTable(rows){
     const isParaBreak = !row.ot && !row.mt && !row.v1 && !row.v2;
     if(isParaBreak){
       const tr=document.createElement('tr'); tr.className='para-break-row';
-      const colCount=Object.values(vis).filter(Boolean).length+1;
+      const colCount=Object.values(vis).filter(Boolean).length+2;
       const td=document.createElement('td'); td.colSpan=colCount;
       td.innerHTML=`<div class="para-break-cell">¶ paragraph break</div>`;
       tr.appendChild(td); tb.appendChild(tr);
@@ -4258,7 +4265,7 @@ function renderStacked(rows){
     if(!ac.length){d.innerHTML+='<div style="padding:8px 12px;color:var(--text-faint);font-size:0.76rem;">No columns visible</div>';}
     else{
       const cells=document.createElement('div'); cells.className='s-cells';
-      cells.style.gridTemplateColumns=`repeat(${Math.min(ac.length,4)},1fr)`;
+      cells.style.gridTemplateColumns=`1fr`;
       ac.forEach(col=>{
         const c=document.createElement('div');
         c.className=`s-cell ${col}${COL_RTL[col]?' rtl-cell':''}`;
@@ -4291,10 +4298,10 @@ function renderFlowSide(rows){
       else cur.push(r);
     });
     if(cur.length) paragraphs.push(cur);
-    const text=paragraphs.map(p=>AR(p.map(r=>r[COL_KEYS[col]]).filter(Boolean).join(' '))).filter(Boolean).join('<br><br>');
+    const text=paragraphs.map(p=>p.map(r=>r[COL_KEYS[col]]).filter(Boolean).join(' ')).filter(Boolean).join('<br><br>');
     const colDiv=document.createElement('div');
     colDiv.className=`flow-col ${col}${COL_RTL[col]?' rtl-cell':''}`;
-    colDiv.innerHTML=`<div class="flow-col-lbl">${COL_LABELS[col]}</div>${text}`;
+    colDiv.innerHTML=`<div class="flow-col-lbl">${COL_LABELS[col]}</div>${AR(text)}`;
     wrap.appendChild(colDiv);
   });
   el.appendChild(wrap);
@@ -4319,10 +4326,10 @@ function renderFlowStack(rows){
       else cur.push(r);
     });
     if(cur.length) paragraphs.push(cur);
-    const text=paragraphs.map(p=>AR(p.map(r=>r[COL_KEYS[col]]).filter(Boolean).join(' '))).filter(Boolean).join('<br><br>');
+    const text=paragraphs.map(p=>p.map(r=>r[COL_KEYS[col]]).filter(Boolean).join(' ')).filter(Boolean).join('<br><br>');
     const colDiv=document.createElement('div');
     colDiv.className=`flow-stack-col ${col}${COL_RTL[col]?' rtl-cell':''}`;
-    colDiv.innerHTML=`<div class="flow-col-lbl">${COL_LABELS[col]}</div>${text}`;
+    colDiv.innerHTML=`<div class="flow-col-lbl">${COL_LABELS[col]}</div>${AR(text)}`;
     el.appendChild(colDiv);
   });
 }

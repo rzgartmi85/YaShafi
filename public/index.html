@@ -31,8 +31,9 @@
   --danger:#a04040; --warn:#9a7010;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;overflow:hidden;}
-body{background:var(--bg);color:var(--text);font-family:'Spectral',Georgia,serif;display:flex;flex-direction:column;}
+html{height:100%;/* allow document-level scroll so mobile browsers can hide their address bar */}
+body{height:100dvh;/* dvh = dynamic viewport height, shrinks when address bar hides */overflow:hidden;background:var(--bg);color:var(--text);font-family:'Spectral',Georgia,serif;display:flex;flex-direction:column;}
+@supports not (height:100dvh){body{height:100vh;}}
 
 /* ── TOPBAR ── */
 #topbar{height:var(--topbar-h);min-height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;z-index:200;flex-shrink:0;}
@@ -5628,9 +5629,9 @@ function buildCardPrefPop(prefKey, card) {
     pop.appendChild(sep);
 
     const applyAllBtn = document.createElement('button');
-    applyAllBtn.style.cssText = 'width:100%;background:none;border:1px dashed var(--border);color:var(--text-dim);font-family:'Spectral',serif;font-size:0.68rem;padding:5px 8px;border-radius:5px;cursor:pointer;transition:all .15s;text-align:center;letter-spacing:.04em;';
+    applyAllBtn.style.cssText = "width:100%;background:none;border:1px dashed var(--border);color:var(--text-dim);font-family:'Spectral',serif;font-size:0.68rem;padding:5px 8px;border-radius:5px;cursor:pointer;transition:all .15s;text-align:center;letter-spacing:.04em;";
     applyAllBtn.textContent = 'Apply to all cards';
-    applyAllBtn.title = 'Use this card's language settings for every card in the slider';
+    applyAllBtn.title = "Use this card's language settings for every card in the slider";
     applyAllBtn.addEventListener('mouseenter', () => { applyAllBtn.style.borderColor = 'var(--accent2)'; applyAllBtn.style.color = 'var(--accent2)'; });
     applyAllBtn.addEventListener('mouseleave', () => { applyAllBtn.style.borderColor = 'var(--border)'; applyAllBtn.style.color = 'var(--text-dim)'; });
     applyAllBtn.addEventListener('click', e => {
@@ -6274,6 +6275,29 @@ function addDropdownKeyboardNav(dotsBtn, dd) {
 /* ── INIT ── */
 // Anonymous auth on load — give every visitor a persistent UID before loading books
 ensureAnonymousAuth();
+
+// ── MOBILE ADDRESS-BAR COLLAPSE ──
+// On the first touch, momentarily allow the document to scroll 1 px then restore.
+// This satisfies mobile browsers (Safari, Chrome) that only hide the address bar
+// in response to a document-level scroll event.
+(function() {
+  if (!('ontouchstart' in window)) return; // desktop — nothing to do
+  var triggered = false;
+  document.addEventListener('touchstart', function nudge() {
+    if (triggered) return;
+    triggered = true;
+    document.removeEventListener('touchstart', nudge);
+    // Temporarily allow document scroll
+    document.documentElement.style.overflow = 'auto';
+    document.documentElement.style.height = 'auto';
+    window.scrollTo(0, 1);
+    requestAnimationFrame(function() {
+      window.scrollTo(0, 0);
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.height = '';
+    });
+  }, { passive: true });
+})();
 
 // Offline / online banner
 (function() {

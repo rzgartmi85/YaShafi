@@ -4385,6 +4385,11 @@ function doImport(mode){
     if(mode==='replace') r.rows=clean; else r.rows=[...r.rows,...clean];
     setFb('imp-fb','ok',`✓ ${clean.length} rows ${mode==='replace'?'replaced':'appended'}.`);
     render();
+    // Persist to Firestore
+    const b=books.find(bk=>bk.risales.find(x=>x.id===activeId));
+    if(b && db){
+      db.collection('books').doc(String(b.id)).collection('risales').doc(String(activeId)).update({ rows: r.rows }).catch(console.error);
+    }
   }catch(e){ setFb('imp-fb','err','✗ '+e.message); }
 }
 function openImportAll(){
@@ -4415,6 +4420,19 @@ function doImportAll(){
     setFb('imp-all-fb','ok',`✓ ${books.length} Books imported.`);
     navToBookList();
     if(firstR) { navToRisaleList(activeBookId); selectRisale(activeId); }
+    // Persist all books to Firestore using a batch write
+    if(db){
+      const batch=db.batch();
+      books.forEach((book,bIdx)=>{
+        const bookRef=db.collection('books').doc(String(book.id));
+        batch.set(bookRef,{name:book.name,order:bIdx,createdAt:Date.now()});
+        book.risales.forEach((risale,rIdx)=>{
+          const risaleRef=bookRef.collection('risales').doc(String(risale.id));
+          batch.set(risaleRef,{name:risale.name,order:rIdx,bookmarked:!!risale.bookmarked,rows:risale.rows,createdAt:Date.now()});
+        });
+      });
+      batch.commit().catch(console.error);
+    }
   }catch(e){ setFb('imp-all-fb','err','✗ '+e.message); }
 }
 function setFb(id,cls,msg){

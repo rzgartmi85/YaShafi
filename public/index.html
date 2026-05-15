@@ -4287,13 +4287,12 @@ function getRowsForPage(rows, pgVal) {
 
 function updatePageNav() {
   const bar = document.getElementById('pm-progress-bar');
-  if (bar) bar.style.width = '0%';
-
+  if (!bar) return;
   if (pageMode === 'continuous') {
-    updateScrollProgress();
+    bar.style.width = '0%';
     return;
   }
-
+  // ── PAGE MODE ──
   const total = pageList.length;
   const label = document.getElementById('pm-label');
   const prev  = document.getElementById('pm-prev');
@@ -4301,17 +4300,16 @@ function updatePageNav() {
   if (!label || !prev || !next) return;
   if (total === 0) {
     label.textContent = 'No pages';
+    bar.style.width = '0%';
     prev.disabled = true; next.disabled = true;
     return;
   }
   label.textContent = `Page ${currentPageIdx + 1} of ${total}`;
   prev.disabled = currentPageIdx === 0;
   next.disabled = currentPageIdx === total - 1;
-
-  if (!bar) return;
+  // ── SENTENCE-BASED PROGRESS (Phase 3) ──
   const r = cur();
-  if (!r || !r.rows || r.rows.length === 0) return;
-
+  if (!r || !r.rows || r.rows.length === 0) { bar.style.width = '0%'; return; }
   const pagesUpToNow = new Set(pageList.slice(0, currentPageIdx + 1));
   let rowsSeen = 0;
   let lastKnownPg = null;
@@ -4358,7 +4356,7 @@ function render(){
   // Clamp currentPageIdx in case data changed
   if (pageList.length > 0) currentPageIdx = Math.max(0, Math.min(pageList.length - 1, currentPageIdx));
   else currentPageIdx = 0;
-  updatePageNav(); // handles page mode progress + triggers updateScrollProgress for continuous mode
+  updatePageNav();
 
   document.getElementById('topbar-title').innerHTML=`${AR(r.name)} <span>${r.rows.length} rows</span>`;
 
@@ -4390,7 +4388,6 @@ function render(){
     }
   }
   applyAllTypo();
-  // In continuous mode, update scroll progress after layout is painted
   if (pageMode === 'continuous') requestAnimationFrame(updateScrollProgress);
 }
 
@@ -4412,7 +4409,7 @@ function renderTable(rows){
     const pgBadge = (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt)
       ? `<span class="pg-badge">p.${row.pgOt}</span>` : '';
     if (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt) {
-      const colCount = 1 + DATA_COLS.length + 1; // col-num + all data cols + col-action (always 6, matches actual DOM)
+      const colCount = Object.keys(vis).length + 1; // all vis cols (5) + col-action = always 6
       const dividerTr=document.createElement('tr'); dividerTr.className='pg-divider-row';
       const dividerTd=document.createElement('td'); dividerTd.colSpan=colCount;
       dividerTd.innerHTML=`<div class="pg-divider"><div class="pg-divider-line"></div><span class="pg-divider-label">Page ${row.pgOt}</span><div class="pg-divider-line"></div></div>`;

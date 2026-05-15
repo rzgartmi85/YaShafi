@@ -4301,7 +4301,7 @@ function updatePageNav() {
       return;
     }
     label.textContent = `Page ${currentPageIdx + 1} of ${total}`;
-    // Sentence-based progress: count rows seen up to and including current page
+    // Sentence-based progress: count rows belonging to pages up to and including current page
     const r = cur();
     if (r && r.rows) {
       const pagesUpToNow = new Set(pageList.slice(0, currentPageIdx + 1));
@@ -4323,7 +4323,6 @@ function updateScrollProgress() {
   if (pageMode !== 'continuous') return;
   const bar = document.getElementById('pm-progress-bar');
   if (!bar) return;
-  // Use #main if it is actually scrolling, otherwise fall back to document.documentElement
   const mainEl = document.getElementById('main');
   const el = (mainEl && mainEl.scrollHeight > mainEl.clientHeight + 1) ? mainEl : document.documentElement;
   const scrollable = el.scrollHeight - el.clientHeight;
@@ -4403,7 +4402,7 @@ function renderTable(rows){
     const pgBadge = (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt)
       ? `<span class="pg-badge">p.${row.pgOt}</span>` : '';
     if (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt) {
-      const colCount = Object.keys(vis).length + 1; // all cols (5 vis keys + col-action = 6)
+      const colCount = Object.values(vis).filter(Boolean).length + 1; // visible cols + action col
       const dividerTr=document.createElement('tr'); dividerTr.className='pg-divider-row';
       const dividerTd=document.createElement('td'); dividerTd.colSpan=colCount;
       dividerTd.innerHTML=`<div class="pg-divider"><div class="pg-divider-line"></div><span class="pg-divider-label">Page ${row.pgOt}</span><div class="pg-divider-line"></div></div>`;
@@ -5419,10 +5418,7 @@ document.getElementById('main').addEventListener('scroll', () => {
   }
   updateScrollProgress();
 }, { passive: true });
-// Fallback: also listen on window in case #main is not the scroll container
-window.addEventListener('scroll', () => {
-  updateScrollProgress();
-}, { passive: true });
+window.addEventListener('scroll', () => { updateScrollProgress(); }, { passive: true });
 window.addEventListener('resize', () => {
   if (pillState.visible && pillState.anchorEl) {
     requestAnimationFrame(() => positionPill(pillState.anchorEl));

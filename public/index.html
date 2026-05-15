@@ -4287,53 +4287,45 @@ function getRowsForPage(rows, pgVal) {
 
 function updatePageNav() {
   const bar = document.getElementById('pm-progress-bar');
-  if (!bar) return;
-  if (pageMode === 'page') {
-    const total = pageList.length;
-    const label = document.getElementById('pm-label');
-    const prev  = document.getElementById('pm-prev');
-    const next  = document.getElementById('pm-next');
-    if (!label || !prev || !next) return;
-    if (total === 0) {
-      label.textContent = 'No pages';
-      bar.style.width = '0%';
-      prev.disabled = true; next.disabled = true;
-      return;
-    }
-    label.textContent = `Page ${currentPageIdx + 1} of ${total}`;
-    // Sentence-based progress: count rows seen up to and including current page
-    const r = cur();
-    if (r && r.rows) {
-      const currentPg = pageList[currentPageIdx];
-      let seen = 0, total_rows = r.rows.length;
-      let counting = true;
-      for (let i = 0; i < r.rows.length; i++) {
-        const rPg = (r.rows[i].pgOt != null && r.rows[i].pgOt !== '') ? String(r.rows[i].pgOt) : null;
-        if (rPg === currentPg || (rPg === null)) seen++;
-        // Stop after we've passed all rows of the current page
-        if (rPg !== null && rPg !== currentPg && seen > 0) break;
-      }
-      // Simpler approach: count all rows up to end of current page
-      let rowsSeen = 0;
-      let lastKnown = null;
-      for (let i = 0; i < r.rows.length; i++) {
-        const rPg = (r.rows[i].pgOt != null && r.rows[i].pgOt !== '') ? String(r.rows[i].pgOt) : null;
-        if (rPg !== null) lastKnown = rPg;
-        const eff = rPg !== null ? rPg : lastKnown;
-        rowsSeen++;
-        if (eff === currentPg) {
-          // Check if next row starts a new page
-          const nextRow = r.rows[i + 1];
-          const nextPg = nextRow && nextRow.pgOt != null && nextRow.pgOt !== '' ? String(nextRow.pgOt) : null;
-          if (nextPg !== null && nextPg !== currentPg) break;
-          if (!nextRow) break;
-        }
-      }
-      bar.style.width = total_rows > 0 ? (rowsSeen / total_rows * 100) + '%' : '0%';
-    }
-    prev.disabled = currentPageIdx === 0;
-    next.disabled = currentPageIdx === total - 1;
+  if (bar) bar.style.width = '0%';
+
+  if (pageMode === 'continuous') {
+    updateScrollProgress();
+    return;
   }
+
+  const total = pageList.length;
+  const label = document.getElementById('pm-label');
+  const prev  = document.getElementById('pm-prev');
+  const next  = document.getElementById('pm-next');
+  if (!label || !prev || !next) return;
+  if (total === 0) {
+    label.textContent = 'No pages';
+    prev.disabled = true; next.disabled = true;
+    return;
+  }
+  label.textContent = `Page ${currentPageIdx + 1} of ${total}`;
+  prev.disabled = currentPageIdx === 0;
+  next.disabled = currentPageIdx === total - 1;
+
+  if (!bar) return;
+  const r = cur();
+  if (!r || !r.rows || r.rows.length === 0) return;
+
+  const pagesUpToNow = new Set(pageList.slice(0, currentPageIdx + 1));
+  let rowsSeen = 0;
+  let lastKnownPg = null;
+  for (let i = 0; i < r.rows.length; i++) {
+    const rPg = (r.rows[i].pgOt != null && r.rows[i].pgOt !== '') ? String(r.rows[i].pgOt) : null;
+    if (rPg !== null) lastKnownPg = rPg;
+    const effectivePg = rPg !== null ? rPg : lastKnownPg;
+    if (effectivePg === null || pagesUpToNow.has(effectivePg)) {
+      rowsSeen++;
+    } else {
+      break;
+    }
+  }
+  bar.style.width = (rowsSeen / r.rows.length * 100) + '%';
 }
 
 function updateScrollProgress() {
@@ -4341,6 +4333,7 @@ function updateScrollProgress() {
   const bar = document.getElementById('pm-progress-bar');
   if (!bar) return;
   const el = document.getElementById('main');
+  if (!el) return;
   const scrollable = el.scrollHeight - el.clientHeight;
   const pct = scrollable > 0 ? (el.scrollTop / scrollable * 100) : 0;
   bar.style.width = pct + '%';
@@ -4365,8 +4358,7 @@ function render(){
   // Clamp currentPageIdx in case data changed
   if (pageList.length > 0) currentPageIdx = Math.max(0, Math.min(pageList.length - 1, currentPageIdx));
   else currentPageIdx = 0;
-  updatePageNav();
-  updateScrollProgress();
+  updatePageNav(); // handles page mode progress + triggers updateScrollProgress for continuous mode
 
   document.getElementById('topbar-title').innerHTML=`${AR(r.name)} <span>${r.rows.length} rows</span>`;
 
@@ -4398,6 +4390,8 @@ function render(){
     }
   }
   applyAllTypo();
+  // In continuous mode, update scroll progress after layout is painted
+  if (pageMode === 'continuous') requestAnimationFrame(updateScrollProgress);
 }
 
 function renderTable(rows){
@@ -4418,7 +4412,7 @@ function renderTable(rows){
     const pgBadge = (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt)
       ? `<span class="pg-badge">p.${row.pgOt}</span>` : '';
     if (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt) {
-      const colCount = Object.values(vis).filter(Boolean).length + 2; // visible cols + action
+      const colCount = 1 + DATA_COLS.length + 1; // col-num + all data cols + col-action (always 6, matches actual DOM)
       const dividerTr=document.createElement('tr'); dividerTr.className='pg-divider-row';
       const dividerTd=document.createElement('td'); dividerTd.colSpan=colCount;
       dividerTd.innerHTML=`<div class="pg-divider"><div class="pg-divider-line"></div><span class="pg-divider-label">Page ${row.pgOt}</span><div class="pg-divider-line"></div></div>`;

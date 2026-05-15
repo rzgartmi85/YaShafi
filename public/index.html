@@ -1605,7 +1605,7 @@ tr.row-bookmarked {
   overflow-y: auto;
   padding: 32px 42px 80px;
 }
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   #ders-canvas { padding: 20px 22px 80px; }
 }
 
@@ -1958,7 +1958,7 @@ tr.row-bookmarked {
 .tb-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ── RESPONSIVE ── */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   :root { --sidebar-w: 260px; }
   .sidebar {
     position: fixed;
@@ -2307,7 +2307,7 @@ tr.row-bookmarked {
   </div>
 
   <!-- Mobile overlay -->
-  <div class="mob-ov" id="mob-ov" onclick="closeAll()"></div>
+  <div class="mob-ov" id="mob-ov"></div>
 
   <!-- HOME PAGE -->
   <div id="home-page">
@@ -2367,6 +2367,24 @@ tr.row-bookmarked {
             <label class="sw"><input type="checkbox" id="sw-flow" onchange="toggleFlow(this.checked)"><div class="sw-t"></div></label>
           </div>
           <div style="font-size:0.66rem;color:var(--text-faint);margin-top:4px;line-height:1.5;">Merges all rows into one continuous text per column.</div>
+        </div>
+
+        <div class="ss" id="ss-page-mode">
+          <div class="ss-label">Pagination</div>
+          <div class="vseg" style="margin-bottom:6px;">
+            <button id="pm-continuous" class="active" onclick="setPageMode('continuous')">Continuous</button>
+            <button id="pm-page" onclick="setPageMode('page')">Page</button>
+          </div>
+          <div id="pm-page-nav" style="display:none;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
+              <button class="ie-btn" id="pm-prev" onclick="pageNav(-1)" style="flex:1;justify-content:center;">← Prev</button>
+              <span id="pm-label" style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap;text-align:center;min-width:60px;"></span>
+              <button class="ie-btn" id="pm-next" onclick="pageNav(1)" style="flex:1;justify-content:center;">Next →</button>
+            </div>
+            <div id="pm-progress-wrap" style="height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;">
+              <div id="pm-progress-bar" style="height:100%;background:var(--accent);border-radius:2px;transition:width .25s;width:0%;"></div>
+            </div>
+          </div>
         </div>
 
         <div class="ss">
@@ -3095,6 +3113,7 @@ function savePrefsToFirestore() {
     vis: Object.assign({}, vis),
     showPages: showPages,
     view: view,
+    pageMode: pageMode,
     activeId: activeId,
     activeBookId: activeBookId,
     typoState: JSON.parse(JSON.stringify(
@@ -3153,6 +3172,17 @@ async function loadPrefsFromFirestore(uid) {
       const cb = document.getElementById('sw-pages');
       if (cb) cb.checked = showPages;
       document.getElementById('main').classList.toggle('hide-pages', !showPages);
+    }
+
+    // Page mode
+    if (prefs.pageMode) {
+      pageMode = prefs.pageMode;
+      const btnC = document.getElementById('pm-continuous');
+      const btnP = document.getElementById('pm-page');
+      if (btnC) btnC.classList.toggle('active', pageMode === 'continuous');
+      if (btnP) btnP.classList.toggle('active', pageMode === 'page');
+      const nav = document.getElementById('pm-page-nav');
+      if (nav) nav.style.display = pageMode === 'page' ? '' : 'none';
     }
 
     // Last active risale
@@ -3382,6 +3412,9 @@ let vis = {'col-num':true,'col-ot':false,'col-mt':false,'col-v1':true,'col-v2':f
 let showPages = true;
 let view = 'side';
 let flowMode = false;
+let pageMode = 'continuous'; // 'continuous' | 'page'
+let currentPageIdx = 0;      // 0-based index into pageList
+let pageList = [];           // array of distinct pgOt values (strings), in order of first appearance
 let dark = true; // runtime bool — true=dark, false=light
 const COL_LABELS = {'col-ot':'Ottoman','col-mt':'Modern TR','col-v1':'Kurdish (Literal)','col-v2':'Kurdish (Free)'};
 const COL_RTL    = {'col-ot':true,'col-mt':false,'col-v1':true,'col-v2':true};
@@ -3438,7 +3471,7 @@ function initTheme() {
 }
 
 /* ── SIDEBARS ── */
-const mob = ()=>window.innerWidth<=900;
+const mob = ()=>window.innerWidth<=1024;
 
 /* ── TOPBAR ICON SYNC (swap to × when sidebar is open) ── */
 const TB_ICONS = { 'btn-bk': '🔖', 'btn-reflect': '📝', 'btn-tr': '⚙', 'btn-tl': '☰' };
@@ -4201,6 +4234,64 @@ function toggleFlow(on){
   render();
 }
 
+function setPageMode(mode) {
+  pageMode = mode;
+  currentPageIdx = 0;
+  document.getElementById('pm-continuous').classList.toggle('active', mode === 'continuous');
+  document.getElementById('pm-page').classList.toggle('active', mode === 'page');
+  document.getElementById('pm-page-nav').style.display = mode === 'page' ? '' : 'none';
+  render();
+  savePrefsToFirestore();
+}
+
+function buildPageList(rows) {
+  const seen = new Set();
+  const list = [];
+  rows.forEach(r => {
+    if (r.pgOt != null && r.pgOt !== '' && !seen.has(String(r.pgOt))) {
+      seen.add(String(r.pgOt));
+      list.push(String(r.pgOt));
+    }
+  });
+  return list;
+}
+
+function getRowsForPage(rows, pgVal) {
+  const result = [];
+  let lastKnown = null;
+  rows.forEach(r => {
+    const rPg = (r.pgOt != null && r.pgOt !== '') ? String(r.pgOt) : null;
+    if (rPg !== null) lastKnown = rPg;
+    const effectivePg = rPg !== null ? rPg : lastKnown;
+    if (effectivePg === pgVal) result.push(r);
+  });
+  return result;
+}
+
+function updatePageNav() {
+  if (pageMode !== 'page') return;
+  const total = pageList.length;
+  const label = document.getElementById('pm-label');
+  const bar   = document.getElementById('pm-progress-bar');
+  const prev  = document.getElementById('pm-prev');
+  const next  = document.getElementById('pm-next');
+  if (total === 0) {
+    label.textContent = 'No pages';
+    bar.style.width = '0%';
+    prev.disabled = true; next.disabled = true;
+    return;
+  }
+  label.textContent = `Page ${currentPageIdx + 1} of ${total}`;
+  bar.style.width = ((currentPageIdx + 1) / total * 100) + '%';
+  prev.disabled = currentPageIdx === 0;
+  next.disabled = currentPageIdx === total - 1;
+}
+
+function pageNav(dir) {
+  currentPageIdx = Math.max(0, Math.min(pageList.length - 1, currentPageIdx + dir));
+  render();
+}
+
 /* ── COLUMNS ── */
 function toggleCol(col,on){ vis[col]=on; render(); savePrefsToFirestore(); }
 function togglePages(on){ showPages=on; document.getElementById('main').classList.toggle('hide-pages',!on); savePrefsToFirestore(); }
@@ -4209,6 +4300,14 @@ function togglePages(on){ showPages=on; document.getElementById('main').classLis
 function render(){
   closePill(); // pill must close since DOM is rebuilt
   const r=cur(); if(!r) return;
+
+  // Rebuild page list whenever render() is called
+  pageList = buildPageList(r.rows);
+  // Clamp currentPageIdx in case data changed
+  if (pageList.length > 0) currentPageIdx = Math.max(0, Math.min(pageList.length - 1, currentPageIdx));
+  else currentPageIdx = 0;
+  updatePageNav();
+
   document.getElementById('topbar-title').innerHTML=`${AR(r.name)} <span>${r.rows.length} rows</span>`;
 
   // hide all views
@@ -4217,21 +4316,25 @@ function render(){
   document.getElementById('flow-side-view').style.display='none';
   document.getElementById('flow-stack-view').style.display='none';
 
+  const activeRows = (pageMode === 'page' && pageList.length > 0)
+    ? getRowsForPage(r.rows, pageList[currentPageIdx])
+    : r.rows;
+
   if(!flowMode){
     if(view==='side'){
       document.getElementById('side-view').style.display='block';
-      renderTable(r.rows);
+      renderTable(activeRows);
     } else {
       document.getElementById('stack-view').style.display='block';
-      renderStacked(r.rows);
+      renderStacked(activeRows);
     }
   } else {
     if(view==='side'){
       document.getElementById('flow-side-view').style.display='block';
-      renderFlowSide(r.rows);
+      renderFlowSide(activeRows);
     } else {
       document.getElementById('flow-stack-view').style.display='block';
-      renderFlowStack(r.rows);
+      renderFlowStack(activeRows);
     }
   }
   applyAllTypo();
@@ -4249,22 +4352,14 @@ function renderTable(rows){
     return;
   }
   rows.forEach((row,i)=>{
-    // Paragraph break: para number changes from previous content row
-    if(i>0 && row.para != null && rows[i-1].para != null && row.para !== rows[i-1].para){
-      const tr=document.createElement('tr'); tr.className='para-break-row';
-      const colCount=Object.values(vis).filter(Boolean).length+1;
-      const td=document.createElement('td'); td.colSpan=colCount;
-      td.innerHTML=`<div class="para-break-cell">¶ ${row.para}</div>`;
-      tr.appendChild(td); tb.appendChild(tr);
-    }
     const tr=document.createElement('tr');
     if(isRowBookmarked(i)) tr.classList.add('row-bookmarked');
     tr.innerHTML=
-      `<td class="col-num${vis['col-num']?'':' col-hidden'}">${i+1}${row.para!=null?'<br><span class="pg-badge">¶'+row.para+'</span>':''}</td>`+
-      `<td class="col-ot${vis['col-ot']?'':' col-hidden'}">${AR(row.ot)}${row.pgOt?'<span class="pg-badge">p.'+AR(row.pgOt)+'</span>':''}</td>`+
-      `<td class="col-mt${vis['col-mt']?'':' col-hidden'}">${AR(row.mt)}${row.pgMt?'<span class="pg-badge">p.'+AR(row.pgMt)+'</span>':''}</td>`+
-      `<td class="col-v1${vis['col-v1']?'':' col-hidden'}">${AR(row.v1)}${row.pgV1?'<span class="pg-badge">p.'+AR(row.pgV1)+'</span>':''}</td>`+
-      `<td class="col-v2${vis['col-v2']?'':' col-hidden'}">${AR(row.v2)}${row.pgV2?'<span class="pg-badge">p.'+AR(row.pgV2)+'</span>':''}</td>`;
+      `<td class="col-num${vis['col-num']?'':' col-hidden'}">${i+1}</td>`+
+      `<td class="col-ot${vis['col-ot']?'':' col-hidden'}">${AR(row.ot)}</td>`+
+      `<td class="col-mt${vis['col-mt']?'':' col-hidden'}">${AR(row.mt)}</td>`+
+      `<td class="col-v1${vis['col-v1']?'':' col-hidden'}">${AR(row.v1)}</td>`+
+      `<td class="col-v2${vis['col-v2']?'':' col-hidden'}">${AR(row.v2)}</td>`;
     // Action cell
     const actionTd=document.createElement('td');
     actionTd.className='col-action';
@@ -4286,11 +4381,6 @@ function renderStacked(rows){
   }
   const ac=DATA_COLS.filter(c=>vis[c]);
   rows.forEach((row,i)=>{
-    if(i>0 && row.para != null && rows[i-1].para != null && row.para !== rows[i-1].para){
-      const sep=document.createElement('div'); sep.className='s-para-break';
-      sep.textContent=`¶ ${row.para}`;
-      el.appendChild(sep);
-    }
     const d=document.createElement('div'); d.className='s-row';
     if(isRowBookmarked(i)) d.classList.add('row-bookmarked');
     // Bookmark icon
@@ -4313,12 +4403,10 @@ function renderStacked(rows){
     else{
       const cells=document.createElement('div'); cells.className='s-cells';
       cells.style.gridTemplateColumns=`1fr`;
-      const PAGE_KEYS={'col-ot':'pgOt','col-mt':'pgMt','col-v1':'pgV1','col-v2':'pgV2'};
       ac.forEach(col=>{
         const c=document.createElement('div');
         c.className=`s-cell ${col}${COL_RTL[col]?' rtl-cell':''}`;
-        const pgKey=PAGE_KEYS[col]; const pgVal=pgKey&&row[pgKey]?`<span class="pg-badge">p.${AR(row[pgKey])}</span>`:'';
-        c.innerHTML=`<div class="s-lbl">${COL_LABELS[col]}</div>${AR(row[COL_KEYS[col]])}${pgVal}`;
+        c.innerHTML=`<div class="s-lbl">${COL_LABELS[col]}</div>${AR(row[COL_KEYS[col]])}`;
         cells.appendChild(c);
       });
       d.appendChild(cells);
@@ -6469,18 +6557,6 @@ initTheme();
 // After initial data load, maybe show the auth nudge
 // We delay so loadUserData has had a chance to populate stores
 setTimeout(maybeShowAuthPrompt, 3500);
-
-// Click outside right sidebar (desktop) → close it
-['main', 'home-page'].forEach(id => {
-  document.getElementById(id).addEventListener('pointerdown', () => {
-    if (mob()) return;
-    const sb = document.getElementById('sb-right');
-    if (!sb.classList.contains('collapsed')) {
-      sb.classList.add('collapsed');
-      closeAll();
-    }
-  });
-});
 
 // Recalculate slider on resize (breakpoint changes)
 window.addEventListener('resize', () => {

@@ -4463,23 +4463,39 @@ function renderFlowSide(rows){
     el.innerHTML=`<div class="main-empty"><div class="main-empty-icon">👁</div><div class="main-empty-title">No columns visible</div><div class="main-empty-msg">Enable at least one column in the Settings panel.</div></div>`;
     return;
   }
-  const wrap=document.createElement('div'); wrap.className='flow-side-wrap';
-  ac.forEach(col=>{
-    const paragraphs=[]; let cur=[];
-    rows.forEach((r,i)=>{
-      const newPara = i>0 && r.para != null && rows[i-1].para != null && r.para !== rows[i-1].para;
-      if(newPara){ if(cur.length){paragraphs.push(cur); cur=[];} }
-      cur.push(r);
-    });
-    if(cur.length) paragraphs.push(cur);
-    const text=paragraphs.map(p=>p.map(r=>AR(r[COL_KEYS[col]]||'')).filter(Boolean).join(' ')).filter(Boolean).join('<br><br>');
-    if(!text) return;
-    const colDiv=document.createElement('div');
-    colDiv.className=`flow-col ${col}${COL_RTL[col]?' rtl-cell':''}`;
-    colDiv.innerHTML=`<div class="flow-col-lbl">${COL_LABELS[col]}</div>${text}`;
-    wrap.appendChild(colDiv);
+  // Split rows into page sections
+  const sections=[]; // [{pgOt, rows}]
+  let lastPgOt=null;
+  rows.forEach(r=>{
+    const pg=(r.pgOt!=null&&r.pgOt!=='') ? String(r.pgOt) : null;
+    if(pg!==null && pg!==lastPgOt){ sections.push({pgOt:pg,rows:[]}); lastPgOt=pg; }
+    if(sections.length===0) sections.push({pgOt:null,rows:[]});
+    sections[sections.length-1].rows.push(r);
   });
-  el.appendChild(wrap);
+  sections.forEach(sec=>{
+    if(sec.pgOt!==null){
+      const divider=document.createElement('div'); divider.className='pg-divider';
+      divider.innerHTML=`<div class="pg-divider-line"></div><span class="pg-divider-label">Page ${sec.pgOt}</span><div class="pg-divider-line"></div>`;
+      el.appendChild(divider);
+    }
+    const wrap=document.createElement('div'); wrap.className='flow-side-wrap';
+    ac.forEach(col=>{
+      const paragraphs=[]; let cur=[];
+      sec.rows.forEach((r,i)=>{
+        const newPara = i>0 && r.para!=null && sec.rows[i-1].para!=null && r.para!==sec.rows[i-1].para;
+        if(newPara){ if(cur.length){paragraphs.push(cur); cur=[];} }
+        cur.push(r);
+      });
+      if(cur.length) paragraphs.push(cur);
+      const text=paragraphs.map(p=>p.map(r=>AR(r[COL_KEYS[col]]||'')).filter(Boolean).join(' ')).filter(Boolean).join('<br><br>');
+      if(!text) return;
+      const colDiv=document.createElement('div');
+      colDiv.className=`flow-col ${col}${COL_RTL[col]?' rtl-cell':''}`;
+      colDiv.innerHTML=`<div class="flow-col-lbl">${COL_LABELS[col]}</div>${text}`;
+      wrap.appendChild(colDiv);
+    });
+    if(wrap.children.length) el.appendChild(wrap);
+  });
 }
 
 function renderFlowStack(rows){
@@ -4493,20 +4509,36 @@ function renderFlowStack(rows){
     el.innerHTML=`<div class="main-empty"><div class="main-empty-icon">👁</div><div class="main-empty-title">No columns visible</div><div class="main-empty-msg">Enable at least one column in the Settings panel.</div></div>`;
     return;
   }
-  ac.forEach(col=>{
-    const paragraphs=[]; let cur=[];
-    rows.forEach((r,i)=>{
-      const newPara = i>0 && r.para != null && rows[i-1].para != null && r.para !== rows[i-1].para;
-      if(newPara){ if(cur.length){paragraphs.push(cur); cur=[];} }
-      cur.push(r);
+  // Split rows into page sections
+  const sections=[];
+  let lastPgOt=null;
+  rows.forEach(r=>{
+    const pg=(r.pgOt!=null&&r.pgOt!=='') ? String(r.pgOt) : null;
+    if(pg!==null && pg!==lastPgOt){ sections.push({pgOt:pg,rows:[]}); lastPgOt=pg; }
+    if(sections.length===0) sections.push({pgOt:null,rows:[]});
+    sections[sections.length-1].rows.push(r);
+  });
+  sections.forEach(sec=>{
+    if(sec.pgOt!==null){
+      const divider=document.createElement('div'); divider.className='pg-divider';
+      divider.innerHTML=`<div class="pg-divider-line"></div><span class="pg-divider-label">Page ${sec.pgOt}</span><div class="pg-divider-line"></div>`;
+      el.appendChild(divider);
+    }
+    ac.forEach(col=>{
+      const paragraphs=[]; let cur=[];
+      sec.rows.forEach((r,i)=>{
+        const newPara = i>0 && r.para!=null && sec.rows[i-1].para!=null && r.para!==sec.rows[i-1].para;
+        if(newPara){ if(cur.length){paragraphs.push(cur); cur=[];} }
+        cur.push(r);
+      });
+      if(cur.length) paragraphs.push(cur);
+      const text=paragraphs.map(p=>p.map(r=>AR(r[COL_KEYS[col]]||'')).filter(Boolean).join(' ')).filter(Boolean).join('<br><br>');
+      if(!text) return;
+      const colDiv=document.createElement('div');
+      colDiv.className=`flow-stack-col ${col}${COL_RTL[col]?' rtl-cell':''}`;
+      colDiv.innerHTML=`<div class="flow-col-lbl">${COL_LABELS[col]}</div>${text}`;
+      el.appendChild(colDiv);
     });
-    if(cur.length) paragraphs.push(cur);
-    const text=paragraphs.map(p=>p.map(r=>AR(r[COL_KEYS[col]]||'')).filter(Boolean).join(' ')).filter(Boolean).join('<br><br>');
-    if(!text) return;
-    const colDiv=document.createElement('div');
-    colDiv.className=`flow-stack-col ${col}${COL_RTL[col]?' rtl-cell':''}`;
-    colDiv.innerHTML=`<div class="flow-col-lbl">${COL_LABELS[col]}</div>${text}`;
-    el.appendChild(colDiv);
   });
 }
 

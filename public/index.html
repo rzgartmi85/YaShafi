@@ -214,8 +214,8 @@ body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectra
 .hide-pages .pg-divider{display:none!important;}
 
 /* ── PAGE NAV BAR (in main content) ── */
-#pm-nav-bar-outer{display:none;position:sticky;bottom:0;z-index:100;flex-shrink:0;}
-#pm-nav-bar{display:flex;align-items:center;gap:8px;padding:6px 18px;background:var(--surface);border-top:1px solid var(--border);position:relative;}
+#pm-nav-bar-outer{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;}
+#pm-nav-bar{display:flex;align-items:center;gap:8px;padding:6px 18px;background:var(--surface);border-top:1px solid var(--border);}
 #pm-nav-bar button{background:var(--surface3);border:1px solid var(--border);color:var(--text-dim);font-family:'Spectral',serif;font-size:0.73rem;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .18s;}
 #pm-nav-bar button:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
 #pm-nav-bar button:disabled{opacity:0.35;cursor:default;}
@@ -2358,13 +2358,14 @@ tr.row-bookmarked {
       <!-- Flow stacked view -->
       <div id="flow-stack-view"><div id="flow-stack-inner"></div></div>
     </div>
-    <!-- Page navigation bar -->
-    <div id="pm-nav-bar-outer">
-      <div id="pm-nav-bar">
-        <button id="pm-prev" onclick="pageNav(-1)">← Prev</button>
-        <span id="pm-label" style="font-size:0.75rem;color:var(--text-dim);flex:1;text-align:center;"></span>
-        <button id="pm-next" onclick="pageNav(1)">Next →</button>
-      </div>
+  </div>
+
+  <!-- Page navigation bar (fixed to bottom of #main viewport area) -->
+  <div id="pm-nav-bar-outer">
+    <div id="pm-nav-bar">
+      <button id="pm-prev" onclick="pageNav(-1)">← Prev</button>
+      <span id="pm-label" style="font-size:0.75rem;color:var(--text-dim);flex:1;text-align:center;"></span>
+      <button id="pm-next" onclick="pageNav(1)">Next →</button>
     </div>
   </div>
 
@@ -5412,6 +5413,24 @@ document.addEventListener('click', e => {
     closePill();
   }
 });
+
+// Position fixed nav bar to match #main bounds
+function positionNavBar() {
+  const nav = document.getElementById('pm-nav-bar-outer');
+  const mainEl = document.getElementById('main');
+  if (!nav || !mainEl) return;
+  const rect = mainEl.getBoundingClientRect();
+  nav.style.left = rect.left + 'px';
+  nav.style.right = (window.innerWidth - rect.right) + 'px';
+}
+(function() {
+  positionNavBar();
+  window.addEventListener('resize', positionNavBar);
+  const mainEl = document.getElementById('main');
+  if (mainEl && window.ResizeObserver) {
+    new ResizeObserver(positionNavBar).observe(mainEl);
+  }
+})();
 
 // Reposition on scroll/resize
 document.getElementById('main').addEventListener('scroll', () => {

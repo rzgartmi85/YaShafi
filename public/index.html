@@ -214,8 +214,8 @@ body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectra
 .hide-pages .pg-divider{display:none!important;}
 
 /* ── PAGE NAV BAR (in main content) ── */
-#pm-nav-bar-outer{display:none;position:sticky;top:0;z-index:100;flex-shrink:0;}
-#pm-nav-bar{display:flex;align-items:center;gap:8px;padding:6px 18px;background:var(--surface);border-bottom:1px solid var(--border);position:relative;}
+#pm-nav-bar-outer{display:none;position:sticky;bottom:0;z-index:100;flex-shrink:0;}
+#pm-nav-bar{display:flex;align-items:center;gap:8px;padding:6px 18px;background:var(--surface);border-top:1px solid var(--border);position:relative;}
 #pm-nav-bar button{background:var(--surface3);border:1px solid var(--border);color:var(--text-dim);font-family:'Spectral',serif;font-size:0.73rem;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .18s;}
 #pm-nav-bar button:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
 #pm-nav-bar button:disabled{opacity:0.35;cursor:default;}
@@ -2336,14 +2336,6 @@ tr.row-bookmarked {
   <div id="main">
     <!-- Offline banner -->
     <div id="offline-banner">⚠ You're offline — changes will sync when reconnected</div>
-    <!-- Page navigation bar -->
-    <div id="pm-nav-bar-outer">
-      <div id="pm-nav-bar">
-        <button id="pm-prev" onclick="pageNav(-1)">← Prev</button>
-        <span id="pm-label" style="font-size:0.75rem;color:var(--text-dim);flex:1;text-align:center;"></span>
-        <button id="pm-next" onclick="pageNav(1)">Next →</button>
-      </div>
-    </div>
     <div class="c-pad">
       <!-- Side-by-side table view -->
       <div id="side-view">
@@ -2365,6 +2357,14 @@ tr.row-bookmarked {
       <div id="flow-side-view"><div id="flow-side-inner"></div></div>
       <!-- Flow stacked view -->
       <div id="flow-stack-view"><div id="flow-stack-inner"></div></div>
+    </div>
+    <!-- Page navigation bar -->
+    <div id="pm-nav-bar-outer">
+      <div id="pm-nav-bar">
+        <button id="pm-prev" onclick="pageNav(-1)">← Prev</button>
+        <span id="pm-label" style="font-size:0.75rem;color:var(--text-dim);flex:1;text-align:center;"></span>
+        <button id="pm-next" onclick="pageNav(1)">Next →</button>
+      </div>
     </div>
   </div>
 

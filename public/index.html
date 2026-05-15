@@ -4304,32 +4304,15 @@ function updatePageNav() {
     // Sentence-based progress: count rows seen up to and including current page
     const r = cur();
     if (r && r.rows) {
-      const currentPg = pageList[currentPageIdx];
-      let seen = 0, total_rows = r.rows.length;
-      let counting = true;
+      const pagesUpToNow = new Set(pageList.slice(0, currentPageIdx + 1));
+      let rowsSeen = 0, lastKnownPg = null;
       for (let i = 0; i < r.rows.length; i++) {
         const rPg = (r.rows[i].pgOt != null && r.rows[i].pgOt !== '') ? String(r.rows[i].pgOt) : null;
-        if (rPg === currentPg || (rPg === null)) seen++;
-        // Stop after we've passed all rows of the current page
-        if (rPg !== null && rPg !== currentPg && seen > 0) break;
+        if (rPg !== null) lastKnownPg = rPg;
+        const effectivePg = rPg !== null ? rPg : lastKnownPg;
+        if (effectivePg === null || pagesUpToNow.has(effectivePg)) { rowsSeen++; } else { break; }
       }
-      // Simpler approach: count all rows up to end of current page
-      let rowsSeen = 0;
-      let lastKnown = null;
-      for (let i = 0; i < r.rows.length; i++) {
-        const rPg = (r.rows[i].pgOt != null && r.rows[i].pgOt !== '') ? String(r.rows[i].pgOt) : null;
-        if (rPg !== null) lastKnown = rPg;
-        const eff = rPg !== null ? rPg : lastKnown;
-        rowsSeen++;
-        if (eff === currentPg) {
-          // Check if next row starts a new page
-          const nextRow = r.rows[i + 1];
-          const nextPg = nextRow && nextRow.pgOt != null && nextRow.pgOt !== '' ? String(nextRow.pgOt) : null;
-          if (nextPg !== null && nextPg !== currentPg) break;
-          if (!nextRow) break;
-        }
-      }
-      bar.style.width = total_rows > 0 ? (rowsSeen / total_rows * 100) + '%' : '0%';
+      bar.style.width = (rowsSeen / r.rows.length * 100) + '%';
     }
     prev.disabled = currentPageIdx === 0;
     next.disabled = currentPageIdx === total - 1;
@@ -4340,7 +4323,9 @@ function updateScrollProgress() {
   if (pageMode !== 'continuous') return;
   const bar = document.getElementById('pm-progress-bar');
   if (!bar) return;
-  const el = document.getElementById('main');
+  // Use #main if it is actually scrolling, otherwise fall back to document.documentElement
+  const mainEl = document.getElementById('main');
+  const el = (mainEl && mainEl.scrollHeight > mainEl.clientHeight + 1) ? mainEl : document.documentElement;
   const scrollable = el.scrollHeight - el.clientHeight;
   const pct = scrollable > 0 ? (el.scrollTop / scrollable * 100) : 0;
   bar.style.width = pct + '%';
@@ -4418,7 +4403,7 @@ function renderTable(rows){
     const pgBadge = (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt)
       ? `<span class="pg-badge">p.${row.pgOt}</span>` : '';
     if (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt) {
-      const colCount = Object.values(vis).filter(Boolean).length + 2; // visible cols + action
+      const colCount = Object.keys(vis).length + 1; // all cols (5 vis keys + col-action = 6)
       const dividerTr=document.createElement('tr'); dividerTr.className='pg-divider-row';
       const dividerTd=document.createElement('td'); dividerTd.colSpan=colCount;
       dividerTd.innerHTML=`<div class="pg-divider"><div class="pg-divider-line"></div><span class="pg-divider-label">Page ${row.pgOt}</span><div class="pg-divider-line"></div></div>`;
@@ -5432,6 +5417,10 @@ document.getElementById('main').addEventListener('scroll', () => {
   if (pillState.visible && pillState.anchorEl) {
     positionPill(pillState.anchorEl);
   }
+  updateScrollProgress();
+}, { passive: true });
+// Fallback: also listen on window in case #main is not the scroll container
+window.addEventListener('scroll', () => {
   updateScrollProgress();
 }, { passive: true });
 window.addEventListener('resize', () => {

@@ -208,15 +208,20 @@ body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectra
 .pg-badge{display:inline-block;font-size:0.58rem;color:var(--text-faint);background:var(--surface3);border:1px solid var(--border-soft);border-radius:3px;padding:1px 4px;margin-left:5px;vertical-align:middle;font-family:'Spectral',serif;letter-spacing:.04em;opacity:0.75;user-select:none;}
 [data-theme="light"] .pg-badge{background:var(--surface2);}
 .hide-pages .pg-badge{display:none!important;}
+.pg-divider{display:flex;align-items:center;gap:10px;padding:10px 0 6px;user-select:none;}
+.pg-divider-line{flex:1;height:1px;background:var(--border);}
+.pg-divider-label{font-size:0.68rem;color:var(--text-faint);font-family:'Spectral',serif;letter-spacing:.08em;opacity:0.7;white-space:nowrap;}
+.hide-pages .pg-divider{display:none!important;}
 
 /* ── PAGE NAV BAR (in main content) ── */
-#pm-nav-bar{display:none;align-items:center;gap:8px;padding:6px 18px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;position:sticky;top:0;z-index:100;}
+#pm-nav-bar-outer{display:none;position:sticky;top:0;z-index:100;flex-shrink:0;}
+#pm-nav-bar{display:flex;align-items:center;gap:8px;padding:6px 18px 9px;background:var(--surface);border-bottom:1px solid var(--border);position:relative;}
 #pm-nav-bar button{background:var(--surface3);border:1px solid var(--border);color:var(--text-dim);font-family:'Spectral',serif;font-size:0.73rem;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .18s;}
 #pm-nav-bar button:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
 #pm-nav-bar button:disabled{opacity:0.35;cursor:default;}
 #pm-nav-bar-label{font-size:0.75rem;color:var(--text-dim);flex:1;text-align:center;}
-#pm-nav-bar-progress-wrap{height:3px;background:var(--surface3);border-radius:2px;overflow:hidden;width:120px;flex-shrink:0;}
-#pm-nav-bar-progress-bar{height:100%;background:var(--accent);border-radius:2px;transition:width .25s;width:0%;}
+#pm-nav-bar-progress-wrap{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--surface3);overflow:hidden;}
+#pm-progress-bar{height:100%;background:var(--accent);transition:width .25s;width:0%;}
 
 /* ── PARAGRAPH BREAK ROW ── */
 tr.para-break-row td { padding: 2px 11px; border-bottom: none; }
@@ -2328,11 +2333,13 @@ tr.row-bookmarked {
     <!-- Offline banner -->
     <div id="offline-banner">⚠ You're offline — changes will sync when reconnected</div>
     <!-- Page navigation bar -->
-    <div id="pm-nav-bar">
-      <button id="pm-prev" onclick="pageNav(-1)">← Prev</button>
-      <span id="pm-label" style="font-size:0.75rem;color:var(--text-dim);flex:1;text-align:center;"></span>
-      <button id="pm-next" onclick="pageNav(1)">Next →</button>
-      <div id="pm-nav-bar-progress-wrap"><div id="pm-progress-bar" style="height:100%;background:var(--accent);border-radius:2px;transition:width .25s;width:0%;"></div></div>
+    <div id="pm-nav-bar-outer">
+      <div id="pm-nav-bar">
+        <button id="pm-prev" onclick="pageNav(-1)">← Prev</button>
+        <span id="pm-label" style="font-size:0.75rem;color:var(--text-dim);flex:1;text-align:center;"></span>
+        <button id="pm-next" onclick="pageNav(1)">Next →</button>
+        <div id="pm-nav-bar-progress-wrap"><div id="pm-progress-bar"></div></div>
+      </div>
     </div>
     <div class="c-pad">
       <!-- Side-by-side table view -->
@@ -2391,6 +2398,9 @@ tr.row-bookmarked {
             <button id="pm-continuous" class="active" onclick="setPageMode('continuous')">Continuous</button>
             <button id="pm-page" onclick="setPageMode('page')">Page</button>
           </div>
+          <div class="ct-row"><span class="ct-name">Show page numbers</span>
+            <label class="sw"><input type="checkbox" id="sw-pages" checked onchange="togglePages(this.checked)"><div class="sw-t"></div></label>
+          </div>
         </div>
 
         <div class="ss">
@@ -2421,9 +2431,6 @@ tr.row-bookmarked {
           </div>
           <div class="ct-row"><span class="ct-name">Kurdish — Free</span>
             <label class="sw"><input type="checkbox" id="sw-v2" onchange="toggleCol('col-v2',this.checked)"><div class="sw-t"></div></label>
-          </div>
-          <div class="ct-row" style="margin-top:6px;border-top:1px solid var(--border-soft);padding-top:6px;"><span class="ct-name">Show page numbers</span>
-            <label class="sw"><input type="checkbox" id="sw-pages" checked onchange="togglePages(this.checked)"><div class="sw-t"></div></label>
           </div>
         </div>
 
@@ -3187,8 +3194,8 @@ async function loadPrefsFromFirestore(uid) {
       const btnP = document.getElementById('pm-page');
       if (btnC) btnC.classList.toggle('active', pageMode === 'continuous');
       if (btnP) btnP.classList.toggle('active', pageMode === 'page');
-      const nav = document.getElementById('pm-nav-bar');
-      if (nav) nav.style.display = pageMode === 'page' ? 'flex' : 'none';
+      const nav = document.getElementById('pm-nav-bar-outer');
+      if (nav) nav.style.display = pageMode === 'page' ? 'block' : 'none';
     }
 
     // Last active risale
@@ -4245,8 +4252,8 @@ function setPageMode(mode) {
   currentPageIdx = 0;
   document.getElementById('pm-continuous').classList.toggle('active', mode === 'continuous');
   document.getElementById('pm-page').classList.toggle('active', mode === 'page');
-  const bar = document.getElementById('pm-nav-bar');
-  if (bar) bar.style.display = mode === 'page' ? 'flex' : 'none';
+  const bar = document.getElementById('pm-nav-bar-outer');
+  if (bar) bar.style.display = mode === 'page' ? 'block' : 'none';
   render();
   savePrefsToFirestore();
 }
@@ -4365,6 +4372,12 @@ function renderTable(rows){
     if(isRowBookmarked(i)) tr.classList.add('row-bookmarked');
     const pgBadge = (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt)
       ? `<span class="pg-badge">p.${row.pgOt}</span>` : '';
+    if (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt) {
+      const dividerTr=document.createElement('tr'); dividerTr.className='pg-divider-row';
+      const dividerTd=document.createElement('td'); dividerTd.colSpan=99;
+      dividerTd.innerHTML=`<div class="pg-divider"><div class="pg-divider-line"></div><span class="pg-divider-label">Page ${row.pgOt}</span><div class="pg-divider-line"></div></div>`;
+      dividerTr.appendChild(dividerTd); tb.appendChild(dividerTr);
+    }
     if (row.pgOt != null && row.pgOt !== '') lastPgOt = String(row.pgOt);
     tr.innerHTML=
       `<td class="col-num${vis['col-num']?'':' col-hidden'}">${i+1}${pgBadge}</td>`+
@@ -4405,7 +4418,8 @@ function renderStacked(rows){
     const numRow=document.createElement('div'); numRow.style.cssText='display:flex;align-items:center;justify-content:space-between;';
     const num=document.createElement('div'); num.className='s-num'; num.style.cssText='border-bottom:none;padding-right:4px;flex:1;';
     num.textContent=`Row ${i+1}`;
-    if (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt) {
+    const isNewPage = row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt;
+    if (isNewPage) {
       const badge=document.createElement('span'); badge.className='pg-badge'; badge.textContent=`p.${row.pgOt}`;
       num.appendChild(badge);
     }
@@ -4428,6 +4442,11 @@ function renderStacked(rows){
         cells.appendChild(c);
       });
       d.appendChild(cells);
+    }
+    if (isNewPage) {
+      const divider=document.createElement('div'); divider.className='pg-divider';
+      divider.innerHTML=`<div class="pg-divider-line"></div><span class="pg-divider-label">Page ${row.pgOt}</span><div class="pg-divider-line"></div>`;
+      el.appendChild(divider);
     }
     el.appendChild(d);
   });

@@ -35,7 +35,7 @@ html{height:100%;}
 body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectral',Georgia,serif;display:flex;flex-direction:column;}
 
 /* ── TOPBAR ── */
-#topbar{height:var(--topbar-h);min-height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;z-index:200;flex-shrink:0;position:sticky;top:0;}
+#topbar{height:var(--topbar-h);min-height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;z-index:200;flex-shrink:0;position:sticky;top:0;overflow:visible;}
 .tb-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:5px 9px;cursor:pointer;font-size:1rem;line-height:1;transition:all .18s;display:flex;align-items:center;justify-content:center;}
 .tb-btn:hover{border-color:var(--accent);color:var(--accent);}
 .tb-btn.active{background:var(--accent);border-color:var(--accent);color:#f5ede0;}
@@ -215,17 +215,20 @@ body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectra
 
 /* ── PAGE NAV BAR (in main content) ── */
 #pm-nav-bar-outer{display:none;position:sticky;top:0;z-index:100;flex-shrink:0;}
-#pm-nav-bar{display:flex;align-items:center;gap:8px;padding:6px 18px 9px;background:var(--surface);border-bottom:1px solid var(--border);position:relative;}
+#pm-nav-bar{display:flex;align-items:center;gap:8px;padding:6px 18px;background:var(--surface);border-bottom:1px solid var(--border);position:relative;}
 #pm-nav-bar button{background:var(--surface3);border:1px solid var(--border);color:var(--text-dim);font-family:'Spectral',serif;font-size:0.73rem;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .18s;}
 #pm-nav-bar button:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
 #pm-nav-bar button:disabled{opacity:0.35;cursor:default;}
 #pm-nav-bar-label{font-size:0.75rem;color:var(--text-dim);flex:1;text-align:center;}
-#pm-nav-bar-progress-wrap{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--surface3);overflow:hidden;}
-#pm-progress-bar{height:100%;background:var(--accent);transition:width .25s;width:0%;}
+#topbar-progress-wrap{position:absolute;bottom:0;left:0;right:0;height:3px;background:transparent;overflow:hidden;}
+#pm-progress-bar{height:100%;background:var(--accent);transition:width .2s;width:0%;}
 
 /* ── PARAGRAPH BREAK ROW ── */
 tr.para-break-row td { padding: 2px 11px; border-bottom: none; }
 tr.para-break-row:hover { background: none; }
+tr.pg-divider-row td { padding: 0; border-bottom: none; }
+tr.pg-divider-row:hover { background: none; }
+tr.pg-divider-row td .pg-divider { padding: 10px 11px 6px; }
 .para-break-cell { display: flex; align-items: center; gap: 8px; color: var(--text-faint); font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase; opacity: 0.55; user-select: none; }
 .para-break-cell::before, .para-break-cell::after { content: ''; flex: 1; height: 1px; background: var(--border-soft); }
 .s-para-break { display: flex; align-items: center; gap: 8px; margin: 4px 0; color: var(--text-faint); font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase; opacity: 0.55; user-select: none; }
@@ -2296,6 +2299,7 @@ tr.row-bookmarked {
     <button class="tb-btn" id="btn-reflect" onclick="openReflectionsTab()" title="Reflections">📝</button>
     <button class="tb-btn" id="btn-tr" onclick="openSettingsTab()" title="Settings">⚙</button>
   </div>
+  <div id="topbar-progress-wrap"><div id="pm-progress-bar"></div></div>
 </div>
 
 <!-- LAYOUT -->
@@ -2338,7 +2342,6 @@ tr.row-bookmarked {
         <button id="pm-prev" onclick="pageNav(-1)">← Prev</button>
         <span id="pm-label" style="font-size:0.75rem;color:var(--text-dim);flex:1;text-align:center;"></span>
         <button id="pm-next" onclick="pageNav(1)">Next →</button>
-        <div id="pm-nav-bar-progress-wrap"><div id="pm-progress-bar"></div></div>
       </div>
     </div>
     <div class="c-pad">
@@ -4283,23 +4286,64 @@ function getRowsForPage(rows, pgVal) {
 }
 
 function updatePageNav() {
-  if (pageMode !== 'page') return;
-  const total = pageList.length;
-  const label = document.getElementById('pm-label');
-  const bar   = document.getElementById('pm-progress-bar');
-  const prev  = document.getElementById('pm-prev');
-  const next  = document.getElementById('pm-next');
-  if (!label || !bar || !prev || !next) return;
-  if (total === 0) {
-    label.textContent = 'No pages';
-    bar.style.width = '0%';
-    prev.disabled = true; next.disabled = true;
-    return;
+  const bar = document.getElementById('pm-progress-bar');
+  if (!bar) return;
+  if (pageMode === 'page') {
+    const total = pageList.length;
+    const label = document.getElementById('pm-label');
+    const prev  = document.getElementById('pm-prev');
+    const next  = document.getElementById('pm-next');
+    if (!label || !prev || !next) return;
+    if (total === 0) {
+      label.textContent = 'No pages';
+      bar.style.width = '0%';
+      prev.disabled = true; next.disabled = true;
+      return;
+    }
+    label.textContent = `Page ${currentPageIdx + 1} of ${total}`;
+    // Sentence-based progress: count rows seen up to and including current page
+    const r = cur();
+    if (r && r.rows) {
+      const currentPg = pageList[currentPageIdx];
+      let seen = 0, total_rows = r.rows.length;
+      let counting = true;
+      for (let i = 0; i < r.rows.length; i++) {
+        const rPg = (r.rows[i].pgOt != null && r.rows[i].pgOt !== '') ? String(r.rows[i].pgOt) : null;
+        if (rPg === currentPg || (rPg === null)) seen++;
+        // Stop after we've passed all rows of the current page
+        if (rPg !== null && rPg !== currentPg && seen > 0) break;
+      }
+      // Simpler approach: count all rows up to end of current page
+      let rowsSeen = 0;
+      let lastKnown = null;
+      for (let i = 0; i < r.rows.length; i++) {
+        const rPg = (r.rows[i].pgOt != null && r.rows[i].pgOt !== '') ? String(r.rows[i].pgOt) : null;
+        if (rPg !== null) lastKnown = rPg;
+        const eff = rPg !== null ? rPg : lastKnown;
+        rowsSeen++;
+        if (eff === currentPg) {
+          // Check if next row starts a new page
+          const nextRow = r.rows[i + 1];
+          const nextPg = nextRow && nextRow.pgOt != null && nextRow.pgOt !== '' ? String(nextRow.pgOt) : null;
+          if (nextPg !== null && nextPg !== currentPg) break;
+          if (!nextRow) break;
+        }
+      }
+      bar.style.width = total_rows > 0 ? (rowsSeen / total_rows * 100) + '%' : '0%';
+    }
+    prev.disabled = currentPageIdx === 0;
+    next.disabled = currentPageIdx === total - 1;
   }
-  label.textContent = `Page ${currentPageIdx + 1} of ${total}`;
-  bar.style.width = ((currentPageIdx + 1) / total * 100) + '%';
-  prev.disabled = currentPageIdx === 0;
-  next.disabled = currentPageIdx === total - 1;
+}
+
+function updateScrollProgress() {
+  if (pageMode !== 'continuous') return;
+  const bar = document.getElementById('pm-progress-bar');
+  if (!bar) return;
+  const el = document.getElementById('main');
+  const scrollable = el.scrollHeight - el.clientHeight;
+  const pct = scrollable > 0 ? (el.scrollTop / scrollable * 100) : 0;
+  bar.style.width = pct + '%';
 }
 
 function pageNav(dir) {
@@ -4322,6 +4366,7 @@ function render(){
   if (pageList.length > 0) currentPageIdx = Math.max(0, Math.min(pageList.length - 1, currentPageIdx));
   else currentPageIdx = 0;
   updatePageNav();
+  updateScrollProgress();
 
   document.getElementById('topbar-title').innerHTML=`${AR(r.name)} <span>${r.rows.length} rows</span>`;
 
@@ -4373,8 +4418,9 @@ function renderTable(rows){
     const pgBadge = (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt)
       ? `<span class="pg-badge">p.${row.pgOt}</span>` : '';
     if (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt) {
+      const colCount = Object.values(vis).filter(Boolean).length + 2; // visible cols + action
       const dividerTr=document.createElement('tr'); dividerTr.className='pg-divider-row';
-      const dividerTd=document.createElement('td'); dividerTd.colSpan=99;
+      const dividerTd=document.createElement('td'); dividerTd.colSpan=colCount;
       dividerTd.innerHTML=`<div class="pg-divider"><div class="pg-divider-line"></div><span class="pg-divider-label">Page ${row.pgOt}</span><div class="pg-divider-line"></div></div>`;
       dividerTr.appendChild(dividerTd); tb.appendChild(dividerTr);
     }
@@ -5386,6 +5432,7 @@ document.getElementById('main').addEventListener('scroll', () => {
   if (pillState.visible && pillState.anchorEl) {
     positionPill(pillState.anchorEl);
   }
+  updateScrollProgress();
 }, { passive: true });
 window.addEventListener('resize', () => {
   if (pillState.visible && pillState.anchorEl) {

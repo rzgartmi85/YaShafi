@@ -4333,6 +4333,8 @@ function updateScrollProgress() {
 function pageNav(dir) {
   currentPageIdx = Math.max(0, Math.min(pageList.length - 1, currentPageIdx + dir));
   render();
+  const mainEl = document.getElementById('main');
+  if (mainEl) mainEl.scrollTop = 0;
 }
 
 /* ── COLUMNS ── */

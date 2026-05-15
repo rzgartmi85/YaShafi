@@ -4320,37 +4320,10 @@ function updatePageNav() {
 }
 
 function updateScrollProgress() {
+  if (pageMode !== 'continuous') return;
   const bar = document.getElementById('pm-progress-bar');
   if (!bar) return;
   const mainEl = document.getElementById('main');
-
-  if (pageMode === 'page' && pageList.length > 0) {
-    const r = cur();
-    if (!r || !r.rows) return;
-    const total = pageList.length;
-    // Rows belonging to pages before the current one
-    const pagesBefore = new Set(pageList.slice(0, currentPageIdx));
-    const pagesUpToNow = new Set(pageList.slice(0, currentPageIdx + 1));
-    let rowsBefore = 0, rowsOnPage = 0, lastKnownPg = null;
-    for (let i = 0; i < r.rows.length; i++) {
-      const rPg = (r.rows[i].pgOt != null && r.rows[i].pgOt !== '') ? String(r.rows[i].pgOt) : null;
-      if (rPg !== null) lastKnownPg = rPg;
-      const effectivePg = lastKnownPg;
-      const inBefore = effectivePg === null ? false : pagesBefore.has(effectivePg);
-      const inCurrent = effectivePg === null ? false : pagesUpToNow.has(effectivePg) && !inBefore;
-      if (inBefore) rowsBefore++;
-      else if (inCurrent) rowsOnPage++;
-    }
-    const totalRows = r.rows.length;
-    // Within-page scroll fraction
-    const scrollable = mainEl ? mainEl.scrollHeight - mainEl.clientHeight : 0;
-    const scrollFrac = (scrollable > 0 && mainEl) ? (mainEl.scrollTop / scrollable) : 0;
-    const rowsDone = rowsBefore + scrollFrac * rowsOnPage;
-    bar.style.width = (rowsDone / totalRows * 100) + '%';
-    return;
-  }
-
-  if (pageMode !== 'continuous') return;
   const el = (mainEl && mainEl.scrollHeight > mainEl.clientHeight + 1) ? mainEl : document.documentElement;
   const scrollable = el.scrollHeight - el.clientHeight;
   const pct = scrollable > 0 ? (el.scrollTop / scrollable * 100) : 0;
@@ -4361,8 +4334,10 @@ function pageNav(dir) {
   currentPageIdx = Math.max(0, Math.min(pageList.length - 1, currentPageIdx + dir));
   render();
   const mainEl = document.getElementById('main');
-  if (mainEl) mainEl.scrollTop = 0;
-  updateScrollProgress();
+  if (mainEl) {
+    mainEl.scrollTop = 0;
+    requestAnimationFrame(() => { mainEl.scrollTop = 0; });
+  }
 }
 
 /* ── COLUMNS ── */
@@ -4409,6 +4384,10 @@ function render(){
       document.getElementById('flow-stack-view').style.display='block';
       renderFlowStack(activeRows);
     }
+  }
+  if (pageMode === 'page') {
+    const mainEl = document.getElementById('main');
+    if (mainEl) mainEl.scrollTop = 0;
   }
   applyAllTypo();
   if (pageMode === 'continuous') requestAnimationFrame(updateScrollProgress);

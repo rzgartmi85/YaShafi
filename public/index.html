@@ -209,6 +209,15 @@ body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectra
 [data-theme="light"] .pg-badge{background:var(--surface2);}
 .hide-pages .pg-badge{display:none!important;}
 
+/* ── PAGE NAV BAR (in main content) ── */
+#pm-nav-bar{display:none;align-items:center;gap:8px;padding:6px 18px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;position:sticky;top:0;z-index:100;}
+#pm-nav-bar button{background:var(--surface3);border:1px solid var(--border);color:var(--text-dim);font-family:'Spectral',serif;font-size:0.73rem;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .18s;}
+#pm-nav-bar button:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+#pm-nav-bar button:disabled{opacity:0.35;cursor:default;}
+#pm-nav-bar-label{font-size:0.75rem;color:var(--text-dim);flex:1;text-align:center;}
+#pm-nav-bar-progress-wrap{height:3px;background:var(--surface3);border-radius:2px;overflow:hidden;width:120px;flex-shrink:0;}
+#pm-nav-bar-progress-bar{height:100%;background:var(--accent);border-radius:2px;transition:width .25s;width:0%;}
+
 /* ── PARAGRAPH BREAK ROW ── */
 tr.para-break-row td { padding: 2px 11px; border-bottom: none; }
 tr.para-break-row:hover { background: none; }
@@ -2318,6 +2327,13 @@ tr.row-bookmarked {
   <div id="main">
     <!-- Offline banner -->
     <div id="offline-banner">⚠ You're offline — changes will sync when reconnected</div>
+    <!-- Page navigation bar -->
+    <div id="pm-nav-bar">
+      <button id="pm-prev" onclick="pageNav(-1)">← Prev</button>
+      <span id="pm-label" style="font-size:0.75rem;color:var(--text-dim);flex:1;text-align:center;"></span>
+      <button id="pm-next" onclick="pageNav(1)">Next →</button>
+      <div id="pm-nav-bar-progress-wrap"><div id="pm-progress-bar" style="height:100%;background:var(--accent);border-radius:2px;transition:width .25s;width:0%;"></div></div>
+    </div>
     <div class="c-pad">
       <!-- Side-by-side table view -->
       <div id="side-view">
@@ -2374,16 +2390,6 @@ tr.row-bookmarked {
           <div class="vseg" style="margin-bottom:6px;">
             <button id="pm-continuous" class="active" onclick="setPageMode('continuous')">Continuous</button>
             <button id="pm-page" onclick="setPageMode('page')">Page</button>
-          </div>
-          <div id="pm-page-nav" style="display:none;">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
-              <button class="ie-btn" id="pm-prev" onclick="pageNav(-1)" style="flex:1;justify-content:center;">← Prev</button>
-              <span id="pm-label" style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap;text-align:center;min-width:60px;"></span>
-              <button class="ie-btn" id="pm-next" onclick="pageNav(1)" style="flex:1;justify-content:center;">Next →</button>
-            </div>
-            <div id="pm-progress-wrap" style="height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;">
-              <div id="pm-progress-bar" style="height:100%;background:var(--accent);border-radius:2px;transition:width .25s;width:0%;"></div>
-            </div>
           </div>
         </div>
 
@@ -3181,8 +3187,8 @@ async function loadPrefsFromFirestore(uid) {
       const btnP = document.getElementById('pm-page');
       if (btnC) btnC.classList.toggle('active', pageMode === 'continuous');
       if (btnP) btnP.classList.toggle('active', pageMode === 'page');
-      const nav = document.getElementById('pm-page-nav');
-      if (nav) nav.style.display = pageMode === 'page' ? '' : 'none';
+      const nav = document.getElementById('pm-nav-bar');
+      if (nav) nav.style.display = pageMode === 'page' ? 'flex' : 'none';
     }
 
     // Last active risale
@@ -4239,7 +4245,8 @@ function setPageMode(mode) {
   currentPageIdx = 0;
   document.getElementById('pm-continuous').classList.toggle('active', mode === 'continuous');
   document.getElementById('pm-page').classList.toggle('active', mode === 'page');
-  document.getElementById('pm-page-nav').style.display = mode === 'page' ? '' : 'none';
+  const bar = document.getElementById('pm-nav-bar');
+  if (bar) bar.style.display = mode === 'page' ? 'flex' : 'none';
   render();
   savePrefsToFirestore();
 }
@@ -4275,6 +4282,7 @@ function updatePageNav() {
   const bar   = document.getElementById('pm-progress-bar');
   const prev  = document.getElementById('pm-prev');
   const next  = document.getElementById('pm-next');
+  if (!label || !bar || !prev || !next) return;
   if (total === 0) {
     label.textContent = 'No pages';
     bar.style.width = '0%';
@@ -4351,11 +4359,15 @@ function renderTable(rows){
     const tr=document.createElement('tr'); tr.appendChild(td); tb.appendChild(tr);
     return;
   }
+  let lastPgOt = null;
   rows.forEach((row,i)=>{
     const tr=document.createElement('tr');
     if(isRowBookmarked(i)) tr.classList.add('row-bookmarked');
+    const pgBadge = (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt)
+      ? `<span class="pg-badge">p.${row.pgOt}</span>` : '';
+    if (row.pgOt != null && row.pgOt !== '') lastPgOt = String(row.pgOt);
     tr.innerHTML=
-      `<td class="col-num${vis['col-num']?'':' col-hidden'}">${i+1}</td>`+
+      `<td class="col-num${vis['col-num']?'':' col-hidden'}">${i+1}${pgBadge}</td>`+
       `<td class="col-ot${vis['col-ot']?'':' col-hidden'}">${AR(row.ot)}</td>`+
       `<td class="col-mt${vis['col-mt']?'':' col-hidden'}">${AR(row.mt)}</td>`+
       `<td class="col-v1${vis['col-v1']?'':' col-hidden'}">${AR(row.v1)}</td>`+
@@ -4380,6 +4392,7 @@ function renderStacked(rows){
     return;
   }
   const ac=DATA_COLS.filter(c=>vis[c]);
+  let lastPgOt = null;
   rows.forEach((row,i)=>{
     const d=document.createElement('div'); d.className='s-row';
     if(isRowBookmarked(i)) d.classList.add('row-bookmarked');
@@ -4392,6 +4405,11 @@ function renderStacked(rows){
     const numRow=document.createElement('div'); numRow.style.cssText='display:flex;align-items:center;justify-content:space-between;';
     const num=document.createElement('div'); num.className='s-num'; num.style.cssText='border-bottom:none;padding-right:4px;flex:1;';
     num.textContent=`Row ${i+1}`;
+    if (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt) {
+      const badge=document.createElement('span'); badge.className='pg-badge'; badge.textContent=`p.${row.pgOt}`;
+      num.appendChild(badge);
+    }
+    if (row.pgOt != null && row.pgOt !== '') lastPgOt = String(row.pgOt);
     numRow.appendChild(num);
     const dotsWrap=document.createElement('div'); dotsWrap.className='s-row-dots-wrap'; dotsWrap.style.cssText='position:relative;flex-shrink:0;';
     dotsWrap.appendChild(makeRowDotsBtn(i));

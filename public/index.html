@@ -214,8 +214,8 @@ body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectra
 .hide-pages .pg-divider{display:none!important;}
 
 /* ── PAGE NAV BAR (in main content) ── */
-#pm-nav-bar-outer{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;}
-#pm-nav-bar{display:flex;align-items:center;gap:8px;padding:6px 18px;background:var(--surface);border-top:1px solid var(--border);}
+#pm-nav-bar-outer{display:none;position:sticky;top:0;z-index:100;flex-shrink:0;}
+#pm-nav-bar{display:flex;align-items:center;gap:8px;padding:6px 18px;background:var(--surface);border-bottom:1px solid var(--border);position:relative;}
 #pm-nav-bar button{background:var(--surface3);border:1px solid var(--border);color:var(--text-dim);font-family:'Spectral',serif;font-size:0.73rem;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .18s;}
 #pm-nav-bar button:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
 #pm-nav-bar button:disabled{opacity:0.35;cursor:default;}
@@ -2336,6 +2336,14 @@ tr.row-bookmarked {
   <div id="main">
     <!-- Offline banner -->
     <div id="offline-banner">⚠ You're offline — changes will sync when reconnected</div>
+    <!-- Page navigation bar -->
+    <div id="pm-nav-bar-outer">
+      <div id="pm-nav-bar">
+        <button id="pm-prev" onclick="pageNav(-1)">← Prev</button>
+        <span id="pm-label" style="font-size:0.75rem;color:var(--text-dim);flex:1;text-align:center;"></span>
+        <button id="pm-next" onclick="pageNav(1)">Next →</button>
+      </div>
+    </div>
     <div class="c-pad">
       <!-- Side-by-side table view -->
       <div id="side-view">
@@ -2357,15 +2365,6 @@ tr.row-bookmarked {
       <div id="flow-side-view"><div id="flow-side-inner"></div></div>
       <!-- Flow stacked view -->
       <div id="flow-stack-view"><div id="flow-stack-inner"></div></div>
-    </div>
-  </div>
-
-  <!-- Page navigation bar (fixed to bottom of #main viewport area) -->
-  <div id="pm-nav-bar-outer">
-    <div id="pm-nav-bar">
-      <button id="pm-prev" onclick="pageNav(-1)">← Prev</button>
-      <span id="pm-label" style="font-size:0.75rem;color:var(--text-dim);flex:1;text-align:center;"></span>
-      <button id="pm-next" onclick="pageNav(1)">Next →</button>
     </div>
   </div>
 
@@ -4302,9 +4301,18 @@ function updatePageNav() {
       return;
     }
     label.textContent = `Page ${currentPageIdx + 1} of ${total}`;
-    // Sentence-based progress: count rows belonging to pages up to and including current page
+    // Sentence-based progress: count rows seen up to and including current page
     const r = cur();
     if (r && r.rows) {
+      const currentPg = pageList[currentPageIdx];
+      let seen = 0, total_rows = r.rows.length;
+      let counting = true;
+      for (let i = 0; i < r.rows.length; i++) {
+        const rPg = (r.rows[i].pgOt != null && r.rows[i].pgOt !== '') ? String(r.rows[i].pgOt) : null;
+        if (rPg === currentPg || (rPg === null)) seen++;
+        // Stop after we've passed all rows of the current page
+        if (rPg !== null && rPg !== currentPg && seen > 0) break;
+      }
       const pagesUpToNow = new Set(pageList.slice(0, currentPageIdx + 1));
       let rowsSeen = 0, lastKnownPg = null;
       for (let i = 0; i < r.rows.length; i++) {
@@ -4324,8 +4332,7 @@ function updateScrollProgress() {
   if (pageMode !== 'continuous') return;
   const bar = document.getElementById('pm-progress-bar');
   if (!bar) return;
-  const mainEl = document.getElementById('main');
-  const el = (mainEl && mainEl.scrollHeight > mainEl.clientHeight + 1) ? mainEl : document.documentElement;
+  const el = document.getElementById('main');
   const scrollable = el.scrollHeight - el.clientHeight;
   const pct = scrollable > 0 ? (el.scrollTop / scrollable * 100) : 0;
   bar.style.width = pct + '%';
@@ -4334,8 +4341,8 @@ function updateScrollProgress() {
 function pageNav(dir) {
   currentPageIdx = Math.max(0, Math.min(pageList.length - 1, currentPageIdx + dir));
   render();
-  const mainEl = document.getElementById('main');
-  if (mainEl) mainEl.scrollTop = 0;
+  window.scrollTo(0, 0);
+  document.getElementById('main').scrollTop = 0;
 }
 
 /* ── COLUMNS ── */
@@ -4405,7 +4412,7 @@ function renderTable(rows){
     const pgBadge = (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt)
       ? `<span class="pg-badge">p.${row.pgOt}</span>` : '';
     if (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt) {
-      const colCount = Object.values(vis).filter(Boolean).length + 1; // visible cols + action col
+      const colCount = Object.values(vis).filter(Boolean).length + 2; // visible cols + action
       const dividerTr=document.createElement('tr'); dividerTr.className='pg-divider-row';
       const dividerTd=document.createElement('td'); dividerTd.colSpan=colCount;
       dividerTd.innerHTML=`<div class="pg-divider"><div class="pg-divider-line"></div><span class="pg-divider-label">Page ${row.pgOt}</span><div class="pg-divider-line"></div></div>`;
@@ -5414,24 +5421,6 @@ document.addEventListener('click', e => {
   }
 });
 
-// Position fixed nav bar to match #main bounds
-function positionNavBar() {
-  const nav = document.getElementById('pm-nav-bar-outer');
-  const mainEl = document.getElementById('main');
-  if (!nav || !mainEl) return;
-  const rect = mainEl.getBoundingClientRect();
-  nav.style.left = rect.left + 'px';
-  nav.style.right = (window.innerWidth - rect.right) + 'px';
-}
-(function() {
-  positionNavBar();
-  window.addEventListener('resize', positionNavBar);
-  const mainEl = document.getElementById('main');
-  if (mainEl && window.ResizeObserver) {
-    new ResizeObserver(positionNavBar).observe(mainEl);
-  }
-})();
-
 // Reposition on scroll/resize
 document.getElementById('main').addEventListener('scroll', () => {
   if (pillState.visible && pillState.anchorEl) {
@@ -5439,7 +5428,6 @@ document.getElementById('main').addEventListener('scroll', () => {
   }
   updateScrollProgress();
 }, { passive: true });
-window.addEventListener('scroll', () => { updateScrollProgress(); }, { passive: true });
 window.addEventListener('resize', () => {
   if (pillState.visible && pillState.anchorEl) {
     requestAnimationFrame(() => positionPill(pillState.anchorEl));

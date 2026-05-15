@@ -4301,28 +4301,38 @@ function updatePageNav() {
       return;
     }
     label.textContent = `Page ${currentPageIdx + 1} of ${total}`;
-    prev.disabled = currentPageIdx === 0;
-    next.disabled = currentPageIdx === total - 1;
-    // Sentence-based progress: count rows whose effective page <= currentPageIdx
+    // Sentence-based progress: count rows seen up to and including current page
     const r = cur();
-    if (r && r.rows && r.rows.length > 0) {
-      const pagesUpToNow = new Set(pageList.slice(0, currentPageIdx + 1));
-      let rowsSeen = 0;
-      let lastKnownPg = null;
+    if (r && r.rows) {
+      const currentPg = pageList[currentPageIdx];
+      let seen = 0, total_rows = r.rows.length;
+      let counting = true;
       for (let i = 0; i < r.rows.length; i++) {
         const rPg = (r.rows[i].pgOt != null && r.rows[i].pgOt !== '') ? String(r.rows[i].pgOt) : null;
-        if (rPg !== null) lastKnownPg = rPg;
-        const effectivePg = rPg !== null ? rPg : lastKnownPg;
-        if (effectivePg === null || pagesUpToNow.has(effectivePg)) {
-          rowsSeen++;
-        } else {
-          break;
+        if (rPg === currentPg || (rPg === null)) seen++;
+        // Stop after we've passed all rows of the current page
+        if (rPg !== null && rPg !== currentPg && seen > 0) break;
+      }
+      // Simpler approach: count all rows up to end of current page
+      let rowsSeen = 0;
+      let lastKnown = null;
+      for (let i = 0; i < r.rows.length; i++) {
+        const rPg = (r.rows[i].pgOt != null && r.rows[i].pgOt !== '') ? String(r.rows[i].pgOt) : null;
+        if (rPg !== null) lastKnown = rPg;
+        const eff = rPg !== null ? rPg : lastKnown;
+        rowsSeen++;
+        if (eff === currentPg) {
+          // Check if next row starts a new page
+          const nextRow = r.rows[i + 1];
+          const nextPg = nextRow && nextRow.pgOt != null && nextRow.pgOt !== '' ? String(nextRow.pgOt) : null;
+          if (nextPg !== null && nextPg !== currentPg) break;
+          if (!nextRow) break;
         }
       }
-      bar.style.width = (rowsSeen / r.rows.length * 100) + '%';
-    } else {
-      bar.style.width = '0%';
+      bar.style.width = total_rows > 0 ? (rowsSeen / total_rows * 100) + '%' : '0%';
     }
+    prev.disabled = currentPageIdx === 0;
+    next.disabled = currentPageIdx === total - 1;
   }
 }
 
@@ -4408,7 +4418,7 @@ function renderTable(rows){
     const pgBadge = (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt)
       ? `<span class="pg-badge">p.${row.pgOt}</span>` : '';
     if (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt) {
-      const colCount = 6; // always: col-num + col-ot + col-mt + col-v1 + col-v2 + col-action
+      const colCount = Object.values(vis).filter(Boolean).length + 2; // visible cols + action
       const dividerTr=document.createElement('tr'); dividerTr.className='pg-divider-row';
       const dividerTd=document.createElement('td'); dividerTd.colSpan=colCount;
       dividerTd.innerHTML=`<div class="pg-divider"><div class="pg-divider-line"></div><span class="pg-divider-label">Page ${row.pgOt}</span><div class="pg-divider-line"></div></div>`;

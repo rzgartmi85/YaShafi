@@ -4309,8 +4309,8 @@ function updatePageNav() {
       for (let i = 0; i < r.rows.length; i++) {
         const rPg = (r.rows[i].pgOt != null && r.rows[i].pgOt !== '') ? String(r.rows[i].pgOt) : null;
         if (rPg !== null) lastKnownPg = rPg;
-        const effectivePg = rPg !== null ? rPg : lastKnownPg;
-        if (effectivePg === null || pagesUpToNow.has(effectivePg)) { rowsSeen++; } else { break; }
+        const effectivePg = lastKnownPg;
+        if (effectivePg === null || pagesUpToNow.has(effectivePg)) rowsSeen++;
       }
       bar.style.width = (rowsSeen / r.rows.length * 100) + '%';
     }
@@ -4333,6 +4333,8 @@ function updateScrollProgress() {
 function pageNav(dir) {
   currentPageIdx = Math.max(0, Math.min(pageList.length - 1, currentPageIdx + dir));
   render();
+  const mainEl = document.getElementById('main');
+  if (mainEl) mainEl.scrollTop = 0;
 }
 
 /* ── COLUMNS ── */

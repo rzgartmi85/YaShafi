@@ -8482,5 +8482,157 @@ function buildReflectionsSidebar() {
 
 
 </script>
+
+<!-- ── FLOATING AUDIO PLAYER ── -->
+<style>
+#float-player{
+  position:fixed;
+  bottom:22px;
+  left:22px;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  pointer-events:none;
+}
+#float-play-btn{
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  background:var(--accent);
+  border:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 3px 14px rgba(0,0,0,.45);
+  flex-shrink:0;
+  pointer-events:all;
+  transition:background .18s, transform .15s;
+  position:relative;
+  z-index:2;
+}
+#float-play-btn:hover{background:var(--accent-dim);transform:scale(1.07);}
+#float-play-btn svg{width:16px;height:16px;fill:#1a1208;pointer-events:none;}
+#float-progress-track{
+  height:4px;
+  border-radius:2px;
+  background:var(--surface3);
+  border:1px solid var(--border);
+  overflow:hidden;
+  width:0;
+  max-width:500px;
+  margin-left:0;
+  transition:width .32s cubic-bezier(.4,0,.2,1), margin-left .32s cubic-bezier(.4,0,.2,1), opacity .28s;
+  opacity:0;
+  pointer-events:none;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+#float-progress-track.visible{
+  width:min(calc(100vw - 90px), 500px);
+  margin-left:10px;
+  opacity:1;
+}
+#float-progress-fill{
+  height:100%;
+  background:var(--accent);
+  width:0%;
+  transition:width .25s linear;
+  border-radius:2px;
+}
+</style>
+
+<div id="float-player">
+  <button id="float-play-btn" title="Play / Pause">
+    <svg id="float-icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    <svg id="float-icon-pause" viewBox="0 0 24 24" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+  </button>
+  <div id="float-progress-track">
+    <div id="float-progress-fill"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const btn       = document.getElementById('float-play-btn');
+  const track     = document.getElementById('float-progress-track');
+  const fill      = document.getElementById('float-progress-fill');
+  const iconPlay  = document.getElementById('float-icon-play');
+  const iconPause = document.getElementById('float-icon-pause');
+
+  let playing = false;
+  let progress = 0;          // 0–100
+  let rafId    = null;
+  let lastTs   = null;
+  const DURATION_MS = 60000; // 60 s demo loop
+  let inactivityTimer = null;
+
+  function showBar(){
+    track.classList.add('visible');
+    resetInactivity();
+  }
+
+  function hideBar(){
+    track.classList.remove('visible');
+  }
+
+  function resetInactivity(){
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => {
+      if(!playing) hideBar();
+      else {
+        // still playing – just keep alive until paused
+        resetInactivity();
+      }
+    }, 3000);
+  }
+
+  function setPlaying(val){
+    playing = val;
+    iconPlay.style.display  = playing ? 'none'  : '';
+    iconPause.style.display = playing ? ''      : 'none';
+  }
+
+  function tick(ts){
+    if(lastTs == null) lastTs = ts;
+    const dt = ts - lastTs;
+    lastTs   = ts;
+    progress += (dt / DURATION_MS) * 100;
+    if(progress >= 100){ progress = 0; }
+    fill.style.width = progress + '%';
+    if(playing) rafId = requestAnimationFrame(tick);
+  }
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if(!playing){
+      setPlaying(true);
+      showBar();
+      lastTs = null;
+      rafId  = requestAnimationFrame(tick);
+    } else {
+      setPlaying(false);
+      cancelAnimationFrame(rafId);
+      resetInactivity();
+    }
+  });
+
+  /* tap outside → collapse */
+  document.addEventListener('click', (e) => {
+    if(!btn.contains(e.target) && !track.contains(e.target)){
+      if(playing){ setPlaying(false); cancelAnimationFrame(rafId); }
+      hideBar();
+      clearTimeout(inactivityTimer);
+    }
+  });
+
+  /* scroll → collapse */
+  document.addEventListener('scroll', () => {
+    if(playing){ setPlaying(false); cancelAnimationFrame(rafId); }
+    hideBar();
+    clearTimeout(inactivityTimer);
+  }, { passive:true, capture:true });
+})();
+</script>
+
 </body>
 </html>

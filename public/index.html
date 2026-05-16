@@ -2652,6 +2652,30 @@ tr.row-bookmarked {
   .ap-pill-row { padding: 0 10px; height: 58px; }
 }
 
+/* Minimize button inside the bar */
+.ap-minimize-btn {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  font-size: 1.3rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 6px;
+  transition: background .13s, color .13s;
+  line-height: 1;
+  padding: 0;
+}
+.ap-minimize-btn:hover {
+  background: var(--surface3);
+  color: var(--accent);
+}
+
 /* ── Audio FAB toggle circle ── */
 #ap-fab-toggle {
   position: fixed;
@@ -2679,6 +2703,12 @@ tr.row-bookmarked {
 /* Lift FAB above the bar when bar is showing */
 #ap-fab-toggle.ap-fab-above {
   bottom: calc(66px + 22px); /* bar height ~66px + margin */
+}
+/* Hide FAB when player bar is open */
+#ap-fab-toggle.ap-fab-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) scale(0.7);
 }
 #ap-fab-toggle:hover {
   background: var(--surface3);
@@ -8972,8 +9002,8 @@ function buildReflectionsSidebar() {
 
 </script>
 
-<!-- AUDIO PLAYER TOGGLE FAB -->
-<button id="ap-fab-toggle" onclick="apToggleBar()" title="Show / hide audio player">&#9654;</button>
+<!-- AUDIO PLAYER TOGGLE FAB — always floats at bottom-center, click to open player -->
+<button id="ap-fab-toggle" onclick="apOpenBar()" title="Open audio player">&#9654;</button>
 
 <!-- AUDIO PLAYER — refined full-width bottom bar -->
 <div id="audio-player">
@@ -9020,6 +9050,9 @@ function buildReflectionsSidebar() {
         <button class="ap-col-btn" id="ap-col-v1" onclick="apSetCol('v1')">Kurdish</button>
       </div>
 
+      <!-- Minimize -->
+      <button class="ap-minimize-btn" onclick="apCloseBar()" title="Minimize player">&#8964;</button>
+
     </div>
 
     <!-- Hidden compat stubs -->
@@ -9050,7 +9083,7 @@ const apState = {
   playing:   false,
   pinned:    false,
   visible:   false,
-  hidden:    false,   // user toggled bar off
+  hidden:    true,    // player starts minimised; FAB opens it
 };
 
 const apAudio    = document.getElementById('ap-audio');
@@ -9103,7 +9136,17 @@ function apFmtTime(sec) {
   return `${m}:${s.toString().padStart(2,'0')}`;
 }
 
-/* ── Toggle bar visibility (topbar button) ── */
+/* ── Toggle bar visibility ── */
+function apOpenBar() {
+  apState.hidden = false;
+  apSyncFab();
+}
+
+function apCloseBar() {
+  apState.hidden = true;
+  apSyncFab();
+}
+
 function apToggleBar() {
   apState.hidden = !apState.hidden;
   apSyncFab();
@@ -9112,21 +9155,17 @@ function apToggleBar() {
 /* ── UI sync ── */
 function apSyncFab() {
   const hasAny = apHasAnyAudio();
-  // Show bar only when there is audio AND user has not hidden it
-  const shouldShow = hasAny && !apState.hidden;
+  // Show bar only when user has not hidden it
+  const shouldShow = !apState.hidden;
   apPlayer.classList.toggle('ap-visible', shouldShow);
   apShell.classList.toggle('has-audio', hasAny);
   apShell.classList.toggle('ap-playing', apState.playing);
 
-  // FAB toggle circle — always visible
+  // FAB: always floats, but hide it when the bar is open (minimize btn handles that)
   const fab = document.getElementById('ap-fab-toggle');
   if (fab) {
-    fab.classList.add('ap-fab-visible');
-    // Lift above bar when bar is showing
-    fab.classList.toggle('ap-fab-above', shouldShow);
-    // Pulse when playing
+    fab.classList.toggle('ap-fab-hidden', shouldShow);
     fab.classList.toggle('ap-fab-playing', apState.playing);
-    // Icon: pause bars when playing, play arrow when paused/stopped
     fab.innerHTML = apState.playing ? '&#9646;&#9646;' : '&#9654;';
   }
 

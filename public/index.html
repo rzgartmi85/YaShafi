@@ -2406,72 +2406,41 @@ tr.row-bookmarked {
   padding-bottom: 20px;
 }
 
-/* ── Shell: circle when collapsed, rounded card when open ── */
+/* Shell — always a rounded card, hidden via transform when collapsed */
 #audio-shell {
   pointer-events: all;
   position: relative;
-  /* Collapsed = circle */
-  width: 52px;
-  height: 52px;
+  width: min(460px, calc(100vw - 32px));
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 999px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 2px 8px rgba(0,0,0,.25);
-  overflow: hidden;
-  transition:
-    width .38s cubic-bezier(.4,0,.2,1),
-    height .38s cubic-bezier(.4,0,.2,1),
-    border-radius .38s cubic-bezier(.4,0,.2,1),
-    box-shadow .38s ease;
-  cursor: pointer;
-}
-[data-theme="light"] #audio-shell {
-  box-shadow: 0 8px 28px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.1);
-}
-
-/* ── Expanded state ── */
-#audio-shell.bar-open {
-  width: min(460px, calc(100vw - 32px));
-  height: auto;
   border-radius: 24px;
   box-shadow: 0 12px 40px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.3);
-  cursor: default;
+  overflow: hidden;
+  /* collapsed: slide down + fade out */
+  transform: translateY(calc(100% + 28px));
+  opacity: 0;
+  transition:
+    transform .35s cubic-bezier(.4,0,.2,1),
+    opacity .28s ease;
+  pointer-events: none;
 }
-[data-theme="light"] #audio-shell.bar-open {
+[data-theme="light"] #audio-shell {
   box-shadow: 0 8px 32px rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.1);
 }
 
-/* ════════════════════════════════
-   COLLAPSED (circle) state:
-   only the play button is visible,
-   centred inside the 52px circle.
-   ════════════════════════════════ */
-#audio-shell:not(.bar-open) .ap-pill-row {
-  width: 52px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  gap: 0;
-}
-#audio-shell:not(.bar-open) .ap-nav-btn,
-#audio-shell:not(.bar-open) .ap-right-btns,
-#audio-shell:not(.bar-open) .ap-progress-zone {
-  display: none;
+/* Expanded — slide up into view */
+#audio-shell.bar-open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: all;
 }
 
-/* ════════════════════════════════
-   EXPANDED state layout
-   ════════════════════════════════ */
-
-/* Progress zone — inside the card, above the controls row */
+/* Progress zone */
 .ap-progress-zone {
   padding: 10px 14px 0;
-  touch-action: none;      /* prevent page scroll while scrubbing */
+  touch-action: none;
   user-select: none;
 }
-
 .ap-progress-wrap {
   height: 4px;
   background: var(--surface3);
@@ -2492,7 +2461,6 @@ tr.row-bookmarked {
   transition: width .1s linear;
   pointer-events: none;
 }
-/* Scrubber thumb */
 .ap-progress-wrap::after {
   content: '';
   position: absolute;
@@ -2522,50 +2490,20 @@ tr.row-bookmarked {
   font-variant-numeric: tabular-nums;
 }
 
-/* Controls row: [dismiss] [spacer] [prev] [play] [next] [spacer] [menu] */
+/* Controls row — centred cluster only */
 .ap-pill-row {
   display: flex;
   align-items: center;
+  justify-content: center;
   height: 60px;
   padding: 0 6px;
-  gap: 0;
 }
 
-/* Center cluster: prev + play + next, truly centred */
 .ap-center-cluster {
   display: flex;
   align-items: center;
   gap: 4px;
-  flex: 1;
-  justify-content: center;
 }
-
-/* Right edge buttons */
-.ap-right-btns {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  flex-shrink: 0;
-}
-
-/* Dismiss (×) button — left edge, collapses the player */
-.ap-dismiss-btn {
-  background: none;
-  border: none;
-  color: var(--text-faint);
-  cursor: pointer;
-  font-size: 1rem;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: color .15s, background .15s;
-  line-height: 1;
-}
-.ap-dismiss-btn:hover { color: var(--accent); background: var(--surface2); }
 
 /* Nav buttons */
 .ap-nav-btn {
@@ -2607,44 +2545,15 @@ tr.row-bookmarked {
 .ap-play-btn:active { transform: scale(0.93); }
 .ap-play-btn:disabled { background: var(--surface3); color: var(--text-faint); cursor: default; transform: none; filter: none; box-shadow: none; }
 
-/* Track info — hidden (no row numbers / column labels) */
-.ap-track-info { display: none; }
-.ap-track-label { display: none; }
-.ap-track-sub   { display: none; }
-
-/* Three-dot menu button */
-.ap-dots-btn {
-  background: none;
-  border: none;
-  color: var(--text-faint);
-  cursor: pointer;
-  font-size: 1.1rem;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  line-height: 1;
-  letter-spacing: 1px;
-  transition: color .15s, background .15s;
-}
-.ap-dots-btn:hover { color: var(--accent); background: var(--surface2); }
-
-/* Pulse animation when playing while collapsed */
-#audio-shell.playing-pulse {
-  animation: ap-shell-pulse 2s ease-in-out infinite;
-}
-@keyframes ap-shell-pulse {
-  0%,100% { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 0 rgba(200,169,110,.5); }
-  50%      { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 10px rgba(200,169,110,0); }
-}
+/* Hidden elements */
+.ap-track-info, .ap-track-label, .ap-track-sub,
+.ap-dismiss-btn, .ap-dots-btn, .ap-right-btns,
+.ap-dots-menu, .ap-chevron-btn { display: none !important; }
 
 /* Mobile */
 @media (max-width: 600px) {
   #audio-player { padding-bottom: 12px; }
-  #audio-shell.bar-open { width: min(420px, calc(100vw - 20px)); }
+  #audio-shell { width: min(420px, calc(100vw - 20px)); }
 }
 
 /* ── Three-dot dropdown ── */
@@ -8985,32 +8894,20 @@ function buildReflectionsSidebar() {
       </div>
     </div>
 
-    <!-- Controls row -->
+    <!-- Controls row: prev / play / next — centred -->
     <div class="ap-pill-row" id="ap-pill-row">
-
-      <!-- Left: dismiss button (collapses player) -->
-      <button class="ap-dismiss-btn" id="ap-dismiss-btn" onclick="apShowControls(false)" title="Minimise player">✕</button>
-
-      <!-- Centre: prev / play / next -->
       <div class="ap-center-cluster">
         <button class="ap-nav-btn" id="ap-prev" onclick="apPrev()" title="Previous" disabled>‹</button>
         <button class="ap-play-btn" id="ap-play-btn" onclick="apFabClick()" title="Play / Pause" disabled>▶</button>
         <button class="ap-nav-btn" id="ap-next" onclick="apNext()" title="Next" disabled>›</button>
       </div>
-
-      <!-- Right: three-dot menu -->
-      <div class="ap-right-btns">
-        <button class="ap-dots-btn" id="ap-dots-btn" onclick="apToggleDotsMenu(event)" title="More options">⋯</button>
-      </div>
     </div>
 
-    <!-- Hidden track info (JS still targets these) -->
+    <!-- Hidden stubs (JS still targets these) -->
     <div class="ap-track-info" style="display:none;">
       <div class="ap-track-label" id="ap-row-label"></div>
       <div class="ap-track-sub" id="ap-track-sub"></div>
     </div>
-
-    <!-- Hidden compat rows (JS targets) -->
     <div class="ap-col-row" style="display:none;">
       <button class="ap-col-btn active" id="ap-col-ot" onclick="apSetCol('ot')">Ottoman</button>
       <button class="ap-col-btn" id="ap-col-v1" onclick="apSetCol('v1')">Kurdish (L)</button>
@@ -9019,18 +8916,11 @@ function buildReflectionsSidebar() {
       <label class="sw"><input type="checkbox" id="ap-pin" onchange="apTogglePin(this.checked)"><div class="sw-t"></div></label>
     </div>
     <span id="ap-nav-label" style="display:none;"></span>
-
-    <!-- Three-dot dropdown -->
-    <div class="ap-dots-menu" id="ap-dots-menu">
-      <div class="ap-menu-section">
-        <div class="ap-menu-label">Audio Column</div>
-        <button class="ap-menu-btn active" id="apm-col-ot" onclick="apSetCol('ot');apSyncDotsMenu()">Ottoman<span class="ap-menu-check">✓</span></button>
-        <button class="ap-menu-btn" id="apm-col-v1" onclick="apSetCol('v1');apSyncDotsMenu()">Kurdish (Literal)<span class="ap-menu-check">✓</span></button>
-      </div>
-      <div class="ap-menu-section">
-        <button class="ap-menu-btn" id="apm-pin" onclick="apMenuTogglePin()">Keep player visible<span class="ap-menu-check" id="apm-pin-check"></span></button>
-        <button class="ap-menu-btn" onclick="apStop();apCloseDotsMenu()">Stop & close<span class="ap-menu-check"></span></button>
-      </div>
+    <div id="ap-dots-menu" style="display:none;">
+      <button id="apm-col-ot" style="display:none;"></button>
+      <button id="apm-col-v1" style="display:none;"></button>
+      <button id="apm-pin" style="display:none;"></button>
+      <span id="apm-pin-check" style="display:none;"></span>
     </div>
 
   </div>
@@ -9112,7 +9002,7 @@ function apSyncFab() {
     apPlayBtn.textContent = icon;
     apPlayBtn.disabled = !hasAny;
   }
-  apShell.classList.toggle('playing-pulse', apState.playing && !apState.visible);
+  // playing-pulse removed (no circle mode)
   // update row play buttons
   apSyncRowPlayBtns();
 }
@@ -9321,57 +9211,31 @@ function apRowPlay(idx) {
   }
 }
 
-/* ── Three-dot menu ── */
+/* ── Three-dot menu stubs (referenced by legacy code) ── */
 const apDotsMenu = document.getElementById('ap-dots-menu');
-
-function apToggleDotsMenu(e) {
-  e.stopPropagation();
-  apDotsMenu.classList.toggle('open');
-}
-function apCloseDotsMenu() {
-  apDotsMenu.classList.remove('open');
-}
-function apSyncDotsMenu() {
-  const isOt = apState.col === 'ot';
-  const otBtn = document.getElementById('apm-col-ot');
-  const v1Btn = document.getElementById('apm-col-v1');
-  if (otBtn) otBtn.classList.toggle('active', isOt);
-  if (v1Btn) v1Btn.classList.toggle('active', !isOt);
-  const pinCheck = document.getElementById('apm-pin-check');
-  if (pinCheck) pinCheck.textContent = apState.pinned ? '✓' : '';
-  const pinBtn = document.getElementById('apm-pin');
-  if (pinBtn) pinBtn.classList.toggle('active', apState.pinned);
-}
-function apMenuTogglePin() {
-  const newVal = !apState.pinned;
-  apTogglePin(newVal);
-  document.getElementById('ap-pin').checked = newVal;
-  apSyncDotsMenu();
-}
-
-/* ── Close dots menu when clicking outside ── */
-document.addEventListener('click', e => {
-  if (!apDotsMenu.contains(e.target) && e.target.id !== 'ap-dots-btn') {
-    apCloseDotsMenu();
-  }
-});
+function apToggleDotsMenu() {}
+function apCloseDotsMenu() {}
+function apSyncDotsMenu() {}
+function apMenuTogglePin() {}
 
 /* ── Tap outside the shell → collapse player ── */
 document.addEventListener('click', e => {
   if (!apShell.classList.contains('bar-open')) return;
   if (apShell.contains(e.target)) return;
-  if (apDotsMenu.contains(e.target)) return;
   apShowControls(false);
 }, true);
 
-/* ── Tapping the circle (collapsed) → expand ── */
-apShell.addEventListener('click', function(e) {
-  if (apShell.classList.contains('bar-open')) return;
-  apShowControls(true);
-});
-
-/* ── Show bar on load — collapsed by default ── */
-// CSS default is collapsed
+/* ── Scroll anywhere → collapse player ── */
+(function() {
+  let apScrollTimer = null;
+  function apOnScroll() {
+    if (!apShell.classList.contains('bar-open')) return;
+    apShowControls(false);
+  }
+  // Listen on document and all scrollable containers
+  document.addEventListener('scroll', apOnScroll, { passive: true, capture: true });
+  window.addEventListener('scroll', apOnScroll, { passive: true });
+})();
 
 /* ── Re-sync whenever render() runs ── */
 const _origRender = render;

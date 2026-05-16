@@ -47,7 +47,7 @@ body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectra
 #layout{display:flex;flex:1;overflow:hidden;height:calc(100dvh - var(--topbar-h));}
 
 /* ── SIDEBARS ── */
-.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg2);border-style:solid;border-color:var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .25s ease,min-width .25s ease,opacity .2s;flex-shrink:0;container-type:inline-size;container-name:sidebar;}
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg2);border-style:solid;border-color:var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .25s ease,min-width .25s ease,opacity .2s;flex-shrink:0;container-type:inline-size;container-name:sidebar;position:relative;z-index:210;}
 .sidebar.collapsed{width:0;min-width:0;opacity:0;pointer-events:none;}
 #sb-left{border-right-width:1px;border-left-width:0;border-top-width:0;border-bottom-width:0;}
 #sb-right{border-left-width:1px;border-right-width:0;border-top-width:0;border-bottom-width:0;}
@@ -2320,6 +2320,151 @@ tr.row-bookmarked {
   transition: all .18s;
 }
 .auth-guest-close-btn:hover { border-color: var(--text-dim); color: var(--text); }
+
+/* ── AUDIO PLAYER ── */
+#audio-player {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+#audio-fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  color: #f5ede0;
+  font-size: 1.3rem;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .15s, filter .15s;
+  pointer-events: all;
+  flex-shrink: 0;
+}
+#audio-fab:hover { filter: brightness(1.12); transform: scale(1.06); }
+#audio-fab.has-audio { background: var(--accent); }
+#audio-fab.no-audio  { background: var(--surface3); color: var(--text-faint); cursor: default; }
+
+#audio-controls {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px 8px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.5);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: all;
+  min-width: 220px;
+  transition: opacity .2s, transform .2s;
+}
+#audio-controls.hidden { display: none; }
+
+.ap-col-row {
+  display: flex;
+  gap: 4px;
+}
+.ap-col-btn {
+  flex: 1;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-family: 'Spectral', serif;
+  font-size: 0.68rem;
+  padding: 4px 2px;
+  cursor: pointer;
+  text-align: center;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.ap-col-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+
+.ap-nav-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ap-nav-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  width: 30px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.ap-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ap-nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+.ap-row-label {
+  flex: 1;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  text-align: center;
+  font-family: 'Spectral', serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ap-progress-wrap {
+  height: 4px;
+  background: var(--surface3);
+  border-radius: 2px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.ap-progress-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  width: 0%;
+  transition: width .1s linear;
+  pointer-events: none;
+}
+
+.ap-pin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.ap-pin-label {
+  font-size: 0.6rem;
+  color: var(--text-faint);
+  font-family: 'Spectral', serif;
+  letter-spacing: .06em;
+}
+
+@media (max-width: 600px) {
+  #audio-player { bottom: 12px; right: 12px; }
+  #audio-controls { min-width: 180px; }
+}
+
+/* Row audio indicator dot */
+.row-has-audio::after {
+  content: '🔊';
+  font-size: 0.55rem;
+  margin-left: 4px;
+  opacity: 0.6;
+  vertical-align: middle;
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -8481,6 +8626,229 @@ function buildReflectionsSidebar() {
 
 
 
+</script>
+
+<!-- AUDIO PLAYER -->
+<div id="audio-player">
+  <div id="audio-controls" class="hidden">
+    <!-- Column selector -->
+    <div class="ap-col-row">
+      <button class="ap-col-btn active" id="ap-col-ot" onclick="apSetCol('ot')">Ottoman</button>
+      <button class="ap-col-btn" id="ap-col-v1" onclick="apSetCol('v1')">Kurdish (L)</button>
+    </div>
+    <!-- Progress bar -->
+    <div class="ap-progress-wrap" id="ap-progress-wrap">
+      <div class="ap-progress-bar" id="ap-progress-bar"></div>
+    </div>
+    <!-- Nav row -->
+    <div class="ap-nav-row">
+      <button class="ap-nav-btn" id="ap-prev" onclick="apPrev()" title="Previous">‹</button>
+      <span class="ap-row-label" id="ap-row-label">Row — / —</span>
+      <button class="ap-nav-btn" id="ap-next" onclick="apNext()" title="Next">›</button>
+    </div>
+    <!-- Pin toggle -->
+    <div class="ap-pin-row">
+      <span class="ap-pin-label">Keep visible</span>
+      <label class="sw" style="transform:scale(.85);transform-origin:right;">
+        <input type="checkbox" id="ap-pin" onchange="apTogglePin(this.checked)">
+        <div class="sw-t"></div>
+      </label>
+    </div>
+  </div>
+  <button id="audio-fab" onclick="apFabClick()" title="Play audio">▶</button>
+</div>
+<audio id="ap-audio"></audio>
+
+<script>
+/* ══════════════════════════════════════
+   AUDIO PLAYER  (Phase A)
+   Audio URLs stored on each row as:
+     row.audioOt  — Ottoman clip URL
+     row.audioV1  — Kurdish Literal clip URL
+   ══════════════════════════════════════ */
+
+const apState = {
+  col:       'ot',      // 'ot' | 'v1'
+  rowIndex:  0,
+  playing:   false,
+  pinned:    false,
+  visible:   false,     // controls panel visible
+};
+
+const apAudio   = document.getElementById('ap-audio');
+const apFab     = document.getElementById('audio-fab');
+const apControls = document.getElementById('audio-controls');
+const apBar     = document.getElementById('ap-progress-bar');
+const apLabel   = document.getElementById('ap-row-label');
+const apPrevBtn = document.getElementById('ap-prev');
+const apNextBtn = document.getElementById('ap-next');
+
+/* ── Helpers ── */
+function apGetRows() {
+  const r = cur(); return r ? r.rows : [];
+}
+
+function apUrlForRow(idx) {
+  const rows = apGetRows();
+  if (idx < 0 || idx >= rows.length) return null;
+  const row = rows[idx];
+  return apState.col === 'ot' ? (row.audioOt || null) : (row.audioV1 || null);
+}
+
+function apHasAnyAudio() {
+  return apGetRows().some(r => r.audioOt || r.audioV1);
+}
+
+function apFindNextWithAudio(startIdx, forward) {
+  const rows = apGetRows();
+  const step = forward ? 1 : -1;
+  let i = startIdx;
+  while (i >= 0 && i < rows.length) {
+    const url = apState.col === 'ot' ? rows[i].audioOt : rows[i].audioV1;
+    if (url) return i;
+    i += step;
+  }
+  return -1;
+}
+
+/* ── UI sync ── */
+function apSyncFab() {
+  const hasAny = apHasAnyAudio();
+  apFab.classList.toggle('has-audio', hasAny);
+  apFab.classList.toggle('no-audio', !hasAny);
+  apFab.textContent = apState.playing ? '⏸' : '▶';
+}
+
+function apSyncControls() {
+  const rows = apGetRows();
+  const total = rows.length;
+  const idx   = apState.rowIndex;
+  apLabel.textContent = total > 0 ? `Row ${idx + 1} / ${total}` : 'No rows';
+  apPrevBtn.disabled  = apFindNextWithAudio(idx - 1, false) < 0;
+  apNextBtn.disabled  = apFindNextWithAudio(idx + 1, true)  < 0;
+  document.getElementById('ap-col-ot').classList.toggle('active', apState.col === 'ot');
+  document.getElementById('ap-col-v1').classList.toggle('active', apState.col === 'v1');
+}
+
+function apShowControls(show) {
+  apState.visible = show;
+  apControls.classList.toggle('hidden', !show);
+}
+
+/* ── Column selector ── */
+function apSetCol(col) {
+  apState.col = col;
+  apStop();
+  apSyncControls();
+  apSyncFab();
+}
+
+/* ── FAB click ── */
+function apFabClick() {
+  if (!apHasAnyAudio()) return;
+  if (apState.playing) {
+    apPause();
+  } else {
+    if (!apState.visible) apShowControls(true);
+    apPlay(apState.rowIndex);
+  }
+}
+
+/* ── Playback ── */
+function apPlay(idx) {
+  const url = apUrlForRow(idx);
+  if (!url) {
+    // skip to next row that has audio
+    const next = apFindNextWithAudio(idx + 1, true);
+    if (next >= 0) apPlay(next);
+    return;
+  }
+  apState.rowIndex = idx;
+  apState.playing  = true;
+  apAudio.src = url;
+  apAudio.play().catch(e => console.warn('Audio play error:', e));
+  apSyncControls();
+  apSyncFab();
+  if (!apState.pinned) apShowControls(true);
+}
+
+function apPause() {
+  apAudio.pause();
+  apState.playing = false;
+  apSyncFab();
+}
+
+function apStop() {
+  apAudio.pause();
+  apAudio.src = '';
+  apState.playing = false;
+  apBar.style.width = '0%';
+  apSyncFab();
+}
+
+function apPrev() {
+  const idx = apFindNextWithAudio(apState.rowIndex - 1, false);
+  if (idx >= 0) apPlay(idx);
+}
+
+function apNext() {
+  const idx = apFindNextWithAudio(apState.rowIndex + 1, true);
+  if (idx >= 0) apPlay(idx);
+}
+
+/* ── Auto-advance + progress bar ── */
+apAudio.addEventListener('timeupdate', () => {
+  if (!apAudio.duration) return;
+  apBar.style.width = (apAudio.currentTime / apAudio.duration * 100) + '%';
+});
+
+apAudio.addEventListener('ended', () => {
+  apBar.style.width = '100%';
+  apState.playing = false;
+  const next = apFindNextWithAudio(apState.rowIndex + 1, true);
+  if (next >= 0) {
+    setTimeout(() => apPlay(next), 400);
+  } else {
+    apSyncFab();
+    if (!apState.pinned) {
+      setTimeout(() => apShowControls(false), 1800);
+    }
+  }
+});
+
+/* Click progress bar to seek */
+document.getElementById('ap-progress-wrap').addEventListener('click', e => {
+  if (!apAudio.duration) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  apAudio.currentTime = ((e.clientX - rect.left) / rect.width) * apAudio.duration;
+});
+
+/* ── Auto-hide: hide controls when not pinned and not playing ── */
+apAudio.addEventListener('pause', () => {
+  if (!apState.pinned && !apState.playing) {
+    setTimeout(() => { if (!apState.playing) apShowControls(false); }, 3000);
+  }
+});
+
+/* ── Pin toggle ── */
+function apTogglePin(on) {
+  apState.pinned = on;
+  if (on) apShowControls(true);
+}
+
+/* ── Re-sync whenever render() runs (new rows loaded) ── */
+const _origRender = render;
+window.render = function() {
+  _origRender.apply(this, arguments);
+  apState.rowIndex = 0;
+  apStop();
+  apSyncControls();
+  apSyncFab();
+};
+
+/* ── Init ── */
+apSyncFab();
+apSyncControls();
 </script>
 </body>
 </html>

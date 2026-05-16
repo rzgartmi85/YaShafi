@@ -239,8 +239,8 @@ tr.pg-divider-row td .pg-divider { padding: 10px 11px 6px; }
 
 /* ── MAIN ── */
 #main{flex:1;overflow-y:auto;overflow-x:auto;display:flex;flex-direction:column;}
-.c-pad{padding:14px 18px 60px;}
-body.page-mode-active .c-pad{padding-bottom:90px;}
+.c-pad{padding:14px 18px 80px;}
+body.page-mode-active .c-pad{padding-bottom:110px;}
 
 /* table */
 table{width:100%;border-collapse:collapse;table-layout:fixed;}
@@ -2380,19 +2380,10 @@ tr.row-bookmarked {
 }
 
 /* ═══════════════════════════════════════
-   AUDIO PLAYER — collapsible bottom bar
+   AUDIO PLAYER — refined bottom bar
    ═══════════════════════════════════════ */
 
-/* Wrapper: fixed to bottom, full width, stacks bar above FAB */
-/* ════════════════════════════════════════
-   AUDIO PLAYER  — unified morphing card
-   ════════════════════════════════════════ */
-
-/* Anchor: sits at bottom-center, pointer-events off so it doesn't block content */
-/* ═══════════════════════════════════════
-   AUDIO PLAYER
-   ═══════════════════════════════════════ */
-
+/* Outer wrapper: fixed bottom strip, full width */
 #audio-player {
   position: fixed;
   bottom: 0;
@@ -2400,80 +2391,38 @@ tr.row-bookmarked {
   right: 0;
   z-index: 900;
   pointer-events: none;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  padding-bottom: 20px;
+  transform: translateY(100%);
+  transition: transform .32s cubic-bezier(.4,0,.2,1);
+}
+#audio-player.ap-visible {
+  transform: translateY(0);
+  pointer-events: all;
 }
 
-/* Shell — circle when collapsed, card when open */
+/* The shell: full-width bottom bar */
 #audio-shell {
-  pointer-events: all;
-  position: relative;
-  /* Collapsed = circle */
-  width: 52px;
-  height: 52px;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 2px 8px rgba(0,0,0,.25);
-  overflow: hidden;
-  transition:
-    width .38s cubic-bezier(.4,0,.2,1),
-    height .38s cubic-bezier(.4,0,.2,1),
-    border-radius .38s cubic-bezier(.4,0,.2,1),
-    box-shadow .38s ease;
-  cursor: pointer;
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -6px 28px rgba(0,0,0,.45), 0 -1px 6px rgba(0,0,0,.2);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  position: relative;
 }
 [data-theme="light"] #audio-shell {
-  box-shadow: 0 8px 28px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.1);
+  box-shadow: 0 -4px 20px rgba(0,0,0,.12), 0 -1px 4px rgba(0,0,0,.07);
 }
 
-/* Expanded state */
-#audio-shell.bar-open {
-  width: min(460px, calc(100vw - 32px));
-  height: auto;
-  border-radius: 24px;
-  box-shadow: 0 12px 40px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.3);
-  cursor: default;
-}
-[data-theme="light"] #audio-shell.bar-open {
-  box-shadow: 0 8px 32px rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.1);
-}
-
-/* Collapsed: show only the play icon centred in the circle */
-#audio-shell:not(.bar-open) .ap-pill-row {
-  width: 52px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-#audio-shell:not(.bar-open) .ap-nav-btn,
-#audio-shell:not(.bar-open) .ap-progress-zone {
-  display: none;
-}
-
-/* Pulse when playing while collapsed */
-#audio-shell.playing-pulse {
-  animation: ap-shell-pulse 2s ease-in-out infinite;
-}
-@keyframes ap-shell-pulse {
-  0%,100% { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 0 rgba(200,169,110,.5); }
-  50%      { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 10px rgba(200,169,110,0); }
-}
-
-/* Progress zone */
+/* Progress zone — thin strip at very top of bar */
 .ap-progress-zone {
-  padding: 10px 14px 0;
+  padding: 0;
   touch-action: none;
   user-select: none;
+  position: relative;
 }
 .ap-progress-wrap {
-  height: 4px;
+  height: 3px;
   background: var(--surface3);
-  border-radius: 2px;
   cursor: pointer;
   position: relative;
   overflow: visible;
@@ -2481,170 +2430,226 @@ tr.row-bookmarked {
   touch-action: none;
 }
 .ap-progress-wrap:hover,
-.ap-progress-wrap.seeking { height: 6px; }
+.ap-progress-wrap.seeking { height: 5px; }
 .ap-progress-bar {
   height: 100%;
-  background: var(--accent);
-  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent-dim), var(--accent));
   width: 0%;
   transition: width .1s linear;
   pointer-events: none;
 }
+/* Scrubber thumb */
 .ap-progress-wrap::after {
   content: '';
   position: absolute;
   top: 50%;
   left: var(--ap-pct, 0%);
   transform: translate(-50%, -50%) scale(0);
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   background: var(--accent);
   border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(200,169,110,.25);
   transition: transform .15s;
   pointer-events: none;
 }
 .ap-progress-wrap:hover::after,
 .ap-progress-wrap.seeking::after { transform: translate(-50%, -50%) scale(1); }
 
-.ap-time-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 3px 2px 0;
-}
-.ap-time {
-  font-size: 0.57rem;
-  color: var(--text-faint);
-  font-family: 'Spectral', serif;
-  letter-spacing: .04em;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Controls row — centred cluster only */
+/* Main controls row */
 .ap-pill-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 60px;
-  padding: 0 6px;
+  gap: 0;
+  height: 62px;
+  padding: 0 14px 0 12px;
 }
 
+/* Track info block — left side */
+.ap-track-info {
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+  padding-right: 8px;
+}
+.ap-track-label {
+  display: block !important;
+  font-family: 'Amiri', serif;
+  font-size: 0.82rem;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.ap-track-sub {
+  display: block !important;
+  font-family: 'Spectral', serif;
+  font-size: 0.62rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: .04em;
+}
+
+/* Waveform animation — shown while playing */
+.ap-waveform {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 18px;
+  flex-shrink: 0;
+  margin: 0 8px;
+}
+.ap-waveform span {
+  display: block;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0.6;
+  transform-origin: bottom center;
+  height: 4px;
+  transition: opacity .2s;
+}
+#audio-shell.ap-playing .ap-waveform span {
+  opacity: 1;
+  animation: ap-wave 1.1s ease-in-out infinite;
+}
+#audio-shell.ap-playing .ap-waveform span:nth-child(1) { animation-delay: 0s;    animation-duration: 1.0s; }
+#audio-shell.ap-playing .ap-waveform span:nth-child(2) { animation-delay: .18s;  animation-duration: 0.9s; }
+#audio-shell.ap-playing .ap-waveform span:nth-child(3) { animation-delay: .36s;  animation-duration: 1.2s; }
+#audio-shell.ap-playing .ap-waveform span:nth-child(4) { animation-delay: .12s;  animation-duration: 0.8s; }
+#audio-shell.ap-playing .ap-waveform span:nth-child(5) { animation-delay: .28s;  animation-duration: 1.05s; }
+@keyframes ap-wave {
+  0%,100% { height: 3px; }
+  50%      { height: 18px; }
+}
+
+/* Center cluster — prev/play/next */
 .ap-center-cluster {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
 /* Nav buttons */
 .ap-nav-btn {
   background: none;
   border: none;
-  border-radius: 50%;
   color: var(--text-dim);
-  font-size: 1.2rem;
-  width: 38px;
-  height: 38px;
+  font-size: 1.15rem;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  border-radius: 50%;
   transition: background .13s, color .13s;
+  line-height: 1;
 }
 .ap-nav-btn:hover { background: var(--surface2); color: var(--accent); }
-.ap-nav-btn:disabled { opacity: 0.28; cursor: default; }
+.ap-nav-btn:disabled { opacity: 0.22; cursor: default; }
 
-/* Play button — flat, no circle */
+/* Play/Pause button */
 .ap-play-btn {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: none;
-  border: none;
+  background: var(--surface2);
+  border: 1px solid var(--border);
   color: var(--accent);
-  font-size: 1.4rem;
+  font-size: 1.1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: color .15s, transform .15s;
-  box-shadow: none;
+  transition: background .15s, border-color .15s, transform .15s;
+  margin: 0 4px;
 }
-.ap-play-btn:hover { color: var(--accent); transform: scale(1.12); }
-.ap-play-btn:active { transform: scale(0.93); }
-.ap-play-btn:disabled { color: var(--text-faint); cursor: default; transform: none; }
-
-/* Hidden elements */
-.ap-track-info, .ap-track-label, .ap-track-sub,
-.ap-dismiss-btn, .ap-dots-btn, .ap-right-btns,
-.ap-dots-menu, .ap-chevron-btn { display: none !important; }
-
-/* Mobile */
-@media (max-width: 600px) {
-  #audio-player { padding-bottom: 12px; }
-  #audio-shell { width: min(420px, calc(100vw - 20px)); }
+.ap-play-btn:hover { background: var(--surface3); border-color: var(--accent-dim); transform: scale(1.06); }
+.ap-play-btn:active { transform: scale(0.94); }
+.ap-play-btn:disabled { color: var(--text-faint); cursor: default; transform: none; opacity: 0.45; }
+#audio-shell.ap-playing .ap-play-btn {
+  background: rgba(200,169,110,.12);
+  border-color: var(--accent-dim);
 }
 
-/* ── Three-dot dropdown ── */
-.ap-dots-menu {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + 8px);
-  right: 10px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  min-width: 188px;
-  z-index: 950;
-  overflow: hidden;
-  box-shadow: 0 8px 28px rgba(0,0,0,.45);
-}
-.ap-dots-menu.open { display: block; }
-[data-theme="light"] .ap-dots-menu { box-shadow: 0 6px 24px rgba(0,0,0,.15); }
-.ap-menu-section {
-  padding: 6px 0;
-  border-bottom: 1px solid var(--border-soft);
-}
-.ap-menu-section:last-child { border-bottom: none; }
-.ap-menu-label {
-  font-size: 0.58rem;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  padding: 2px 14px 5px;
-  font-family: 'Spectral', serif;
-}
-.ap-menu-btn {
+/* Time display */
+.ap-time-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  background: none;
-  border: none;
-  color: var(--text-dim);
+  gap: 3px;
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+.ap-time {
+  font-size: 0.6rem;
+  color: var(--text-faint);
   font-family: 'Spectral', serif;
-  font-size: 0.76rem;
-  padding: 7px 14px;
+  letter-spacing: .04em;
+  font-variant-numeric: tabular-nums;
+  min-width: 28px;
+  text-align: center;
+}
+.ap-time-sep {
+  font-size: 0.55rem;
+  color: var(--text-faint);
+  opacity: 0.5;
+}
+
+/* Column selector pills */
+.ap-col-row {
+  display: flex !important;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  flex-shrink: 0;
+}
+.ap-col-btn {
+  background: none;
+  border: 1px solid var(--border-soft);
+  color: var(--text-faint);
+  font-family: 'Spectral', serif;
+  font-size: 0.58rem;
+  padding: 3px 8px;
+  border-radius: 10px;
   cursor: pointer;
-  text-align: left;
-  transition: background .12s, color .12s;
+  transition: all .15s;
+  letter-spacing: .05em;
   white-space: nowrap;
 }
-.ap-menu-btn:hover { background: var(--surface3); color: var(--text); }
-.ap-menu-btn.active { color: var(--accent); }
-.ap-menu-btn .ap-menu-check { font-size: 0.7rem; margin-left: auto; opacity: 0; }
-.ap-menu-btn.active .ap-menu-check { opacity: 1; }
+.ap-col-btn.active {
+  background: rgba(200,169,110,.14);
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+.ap-col-btn:hover:not(.active) {
+  border-color: var(--border);
+  color: var(--text-dim);
+}
 
-/* ── hidden compat rows ── */
-.ap-col-row { display: none; }
+/* Hidden compat stubs */
 .ap-pin-row { display: none; }
 .ap-row-label { display: none; }
+.ap-dismiss-btn, .ap-dots-btn, .ap-right-btns,
+.ap-chevron-btn { display: none !important; }
+.ap-dots-menu { display: none !important; }
 
 /* Mobile tweaks */
 @media (max-width: 600px) {
-  #audio-player { padding-bottom: 12px; }
-  #audio-shell.bar-open { width: min(420px, calc(100vw - 20px)); max-width: min(420px, calc(100vw - 20px)); }
-  .ap-pill-row { height: 52px; }
+  .ap-track-info { display: none !important; }
+  .ap-waveform { display: none; }
+  .ap-col-row { display: none !important; }
+  .ap-time-row { margin-left: 6px; }
+  .ap-pill-row { padding: 0 10px; height: 58px; }
 }
 
 /* ── Per-row play button in the number cell ── */
@@ -8908,42 +8913,55 @@ function buildReflectionsSidebar() {
 
 </script>
 
-<!-- AUDIO PLAYER — unified morphing shell -->
+<!-- AUDIO PLAYER — refined full-width bottom bar -->
 <div id="audio-player">
   <div id="audio-shell">
 
-    <!-- Progress zone — inside the card, above controls, touch-safe -->
+    <!-- Scrubber: thin strip at top of bar -->
     <div class="ap-progress-zone" id="ap-progress-zone">
       <div class="ap-progress-wrap" id="ap-progress-wrap" title="Seek">
         <div class="ap-progress-bar" id="ap-progress-bar"></div>
       </div>
+    </div>
+
+    <!-- Main controls row -->
+    <div class="ap-pill-row" id="ap-pill-row">
+
+      <!-- Left: track info -->
+      <div class="ap-track-info">
+        <div class="ap-track-label" id="ap-row-label">No audio loaded</div>
+        <div class="ap-track-sub" id="ap-track-sub">—</div>
+      </div>
+
+      <!-- Waveform animation -->
+      <div class="ap-waveform" id="ap-waveform">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <!-- Centre: prev / play / next -->
+      <div class="ap-center-cluster">
+        <button class="ap-nav-btn" id="ap-prev" onclick="apPrev()" title="Previous row" disabled>&#8592;</button>
+        <button class="ap-play-btn" id="ap-play-btn" onclick="apFabClick()" title="Play / Pause" disabled>&#9654;</button>
+        <button class="ap-nav-btn" id="ap-next" onclick="apNext()" title="Next row" disabled>&#8594;</button>
+      </div>
+
+      <!-- Time display -->
       <div class="ap-time-row">
         <span class="ap-time" id="ap-time-cur">0:00</span>
+        <span class="ap-time-sep">/</span>
         <span class="ap-time" id="ap-time-dur">0:00</span>
       </div>
-    </div>
 
-    <!-- Controls row: prev / play / next — centred -->
-    <div class="ap-pill-row" id="ap-pill-row">
-      <div class="ap-center-cluster">
-        <button class="ap-nav-btn" id="ap-prev" onclick="apPrev()" title="Previous" disabled>‹</button>
-        <button class="ap-play-btn" id="ap-play-btn" onclick="apFabClick()" title="Play / Pause" disabled>▶</button>
-        <button class="ap-nav-btn" id="ap-next" onclick="apNext()" title="Next" disabled>›</button>
+      <!-- Column selector -->
+      <div class="ap-col-row">
+        <button class="ap-col-btn active" id="ap-col-ot" onclick="apSetCol('ot')">Ottoman</button>
+        <button class="ap-col-btn" id="ap-col-v1" onclick="apSetCol('v1')">Kurdish</button>
       </div>
+
     </div>
 
-    <!-- Hidden stubs (JS still targets these) -->
-    <div class="ap-track-info" style="display:none;">
-      <div class="ap-track-label" id="ap-row-label"></div>
-      <div class="ap-track-sub" id="ap-track-sub"></div>
-    </div>
-    <div class="ap-col-row" style="display:none;">
-      <button class="ap-col-btn active" id="ap-col-ot" onclick="apSetCol('ot')">Ottoman</button>
-      <button class="ap-col-btn" id="ap-col-v1" onclick="apSetCol('v1')">Kurdish (L)</button>
-    </div>
-    <div class="ap-pin-row" style="display:none;">
-      <label class="sw"><input type="checkbox" id="ap-pin" onchange="apTogglePin(this.checked)"><div class="sw-t"></div></label>
-    </div>
+    <!-- Hidden compat stubs -->
+    <div class="ap-pin-row"><label class="sw"><input type="checkbox" id="ap-pin" onchange="apTogglePin(this.checked)"><div class="sw-t"></div></label></div>
     <span id="ap-nav-label" style="display:none;"></span>
     <div id="ap-dots-menu" style="display:none;">
       <button id="apm-col-ot" style="display:none;"></button>
@@ -8958,18 +8976,18 @@ function buildReflectionsSidebar() {
 
 <script>
 /* ══════════════════════════════════════
-   AUDIO PLAYER  (Phase A)
+   AUDIO PLAYER — refined bottom bar (Phase A)
    Audio URLs stored on each row as:
      row.audioOt  — Ottoman clip URL
      row.audioV1  — Kurdish Literal clip URL
    ══════════════════════════════════════ */
 
 const apState = {
-  col:       'ot',      // 'ot' | 'v1'
+  col:       'ot',
   rowIndex:  0,
   playing:   false,
   pinned:    false,
-  visible:   false,     // controls panel visible
+  visible:   false,
 };
 
 const apAudio    = document.getElementById('ap-audio');
@@ -8977,14 +8995,15 @@ const apFab      = document.getElementById('audio-shell');   // legacy alias
 const apControls = document.getElementById('audio-shell');   // legacy alias
 const apShell    = document.getElementById('audio-shell');
 const apBar      = document.getElementById('ap-progress-bar');
-const apLabel    = document.getElementById('ap-row-label');  // track label in header
-const apNavLabel = document.getElementById('ap-nav-label');  // row X / Y (hidden)
+const apLabel    = document.getElementById('ap-row-label');
+const apNavLabel = document.getElementById('ap-nav-label');
 const apPrevBtn  = document.getElementById('ap-prev');
 const apNextBtn  = document.getElementById('ap-next');
 const apPlayBtn  = document.getElementById('ap-play-btn');
 const apTimeCur  = document.getElementById('ap-time-cur');
 const apTimeDur  = document.getElementById('ap-time-dur');
 const apTrackSub = document.getElementById('ap-track-sub');
+const apPlayer   = document.getElementById('audio-player');
 
 /* ── Helpers ── */
 function apGetRows() {
@@ -9024,16 +9043,15 @@ function apFmtTime(sec) {
 /* ── UI sync ── */
 function apSyncFab() {
   const hasAny = apHasAnyAudio();
+  // Show/hide the whole bar
+  apPlayer.classList.toggle('ap-visible', hasAny || apState.visible);
   apShell.classList.toggle('has-audio', hasAny);
-  apShell.classList.toggle('no-audio', !hasAny);
-  const icon = apState.playing ? '⏸' : '▶';
+  apShell.classList.toggle('ap-playing', apState.playing);
+  const icon = apState.playing ? '&#9646;&#9646;' : '&#9654;';
   if (apPlayBtn) {
-    apPlayBtn.textContent = icon;
+    apPlayBtn.innerHTML = icon;
     apPlayBtn.disabled = !hasAny;
   }
-  // playing-pulse: active when playing and collapsed
-  apShell.classList.toggle('playing-pulse', apState.playing && !apState.visible);
-  // update row play buttons
   apSyncRowPlayBtns();
 }
 
@@ -9053,28 +9071,30 @@ function apSyncControls() {
   const rows = apGetRows();
   const total = rows.length;
   const idx   = apState.rowIndex;
-  const apNavLabel = document.getElementById('ap-nav-label');
   if (apNavLabel) apNavLabel.textContent = total > 0 ? `${idx + 1} / ${total}` : '— / —';
   if (apLabel) {
     const url = apUrlForRow(idx);
     apLabel.textContent = total > 0 ? `Row ${idx + 1}` : 'No audio loaded';
     if (apTrackSub) {
-      apTrackSub.textContent = url ? (apState.col === 'ot' ? 'Ottoman Turkish' : 'Kurdish Literal') : 'No clip for this row';
+      apTrackSub.textContent = url
+        ? (apState.col === 'ot' ? 'Ottoman Turkish' : 'Kurdish Literal')
+        : 'No clip for this row';
     }
   }
   if (apPrevBtn) apPrevBtn.disabled = apFindNextWithAudio(idx - 1, false) < 0;
   if (apNextBtn) apNextBtn.disabled = apFindNextWithAudio(idx + 1, true)  < 0;
-  document.getElementById('ap-col-ot').classList.toggle('active', apState.col === 'ot');
-  document.getElementById('ap-col-v1').classList.toggle('active', apState.col === 'v1');
+  const colOt = document.getElementById('ap-col-ot');
+  const colV1 = document.getElementById('ap-col-v1');
+  if (colOt) colOt.classList.toggle('active', apState.col === 'ot');
+  if (colV1) colV1.classList.toggle('active', apState.col === 'v1');
 }
 
 function apShowControls(show) {
   apState.visible = show;
-  apShell.classList.toggle('bar-open', show);
+  // Bar is always shown when there's audio; this just satisfies legacy calls
   apSyncFab();
 }
 
-/* ── Toggle controls panel (FAB click) ── */
 function apToggleControls() {
   apShowControls(!apState.visible);
 }
@@ -9087,7 +9107,7 @@ function apSetCol(col) {
   apSyncFab();
 }
 
-/* ── FAB click (play/pause — works from both FAB pill and full bar) ── */
+/* ── FAB click ── */
 function apFabClick() {
   if (!apHasAnyAudio()) return;
   if (apState.playing) {
@@ -9111,7 +9131,6 @@ function apPlay(idx) {
   apAudio.play().catch(e => console.warn('Audio play error:', e));
   apSyncControls();
   apSyncFab();
-  apShowControls(true); // always expand when playback starts
 }
 
 function apPause() {
@@ -9140,7 +9159,7 @@ function apNext() {
   if (idx >= 0) apPlay(idx);
 }
 
-/* ── Auto-advance + progress bar + time ── */
+/* ── Auto-advance + progress + time ── */
 apAudio.addEventListener('loadedmetadata', () => {
   if (apTimeDur) apTimeDur.textContent = apFmtTime(apAudio.duration);
 });
@@ -9148,18 +9167,16 @@ apAudio.addEventListener('loadedmetadata', () => {
 apAudio.addEventListener('ended', () => {
   apBar.style.width = '100%';
   apState.playing = false;
+  apShell.classList.remove('ap-playing');
   const next = apFindNextWithAudio(apState.rowIndex + 1, true);
   if (next >= 0) {
     setTimeout(() => apPlay(next), 400);
   } else {
     apSyncFab();
-    if (!apState.pinned) {
-      setTimeout(() => apShowControls(false), 1800);
-    }
   }
 });
 
-/* Click progress bar to seek */
+/* ── Seek: mouse ── */
 const apProgressWrap = document.getElementById('ap-progress-wrap');
 
 function apSeekFromEvent(e) {
@@ -9171,7 +9188,6 @@ function apSeekFromEvent(e) {
   apProgressWrap.style.setProperty('--ap-pct', (pct * 100) + '%');
 }
 
-/* Mouse seek */
 let apSeeking = false;
 apProgressWrap.addEventListener('mousedown', e => {
   apSeeking = true;
@@ -9188,7 +9204,7 @@ document.addEventListener('mouseup', () => {
   apProgressWrap.classList.remove('seeking');
 });
 
-/* Touch seek — touch-action:none on the zone prevents page scroll */
+/* ── Seek: touch ── */
 apProgressWrap.addEventListener('touchstart', e => {
   apSeeking = true;
   apProgressWrap.classList.add('seeking');
@@ -9205,7 +9221,7 @@ apProgressWrap.addEventListener('touchend', () => {
   apProgressWrap.classList.remove('seeking');
 });
 
-/* Also update thumb position on timeupdate */
+/* ── Progress bar + time on timeupdate ── */
 apAudio.addEventListener('timeupdate', () => {
   if (!apAudio.duration) return;
   const pct = apAudio.currentTime / apAudio.duration * 100;
@@ -9214,17 +9230,9 @@ apAudio.addEventListener('timeupdate', () => {
   if (apTimeCur) apTimeCur.textContent = apFmtTime(apAudio.currentTime);
 });
 
-/* ── Auto-hide: hide controls when not pinned and not playing ── */
-apAudio.addEventListener('pause', () => {
-  if (!apState.pinned && !apState.playing) {
-    setTimeout(() => { if (!apState.playing) { /* keep visible */ } }, 3000);
-  }
-});
-
-/* ── Pin toggle ── */
+/* ── Pin toggle (compat) ── */
 function apTogglePin(on) {
   apState.pinned = on;
-  if (on) apShowControls(true);
 }
 
 /* ── Row play button click ── */
@@ -9247,31 +9255,6 @@ function apToggleDotsMenu() {}
 function apCloseDotsMenu() {}
 function apSyncDotsMenu() {}
 function apMenuTogglePin() {}
-
-/* ── Tapping the circle (collapsed) → expand ── */
-apShell.addEventListener('click', function(e) {
-  if (apShell.classList.contains('bar-open')) return;
-  apShowControls(true);
-});
-
-/* ── Tap outside the shell → collapse player ── */
-document.addEventListener('click', e => {
-  if (!apShell.classList.contains('bar-open')) return;
-  if (apShell.contains(e.target)) return;
-  apShowControls(false);
-}, true);
-
-/* ── Scroll anywhere → collapse player ── */
-(function() {
-  let apScrollTimer = null;
-  function apOnScroll() {
-    if (!apShell.classList.contains('bar-open')) return;
-    apShowControls(false);
-  }
-  // Listen on document and all scrollable containers
-  document.addEventListener('scroll', apOnScroll, { passive: true, capture: true });
-  window.addEventListener('scroll', apOnScroll, { passive: true });
-})();
 
 /* ── Re-sync whenever render() runs ── */
 const _origRender = render;

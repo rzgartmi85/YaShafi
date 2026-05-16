@@ -35,19 +35,19 @@ html{height:100%;}
 body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectral',Georgia,serif;display:flex;flex-direction:column;}
 
 /* ── TOPBAR ── */
-#topbar{height:var(--topbar-h);min-height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;z-index:200;flex-shrink:0;position:sticky;top:0;overflow:visible;}
-.tb-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:5px 9px;cursor:pointer;font-size:1rem;line-height:1;transition:all .18s;display:flex;align-items:center;justify-content:center;}
+#topbar{height:var(--topbar-h);min-height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 10px;gap:6px;z-index:200;flex-shrink:0;position:sticky;top:0;overflow:visible;}
+.tb-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:5px 9px;cursor:pointer;font-size:1rem;line-height:1;transition:all .18s;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .tb-btn:hover{border-color:var(--accent);color:var(--accent);}
 .tb-btn.active{background:var(--accent);border-color:var(--accent);color:#f5ede0;}
-#topbar-title{font-family:'Amiri',serif;font-size:1rem;color:var(--accent);font-weight:400;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px;}
+#topbar-title{font-family:'Amiri',serif;font-size:1rem;color:var(--accent);font-weight:400;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px;}
 #topbar-title span{color:var(--text-faint);font-size:0.75rem;font-family:'Spectral',serif;margin-left:6px;}
-.tb-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.tb-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 
 /* ── LAYOUT ── */
 #layout{display:flex;flex:1;overflow:hidden;height:calc(100dvh - var(--topbar-h));}
 
 /* ── SIDEBARS ── */
-.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg2);border-style:solid;border-color:var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .25s ease,min-width .25s ease,opacity .2s;flex-shrink:0;container-type:inline-size;container-name:sidebar;position:relative;z-index:210;}
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg2);border-style:solid;border-color:var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .25s ease,min-width .25s ease,opacity .2s;flex-shrink:0;container-type:inline-size;container-name:sidebar;position:relative;z-index:100;}
 .sidebar.collapsed{width:0;min-width:0;opacity:0;pointer-events:none;}
 #sb-left{border-right-width:1px;border-left-width:0;border-top-width:0;border-bottom-width:0;}
 #sb-right{border-left-width:1px;border-right-width:0;border-top-width:0;border-bottom-width:0;}
@@ -340,7 +340,7 @@ td.col-v2{background:rgba(30,26,21,.3);font-family:'Amiri',serif;font-size:1.04r
 .fb.err{background:rgba(200,100,100,.12);color:var(--danger);border:1px solid var(--danger);display:block;}
 
 /* ── MOBILE OVERLAY ── */
-.mob-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:149;}
+.mob-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:155;}
 .mob-ov.on{display:block;}
 
 /* ── SCROLLBAR ── */
@@ -2032,7 +2032,7 @@ tr.row-bookmarked {
     position: fixed;
     top: var(--topbar-h);
     bottom: 0;
-    z-index: 150;
+    z-index: 160;
     width: var(--sidebar-w) !important;
     min-width: var(--sidebar-w) !important;
     opacity: 1 !important;
@@ -2388,44 +2388,169 @@ tr.row-bookmarked {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 6px;
+  gap: 8px;
   pointer-events: none;
 }
+
 #audio-fab {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: var(--accent);
   border: none;
   color: #f5ede0;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   cursor: pointer;
-  box-shadow: 0 4px 18px rgba(0,0,0,.45);
+  box-shadow: 0 4px 20px rgba(0,0,0,.5), 0 1px 4px rgba(0,0,0,.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform .15s, filter .15s;
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s, filter .18s;
   pointer-events: all;
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
 }
-#audio-fab:hover { filter: brightness(1.12); transform: scale(1.06); }
+#audio-fab::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,.12);
+  opacity: 0;
+  transition: opacity .15s;
+}
+#audio-fab:hover::after { opacity: 1; }
+#audio-fab:hover { transform: scale(1.08); box-shadow: 0 6px 26px rgba(0,0,0,.55); }
+#audio-fab:active { transform: scale(0.95); }
 #audio-fab.has-audio { background: var(--accent); }
-#audio-fab.no-audio  { background: var(--surface3); color: var(--text-faint); cursor: default; }
+#audio-fab.no-audio  { background: var(--surface3); color: var(--text-faint); cursor: default; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+#audio-fab.playing-pulse {
+  animation: ap-fab-pulse 1.8s ease-in-out infinite;
+}
+@keyframes ap-fab-pulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,.5), 0 0 0 0 rgba(200,169,110,.4); }
+  50% { box-shadow: 0 4px 20px rgba(0,0,0,.5), 0 0 0 10px rgba(200,169,110,0); }
+}
 
 #audio-controls {
-  background: var(--surface2);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 12px 8px;
-  box-shadow: 0 6px 24px rgba(0,0,0,.5);
+  border-radius: 14px;
+  padding: 12px 14px 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.3);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   pointer-events: all;
-  min-width: 220px;
-  transition: opacity .2s, transform .2s;
+  width: 260px;
+  transform-origin: bottom right;
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  transition: opacity .2s cubic-bezier(.4,0,.2,1), transform .2s cubic-bezier(.4,0,.2,1);
 }
-#audio-controls.hidden { display: none; }
+[data-theme="light"] #audio-controls {
+  box-shadow: 0 8px 32px rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.1);
+}
+#audio-controls.hidden {
+  opacity: 0;
+  transform: scale(.95) translateY(6px);
+  pointer-events: none;
+  /* keep in DOM but invisible so animation works */
+  visibility: hidden;
+}
+/* Override display:none with visibility trick */
+#audio-controls { display: flex !important; }
+
+/* Controls header row: play button + track info */
+.ap-header-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ap-play-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  color: #f5ede0;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: filter .15s, transform .15s;
+}
+.ap-play-btn:hover { filter: brightness(1.15); transform: scale(1.06); }
+.ap-play-btn:active { transform: scale(0.94); }
+.ap-play-btn:disabled { background: var(--surface3); color: var(--text-faint); cursor: default; transform: none; filter: none; }
+
+.ap-track-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.ap-track-label {
+  font-size: 0.72rem;
+  color: var(--text);
+  font-family: 'Spectral', serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.ap-track-sub {
+  font-size: 0.6rem;
+  color: var(--text-faint);
+  font-family: 'Spectral', serif;
+  letter-spacing: .04em;
+}
+
+/* Progress + time */
+.ap-progress-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ap-progress-wrap {
+  height: 5px;
+  background: var(--surface3);
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: height .15s;
+}
+.ap-progress-wrap:hover {
+  height: 7px;
+}
+.ap-progress-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  width: 0%;
+  transition: width .1s linear;
+  pointer-events: none;
+}
+.ap-progress-wrap:hover .ap-progress-bar {
+  background: color-mix(in srgb, var(--accent) 85%, white);
+}
+.ap-time-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ap-time {
+  font-size: 0.6rem;
+  color: var(--text-faint);
+  font-family: 'Spectral', serif;
+  letter-spacing: .04em;
+  font-variant-numeric: tabular-nums;
+}
 
 .ap-col-row {
   display: flex;
@@ -2433,42 +2558,48 @@ tr.row-bookmarked {
 }
 .ap-col-btn {
   flex: 1;
-  background: var(--surface3);
+  background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text-dim);
   font-family: 'Spectral', serif;
-  font-size: 0.68rem;
-  padding: 4px 2px;
+  font-size: 0.65rem;
+  padding: 4px 4px;
   cursor: pointer;
   text-align: center;
   transition: all .15s;
   white-space: nowrap;
+  letter-spacing: .04em;
 }
 .ap-col-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
 
+/* Nav row: prev, row counter, next */
 .ap-nav-row {
   display: flex;
   align-items: center;
   gap: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px 3px;
 }
 .ap-nav-btn {
   background: none;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  border: none;
+  border-radius: 5px;
   color: var(--text-dim);
-  font-size: 0.9rem;
-  width: 30px;
-  height: 28px;
+  font-size: 1rem;
+  width: 28px;
+  height: 26px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all .15s;
+  transition: background .13s, color .13s;
   flex-shrink: 0;
 }
-.ap-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
-.ap-nav-btn:disabled { opacity: 0.3; cursor: default; }
+.ap-nav-btn:hover { background: var(--surface3); color: var(--accent); }
+.ap-nav-btn:disabled { opacity: 0.28; cursor: default; }
 
 .ap-row-label {
   flex: 1;
@@ -2479,22 +2610,7 @@ tr.row-bookmarked {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.ap-progress-wrap {
-  height: 4px;
-  background: var(--surface3);
-  border-radius: 2px;
-  overflow: hidden;
-  cursor: pointer;
-}
-.ap-progress-bar {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 2px;
-  width: 0%;
-  transition: width .1s linear;
-  pointer-events: none;
+  font-variant-numeric: tabular-nums;
 }
 
 .ap-pin-row {
@@ -2512,7 +2628,7 @@ tr.row-bookmarked {
 
 @media (max-width: 600px) {
   #audio-player { bottom: 12px; right: 12px; }
-  #audio-controls { min-width: 180px; }
+  #audio-controls { width: calc(100vw - 24px); }
 }
 
 /* Row audio indicator dot */
@@ -8735,20 +8851,34 @@ function buildReflectionsSidebar() {
 <!-- AUDIO PLAYER -->
 <div id="audio-player">
   <div id="audio-controls" class="hidden">
-    <!-- Column selector -->
-    <div class="ap-col-row">
-      <button class="ap-col-btn active" id="ap-col-ot" onclick="apSetCol('ot')">Ottoman</button>
-      <button class="ap-col-btn" id="ap-col-v1" onclick="apSetCol('v1')">Kurdish (L)</button>
+    <!-- Header: inline play + track info -->
+    <div class="ap-header-row">
+      <button class="ap-play-btn" id="ap-play-btn" onclick="apFabClick()" title="Play / Pause" disabled>▶</button>
+      <div class="ap-track-info">
+        <div class="ap-track-label" id="ap-row-label">No audio loaded</div>
+        <div class="ap-track-sub" id="ap-track-sub">Select a row to play</div>
+      </div>
     </div>
-    <!-- Progress bar -->
-    <div class="ap-progress-wrap" id="ap-progress-wrap">
-      <div class="ap-progress-bar" id="ap-progress-bar"></div>
+    <!-- Progress + time -->
+    <div class="ap-progress-zone">
+      <div class="ap-progress-wrap" id="ap-progress-wrap" title="Seek">
+        <div class="ap-progress-bar" id="ap-progress-bar"></div>
+      </div>
+      <div class="ap-time-row">
+        <span class="ap-time" id="ap-time-cur">0:00</span>
+        <span class="ap-time" id="ap-time-dur">0:00</span>
+      </div>
     </div>
     <!-- Nav row -->
     <div class="ap-nav-row">
       <button class="ap-nav-btn" id="ap-prev" onclick="apPrev()" title="Previous">‹</button>
-      <span class="ap-row-label" id="ap-row-label">Row — / —</span>
+      <span class="ap-row-label" id="ap-nav-label">— / —</span>
       <button class="ap-nav-btn" id="ap-next" onclick="apNext()" title="Next">›</button>
+    </div>
+    <!-- Column selector -->
+    <div class="ap-col-row">
+      <button class="ap-col-btn active" id="ap-col-ot" onclick="apSetCol('ot')">Ottoman</button>
+      <button class="ap-col-btn" id="ap-col-v1" onclick="apSetCol('v1')">Kurdish (L)</button>
     </div>
     <!-- Pin toggle -->
     <div class="ap-pin-row">
@@ -8759,7 +8889,7 @@ function buildReflectionsSidebar() {
       </label>
     </div>
   </div>
-  <button id="audio-fab" onclick="apFabClick()" title="Play audio">▶</button>
+  <button id="audio-fab" onclick="apToggleControls()" title="Audio Player">🔊</button>
 </div>
 <audio id="ap-audio"></audio>
 
@@ -8779,13 +8909,18 @@ const apState = {
   visible:   false,     // controls panel visible
 };
 
-const apAudio   = document.getElementById('ap-audio');
-const apFab     = document.getElementById('audio-fab');
+const apAudio    = document.getElementById('ap-audio');
+const apFab      = document.getElementById('audio-fab');
 const apControls = document.getElementById('audio-controls');
-const apBar     = document.getElementById('ap-progress-bar');
-const apLabel   = document.getElementById('ap-row-label');
-const apPrevBtn = document.getElementById('ap-prev');
-const apNextBtn = document.getElementById('ap-next');
+const apBar      = document.getElementById('ap-progress-bar');
+const apLabel    = document.getElementById('ap-row-label');  // track label in header
+const apNavLabel = document.getElementById('ap-nav-label');  // row X / Y in nav bar
+const apPrevBtn  = document.getElementById('ap-prev');
+const apNextBtn  = document.getElementById('ap-next');
+const apPlayBtn  = document.getElementById('ap-play-btn');
+const apTimeCur  = document.getElementById('ap-time-cur');
+const apTimeDur  = document.getElementById('ap-time-dur');
+const apTrackSub = document.getElementById('ap-track-sub');
 
 /* ── Helpers ── */
 function apGetRows() {
@@ -8815,21 +8950,40 @@ function apFindNextWithAudio(startIdx, forward) {
   return -1;
 }
 
+function apFmtTime(sec) {
+  if (!isFinite(sec) || isNaN(sec)) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
 /* ── UI sync ── */
 function apSyncFab() {
   const hasAny = apHasAnyAudio();
   apFab.classList.toggle('has-audio', hasAny);
   apFab.classList.toggle('no-audio', !hasAny);
-  apFab.textContent = apState.playing ? '⏸' : '▶';
+  apFab.textContent = apState.visible ? '✕' : '🔊';
+  if (apPlayBtn) {
+    apPlayBtn.textContent = apState.playing ? '⏸' : '▶';
+    apPlayBtn.disabled = !apHasAnyAudio();
+  }
+  apFab.classList.toggle('playing-pulse', apState.playing);
 }
 
 function apSyncControls() {
   const rows = apGetRows();
   const total = rows.length;
   const idx   = apState.rowIndex;
-  apLabel.textContent = total > 0 ? `Row ${idx + 1} / ${total}` : 'No rows';
-  apPrevBtn.disabled  = apFindNextWithAudio(idx - 1, false) < 0;
-  apNextBtn.disabled  = apFindNextWithAudio(idx + 1, true)  < 0;
+  if (apNavLabel) apNavLabel.textContent = total > 0 ? `${idx + 1} / ${total}` : '— / —';
+  if (apLabel) {
+    const url = apUrlForRow(idx);
+    apLabel.textContent = total > 0 ? `Row ${idx + 1}` : 'No audio loaded';
+    if (apTrackSub) {
+      apTrackSub.textContent = url ? (apState.col === 'ot' ? 'Ottoman Turkish' : 'Kurdish Literal') : 'No clip for this row';
+    }
+  }
+  if (apPrevBtn) apPrevBtn.disabled = apFindNextWithAudio(idx - 1, false) < 0;
+  if (apNextBtn) apNextBtn.disabled = apFindNextWithAudio(idx + 1, true)  < 0;
   document.getElementById('ap-col-ot').classList.toggle('active', apState.col === 'ot');
   document.getElementById('ap-col-v1').classList.toggle('active', apState.col === 'v1');
 }
@@ -8837,6 +8991,12 @@ function apSyncControls() {
 function apShowControls(show) {
   apState.visible = show;
   apControls.classList.toggle('hidden', !show);
+  apSyncFab();
+}
+
+/* ── Toggle controls panel (FAB click) ── */
+function apToggleControls() {
+  apShowControls(!apState.visible);
 }
 
 /* ── Column selector ── */
@@ -8847,7 +9007,7 @@ function apSetCol(col) {
   apSyncFab();
 }
 
-/* ── FAB click ── */
+/* ── FAB click (now a separate play/pause for backward compat) ── */
 function apFabClick() {
   if (!apHasAnyAudio()) return;
   if (apState.playing) {
@@ -8862,7 +9022,6 @@ function apFabClick() {
 function apPlay(idx) {
   const url = apUrlForRow(idx);
   if (!url) {
-    // skip to next row that has audio
     const next = apFindNextWithAudio(idx + 1, true);
     if (next >= 0) apPlay(next);
     return;
@@ -8887,6 +9046,8 @@ function apStop() {
   apAudio.src = '';
   apState.playing = false;
   apBar.style.width = '0%';
+  if (apTimeCur) apTimeCur.textContent = '0:00';
+  if (apTimeDur) apTimeDur.textContent = '0:00';
   apSyncFab();
 }
 
@@ -8900,10 +9061,16 @@ function apNext() {
   if (idx >= 0) apPlay(idx);
 }
 
-/* ── Auto-advance + progress bar ── */
+/* ── Auto-advance + progress bar + time ── */
 apAudio.addEventListener('timeupdate', () => {
   if (!apAudio.duration) return;
-  apBar.style.width = (apAudio.currentTime / apAudio.duration * 100) + '%';
+  const pct = apAudio.currentTime / apAudio.duration * 100;
+  apBar.style.width = pct + '%';
+  if (apTimeCur) apTimeCur.textContent = apFmtTime(apAudio.currentTime);
+});
+
+apAudio.addEventListener('loadedmetadata', () => {
+  if (apTimeDur) apTimeDur.textContent = apFmtTime(apAudio.duration);
 });
 
 apAudio.addEventListener('ended', () => {
@@ -8927,10 +9094,25 @@ document.getElementById('ap-progress-wrap').addEventListener('click', e => {
   apAudio.currentTime = ((e.clientX - rect.left) / rect.width) * apAudio.duration;
 });
 
+/* Drag to seek */
+let apSeeking = false;
+document.getElementById('ap-progress-wrap').addEventListener('mousedown', e => {
+  apSeeking = true;
+  e.preventDefault();
+});
+document.addEventListener('mousemove', e => {
+  if (!apSeeking || !apAudio.duration) return;
+  const wrap = document.getElementById('ap-progress-wrap');
+  const rect = wrap.getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  apAudio.currentTime = pct * apAudio.duration;
+});
+document.addEventListener('mouseup', () => { apSeeking = false; });
+
 /* ── Auto-hide: hide controls when not pinned and not playing ── */
 apAudio.addEventListener('pause', () => {
   if (!apState.pinned && !apState.playing) {
-    setTimeout(() => { if (!apState.playing) apShowControls(false); }, 3000);
+    setTimeout(() => { if (!apState.playing) { /* keep visible for manual control */ } }, 3000);
   }
 });
 

@@ -2399,55 +2399,67 @@ tr.row-bookmarked {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  padding-bottom: 16px;
+  padding-bottom: 20px;
 }
 
-/* ── The single card that morphs between pill and full bar ── */
+/* ── The single card — collapses to a circle, expands to a bar ── */
 #audio-shell {
   pointer-events: all;
   position: relative;
-  width: calc(100% - 32px);
-  max-width: 700px;
+
+  /* Collapsed = circle (FAB) */
+  width: 52px;
+  height: 52px;
+  max-width: 52px;
 
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 999px;               /* pill in collapsed state */
+  border-radius: 999px;
   box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 2px 8px rgba(0,0,0,.25);
+
+  overflow: hidden;
 
   /* morph transition */
   transition:
+    width .38s cubic-bezier(.4,0,.2,1),
+    height .38s cubic-bezier(.4,0,.2,1),
+    max-width .38s cubic-bezier(.4,0,.2,1),
     border-radius .38s cubic-bezier(.4,0,.2,1),
-    box-shadow .38s ease,
-    max-height .38s cubic-bezier(.4,0,.2,1),
-    padding .28s cubic-bezier(.4,0,.2,1);
-
-  overflow: hidden;
-  max-height: 56px;                   /* pill height */
+    box-shadow .38s ease;
 }
 [data-theme="light"] #audio-shell {
   box-shadow: 0 8px 28px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.1);
 }
 
-/* ── Expanded state ── */
+/* ── Expanded (pill bar) state ── */
 #audio-shell.bar-open {
-  border-radius: 20px;
-  max-height: 140px;                  /* enough for progress + main row */
+  width: min(480px, calc(100vw - 32px));
+  height: auto;
+  max-width: min(480px, calc(100vw - 32px));
+  border-radius: 999px;
   box-shadow: 0 12px 40px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.3);
 }
 [data-theme="light"] #audio-shell.bar-open {
   box-shadow: 0 8px 32px rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.1);
 }
 
-/* ── Pill row (always visible — the "mini player") ── */
+/* ── Further expanded for progress bar ── */
+#audio-shell.bar-open.has-progress {
+  border-radius: 24px;
+}
+
+/* ── Pill row (always in DOM, hidden behind circle in collapsed state) ── */
 .ap-pill-row {
   display: flex;
   align-items: center;
-  height: 54px;
-  padding: 0 6px 0 8px;
-  gap: 0;
+  height: 52px;
+  padding: 0 8px 0 10px;
+  gap: 4px;
+  /* In circle state, only the play button is visible (overflowed content hides) */
+  white-space: nowrap;
 }
 
-/* Nav buttons */
+/* Nav buttons — hidden in circle mode */
 .ap-nav-btn {
   background: none;
   border: none;
@@ -2460,13 +2472,24 @@ tr.row-bookmarked {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background .13s, color .13s;
+  transition: background .13s, color .13s, opacity .25s, width .35s, margin .35s;
   flex-shrink: 0;
+  opacity: 0;
+  width: 0;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+#audio-shell.bar-open .ap-nav-btn {
+  opacity: 1;
+  width: 36px;
+  margin: 0;
+  pointer-events: auto;
 }
 .ap-nav-btn:hover { background: var(--surface2); color: var(--accent); }
 .ap-nav-btn:disabled { opacity: 0.28; cursor: default; }
 
-/* Play button */
+/* Play button — always visible, centered in circle */
 .ap-play-btn {
   width: 38px;
   height: 38px;
@@ -2480,22 +2503,33 @@ tr.row-bookmarked {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin: 0 2px;
+  margin: 0;
   transition: filter .15s, transform .15s, box-shadow .15s;
   box-shadow: 0 2px 8px rgba(0,0,0,.3);
+}
+/* In circle (collapsed) mode: center the play button */
+#audio-shell:not(.bar-open) .ap-pill-row {
+  justify-content: center;
+  padding: 0;
 }
 .ap-play-btn:hover { filter: brightness(1.18); transform: scale(1.07); box-shadow: 0 4px 14px rgba(0,0,0,.4); }
 .ap-play-btn:active { transform: scale(0.93); }
 .ap-play-btn:disabled { background: var(--surface3); color: var(--text-faint); cursor: default; transform: none; filter: none; box-shadow: none; }
 
-/* Track info — shown in pill */
+/* Track info — hidden in circle mode */
 .ap-track-info {
   flex: 1;
   min-width: 0;
-  padding: 0 10px;
+  padding: 0 8px;
   display: flex;
   flex-direction: column;
   gap: 1px;
+  opacity: 0;
+  transition: opacity .25s;
+  overflow: hidden;
+}
+#audio-shell.bar-open .ap-track-info {
+  opacity: 1;
 }
 .ap-track-label {
   font-size: 0.75rem;
@@ -2513,7 +2547,7 @@ tr.row-bookmarked {
   letter-spacing: .04em;
 }
 
-/* Chevron toggle — rotates to signal direction */
+/* Chevron toggle — hidden in circle mode */
 .ap-chevron-btn {
   background: none;
   border: none;
@@ -2526,9 +2560,19 @@ tr.row-bookmarked {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: color .15s, background .15s;
+  transition: color .15s, background .15s, opacity .25s, width .35s, margin .35s;
   padding: 0;
+  margin-left: 0;
+  opacity: 0;
+  overflow: hidden;
+  width: 0;
+  pointer-events: none;
+}
+#audio-shell.bar-open .ap-chevron-btn {
+  opacity: 1;
+  width: 32px;
   margin-left: 2px;
+  pointer-events: auto;
 }
 .ap-chevron-btn:hover { color: var(--accent); background: var(--surface2); }
 .ap-chevron-btn svg {
@@ -2540,7 +2584,7 @@ tr.row-bookmarked {
 /* chevron points up in pill (→ expand), down in bar (→ collapse) */
 #audio-shell.bar-open .ap-chevron-btn svg { transform: rotate(180deg); }
 
-/* Three-dot menu button */
+/* Three-dot menu button — hidden in circle mode */
 .ap-dots-btn {
   background: none;
   border: none;
@@ -2553,10 +2597,19 @@ tr.row-bookmarked {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color .15s, background .15s;
+  transition: color .15s, background .15s, opacity .25s, width .35s;
   flex-shrink: 0;
   line-height: 1;
   letter-spacing: 1px;
+  opacity: 0;
+  overflow: hidden;
+  width: 0;
+  pointer-events: none;
+}
+#audio-shell.bar-open .ap-dots-btn {
+  opacity: 1;
+  width: 32px;
+  pointer-events: auto;
 }
 .ap-dots-btn:hover { color: var(--accent); background: var(--surface2); }
 
@@ -2609,13 +2662,13 @@ tr.row-bookmarked {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Pulse animation when playing and collapsed ── */
+/* ── Pulse animation when playing and collapsed (circle) ── */
 #audio-shell.playing-pulse {
   animation: ap-shell-pulse 2s ease-in-out infinite;
 }
 @keyframes ap-shell-pulse {
-  0%,100% { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 0 rgba(200,169,110,.4); }
-  50%      { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 8px rgba(200,169,110,0); }
+  0%,100% { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 0 rgba(200,169,110,.5); }
+  50%      { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 10px rgba(200,169,110,0); }
 }
 
 /* ── Three-dot dropdown ── */
@@ -2675,9 +2728,9 @@ tr.row-bookmarked {
 
 /* Mobile tweaks */
 @media (max-width: 600px) {
-  #audio-player { padding-bottom: 10px; }
-  #audio-shell { width: calc(100% - 20px); }
-  .ap-pill-row { height: 50px; padding: 0 4px 0 6px; }
+  #audio-player { padding-bottom: 12px; }
+  #audio-shell.bar-open { width: min(420px, calc(100vw - 20px)); max-width: min(420px, calc(100vw - 20px)); }
+  .ap-pill-row { height: 52px; }
 }
 
 /* ── Per-row play button in the number cell ── */
@@ -8957,7 +9010,7 @@ function buildReflectionsSidebar() {
     </div>
 
     <!-- Pill row — always visible -->
-    <div class="ap-pill-row">
+    <div class="ap-pill-row" id="ap-pill-row">
       <button class="ap-nav-btn" id="ap-prev" onclick="apPrev()" title="Previous" disabled>‹</button>
       <button class="ap-play-btn" id="ap-play-btn" onclick="apFabClick()" title="Play / Pause" disabled>▶</button>
       <button class="ap-nav-btn" id="ap-next" onclick="apNext()" title="Next" disabled>›</button>
@@ -9311,6 +9364,14 @@ window.render = function() {
 /* ── Init ── */
 apSyncFab();
 apSyncControls();
+
+/* ── Clicking the circle (collapsed shell) expands it ── */
+apShell.addEventListener('click', function(e) {
+  if (apShell.classList.contains('bar-open')) return; // already open
+  // Only expand if click wasn't on the play button
+  if (e.target.closest('.ap-play-btn')) return;
+  apShowControls(true);
+});
 </script>
 
 <script>

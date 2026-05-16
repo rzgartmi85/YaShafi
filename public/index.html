@@ -217,7 +217,7 @@ body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectra
 .hide-pages .s-para-break{display:none!important;}
 
 /* ── PAGE NAV BAR (in main content) ── */
-#pm-nav-bar-outer{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;flex-shrink:0;}
+#pm-nav-bar-outer{display:none;position:fixed;bottom:80px;left:0;right:0;z-index:200;flex-shrink:0;}
 #pm-nav-bar{display:flex;align-items:center;gap:8px;padding:6px 18px;background:var(--surface);border-top:1px solid var(--border);position:relative;}
 #pm-nav-bar button{background:var(--surface3);border:1px solid var(--border);color:var(--text-dim);font-family:'Spectral',serif;font-size:0.73rem;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .18s;}
 #pm-nav-bar button:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
@@ -239,8 +239,8 @@ tr.pg-divider-row td .pg-divider { padding: 10px 11px 6px; }
 
 /* ── MAIN ── */
 #main{flex:1;overflow-y:auto;overflow-x:auto;display:flex;flex-direction:column;}
-.c-pad{padding:14px 18px 60px;}
-body.page-mode-active .c-pad{padding-bottom:90px;}
+.c-pad{padding:14px 18px 130px;}
+body.page-mode-active .c-pad{padding-bottom:160px;}
 
 /* table */
 table{width:100%;border-collapse:collapse;table-layout:fixed;}
@@ -2379,95 +2379,96 @@ tr.row-bookmarked {
   transition: width .2s;
 }
 
-/* ── AUDIO PLAYER ── */
+/* ── AUDIO PLAYER — minimalist horizontal bottom bar ── */
 #audio-player {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 900;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
   pointer-events: none;
 }
 
+/* FAB hidden — controls are always in the bar */
 #audio-fab {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: none;
-  color: #f5ede0;
-  font-size: 1.1rem;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0,0,0,.5), 0 1px 4px rgba(0,0,0,.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s, filter .18s;
-  pointer-events: all;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-}
-#audio-fab::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: rgba(255,255,255,.12);
-  opacity: 0;
-  transition: opacity .15s;
-}
-#audio-fab:hover::after { opacity: 1; }
-#audio-fab:hover { transform: scale(1.08); box-shadow: 0 6px 26px rgba(0,0,0,.55); }
-#audio-fab:active { transform: scale(0.95); }
-#audio-fab.has-audio { background: var(--accent); }
-#audio-fab.no-audio  { background: var(--surface3); color: var(--text-faint); cursor: default; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
-#audio-fab.playing-pulse {
-  animation: ap-fab-pulse 1.8s ease-in-out infinite;
-}
-@keyframes ap-fab-pulse {
-  0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,.5), 0 0 0 0 rgba(200,169,110,.4); }
-  50% { box-shadow: 0 4px 20px rgba(0,0,0,.5), 0 0 0 10px rgba(200,169,110,0); }
+  display: none;
 }
 
 #audio-controls {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 12px 14px 10px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.3);
-  display: flex;
+  border-top: 1px solid var(--border);
+  padding: 0 16px 0 12px;
+  box-shadow: 0 -4px 24px rgba(0,0,0,.45);
+  display: flex !important;
   flex-direction: column;
-  gap: 10px;
   pointer-events: all;
-  width: 260px;
-  transform-origin: bottom right;
-  transform: scale(1) translateY(0);
+  transform-origin: bottom center;
+  transform: translateY(0);
   opacity: 1;
-  transition: opacity .2s cubic-bezier(.4,0,.2,1), transform .2s cubic-bezier(.4,0,.2,1);
+  transition: opacity .2s, transform .2s;
+  overflow: visible;
 }
 [data-theme="light"] #audio-controls {
-  box-shadow: 0 8px 32px rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.1);
+  box-shadow: 0 -4px 20px rgba(0,0,0,.15);
 }
 #audio-controls.hidden {
   opacity: 0;
-  transform: scale(.95) translateY(6px);
+  transform: translateY(100%);
   pointer-events: none;
-  /* keep in DOM but invisible so animation works */
   visibility: hidden;
 }
-/* Override display:none with visibility trick */
-#audio-controls { display: flex !important; }
 
-/* Controls header row: play button + track info */
+/* ── Progress bar — top of the bar, full width, prominent ── */
+.ap-progress-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0 -16px 0 -12px; /* bleed to edges */
+}
+.ap-progress-wrap {
+  height: 4px;
+  background: var(--surface3);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: height .15s;
+  flex-shrink: 0;
+}
+.ap-progress-wrap:hover { height: 7px; }
+.ap-progress-bar {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width .1s linear;
+  pointer-events: none;
+}
+.ap-progress-wrap:hover .ap-progress-bar {
+  background: color-mix(in srgb, var(--accent) 85%, white);
+}
+.ap-time-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 16px 0 12px;
+}
+.ap-time {
+  font-size: 0.58rem;
+  color: var(--text-faint);
+  font-family: 'Spectral', serif;
+  letter-spacing: .04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Main controls row ── */
 .ap-header-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;
+  height: 52px;
+  min-height: 52px;
 }
+
+/* Play button */
 .ap-play-btn {
   width: 36px;
   height: 36px;
@@ -2475,18 +2476,20 @@ tr.row-bookmarked {
   background: var(--accent);
   border: none;
   color: #f5ede0;
-  font-size: 0.95rem;
+  font-size: 1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   transition: filter .15s, transform .15s;
+  margin-right: 12px;
 }
 .ap-play-btn:hover { filter: brightness(1.15); transform: scale(1.06); }
 .ap-play-btn:active { transform: scale(0.94); }
 .ap-play-btn:disabled { background: var(--surface3); color: var(--text-faint); cursor: default; transform: none; filter: none; }
 
+/* Track info */
 .ap-track-info {
   flex: 1;
   min-width: 0;
@@ -2495,7 +2498,7 @@ tr.row-bookmarked {
   gap: 1px;
 }
 .ap-track-label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text);
   font-family: 'Spectral', serif;
   white-space: nowrap;
@@ -2510,87 +2513,26 @@ tr.row-bookmarked {
   letter-spacing: .04em;
 }
 
-/* Progress + time */
-.ap-progress-zone {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.ap-progress-wrap {
-  height: 5px;
-  background: var(--surface3);
-  border-radius: 3px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: height .15s;
-}
-.ap-progress-wrap:hover {
-  height: 7px;
-}
-.ap-progress-bar {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 3px;
-  width: 0%;
-  transition: width .1s linear;
-  pointer-events: none;
-}
-.ap-progress-wrap:hover .ap-progress-bar {
-  background: color-mix(in srgb, var(--accent) 85%, white);
-}
-.ap-time-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.ap-time {
-  font-size: 0.6rem;
-  color: var(--text-faint);
-  font-family: 'Spectral', serif;
-  letter-spacing: .04em;
-  font-variant-numeric: tabular-nums;
-}
-
-.ap-col-row {
-  display: flex;
-  gap: 4px;
-}
-.ap-col-btn {
-  flex: 1;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text-dim);
-  font-family: 'Spectral', serif;
-  font-size: 0.65rem;
-  padding: 4px 4px;
-  cursor: pointer;
-  text-align: center;
-  transition: all .15s;
-  white-space: nowrap;
-  letter-spacing: .04em;
-}
-.ap-col-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
-
-/* Nav row: prev, row counter, next */
+/* ── Nav row: prev counter next — right side of main row ── */
 .ap-nav-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0;
+  margin-left: 12px;
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 3px 3px;
+  padding: 2px;
+  flex-shrink: 0;
 }
 .ap-nav-btn {
   background: none;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   color: var(--text-dim);
-  font-size: 1rem;
-  width: 28px;
-  height: 26px;
+  font-size: 1.1rem;
+  width: 32px;
+  height: 30px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2600,35 +2542,100 @@ tr.row-bookmarked {
 }
 .ap-nav-btn:hover { background: var(--surface3); color: var(--accent); }
 .ap-nav-btn:disabled { opacity: 0.28; cursor: default; }
-
 .ap-row-label {
-  flex: 1;
   font-size: 0.68rem;
   color: var(--text-dim);
   text-align: center;
   font-family: 'Spectral', serif;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 0 6px;
+  min-width: 52px;
   font-variant-numeric: tabular-nums;
 }
 
-.ap-pin-row {
+/* ── Three-dot menu button ── */
+.ap-dots-btn {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  font-size: 1.1rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  justify-content: center;
+  transition: color .15s, background .15s;
+  flex-shrink: 0;
+  margin-left: 6px;
+  line-height: 1;
+  letter-spacing: 1px;
 }
-.ap-pin-label {
-  font-size: 0.6rem;
-  color: var(--text-faint);
-  font-family: 'Spectral', serif;
-  letter-spacing: .06em;
+.ap-dots-btn:hover { color: var(--accent); background: var(--surface2); }
+
+/* ── Three-dot dropdown ── */
+.ap-dots-menu {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-width: 180px;
+  z-index: 950;
+  overflow: hidden;
+  box-shadow: 0 -6px 24px rgba(0,0,0,.45);
+}
+.ap-dots-menu.open { display: block; }
+[data-theme="light"] .ap-dots-menu {
+  box-shadow: 0 -6px 24px rgba(0,0,0,.15);
 }
 
+.ap-menu-section {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.ap-menu-section:last-child { border-bottom: none; }
+.ap-menu-label {
+  font-size: 0.58rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 2px 13px 5px;
+  font-family: 'Spectral', serif;
+}
+.ap-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: 'Spectral', serif;
+  font-size: 0.76rem;
+  padding: 7px 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background .12s, color .12s;
+  white-space: nowrap;
+}
+.ap-menu-btn:hover { background: var(--surface3); color: var(--text); }
+.ap-menu-btn.active { color: var(--accent); }
+.ap-menu-btn .ap-menu-check { font-size: 0.7rem; margin-left: auto; opacity: 0; }
+.ap-menu-btn.active .ap-menu-check { opacity: 1; }
+
+/* Col selector in menu */
+.ap-col-row { display: none; } /* moved into menu */
+.ap-pin-row { display: none; } /* moved into menu */
+
 @media (max-width: 600px) {
-  #audio-player { bottom: 12px; right: 12px; }
-  #audio-controls { width: calc(100vw - 24px); }
+  #audio-controls { padding: 0 10px 0 10px; }
+  .ap-header-row { height: 50px; min-height: 50px; }
+  .ap-row-label { min-width: 40px; }
+  .ap-nav-btn { width: 30px; }
 }
 
 /* Row audio indicator dot */
@@ -8850,16 +8857,8 @@ function buildReflectionsSidebar() {
 
 <!-- AUDIO PLAYER -->
 <div id="audio-player">
-  <div id="audio-controls" class="hidden">
-    <!-- Header: inline play + track info -->
-    <div class="ap-header-row">
-      <button class="ap-play-btn" id="ap-play-btn" onclick="apFabClick()" title="Play / Pause" disabled>▶</button>
-      <div class="ap-track-info">
-        <div class="ap-track-label" id="ap-row-label">No audio loaded</div>
-        <div class="ap-track-sub" id="ap-track-sub">Select a row to play</div>
-      </div>
-    </div>
-    <!-- Progress + time -->
+  <div id="audio-controls" class="hidden" style="position:relative;">
+    <!-- Progress bar — bleeds full width at top -->
     <div class="ap-progress-zone">
       <div class="ap-progress-wrap" id="ap-progress-wrap" title="Seek">
         <div class="ap-progress-bar" id="ap-progress-bar"></div>
@@ -8869,27 +8868,53 @@ function buildReflectionsSidebar() {
         <span class="ap-time" id="ap-time-dur">0:00</span>
       </div>
     </div>
-    <!-- Nav row -->
-    <div class="ap-nav-row">
-      <button class="ap-nav-btn" id="ap-prev" onclick="apPrev()" title="Previous">‹</button>
-      <span class="ap-row-label" id="ap-nav-label">— / —</span>
-      <button class="ap-nav-btn" id="ap-next" onclick="apNext()" title="Next">›</button>
+    <!-- Main row: play · track info · nav · dots -->
+    <div class="ap-header-row">
+      <button class="ap-play-btn" id="ap-play-btn" onclick="apFabClick()" title="Play / Pause" disabled>▶</button>
+      <div class="ap-track-info">
+        <div class="ap-track-label" id="ap-row-label">No audio loaded</div>
+        <div class="ap-track-sub" id="ap-track-sub">Select a row to play</div>
+      </div>
+      <!-- Nav: prev · counter · next -->
+      <div class="ap-nav-row">
+        <button class="ap-nav-btn" id="ap-prev" onclick="apPrev()" title="Previous">‹</button>
+        <span class="ap-row-label" id="ap-nav-label">— / —</span>
+        <button class="ap-nav-btn" id="ap-next" onclick="apNext()" title="Next">›</button>
+      </div>
+      <!-- Three-dot menu -->
+      <button class="ap-dots-btn" id="ap-dots-btn" onclick="apToggleDotsMenu(event)" title="More options">⋯</button>
     </div>
-    <!-- Column selector -->
-    <div class="ap-col-row">
+    <!-- Hidden column selector kept for JS compat -->
+    <div class="ap-col-row" style="display:none;">
       <button class="ap-col-btn active" id="ap-col-ot" onclick="apSetCol('ot')">Ottoman</button>
       <button class="ap-col-btn" id="ap-col-v1" onclick="apSetCol('v1')">Kurdish (L)</button>
     </div>
-    <!-- Pin toggle -->
-    <div class="ap-pin-row">
-      <span class="ap-pin-label">Keep visible</span>
-      <label class="sw" style="transform:scale(.85);transform-origin:right;">
-        <input type="checkbox" id="ap-pin" onchange="apTogglePin(this.checked)">
-        <div class="sw-t"></div>
-      </label>
+    <!-- Hidden pin toggle kept for JS compat -->
+    <div class="ap-pin-row" style="display:none;">
+      <label class="sw"><input type="checkbox" id="ap-pin" onchange="apTogglePin(this.checked)"><div class="sw-t"></div></label>
+    </div>
+    <!-- Three-dot dropdown menu -->
+    <div class="ap-dots-menu" id="ap-dots-menu">
+      <div class="ap-menu-section">
+        <div class="ap-menu-label">Audio Column</div>
+        <button class="ap-menu-btn active" id="apm-col-ot" onclick="apSetCol('ot');apSyncDotsMenu()">
+          Ottoman<span class="ap-menu-check">✓</span>
+        </button>
+        <button class="ap-menu-btn" id="apm-col-v1" onclick="apSetCol('v1');apSyncDotsMenu()">
+          Kurdish (Literal)<span class="ap-menu-check">✓</span>
+        </button>
+      </div>
+      <div class="ap-menu-section">
+        <button class="ap-menu-btn" id="apm-pin" onclick="apMenuTogglePin()">
+          Keep player visible<span class="ap-menu-check" id="apm-pin-check"></span>
+        </button>
+        <button class="ap-menu-btn" onclick="apStop();apCloseDotsMenu()">
+          Stop & close<span class="ap-menu-check"></span>
+        </button>
+      </div>
     </div>
   </div>
-  <button id="audio-fab" onclick="apToggleControls()" title="Audio Player">🔊</button>
+  <button id="audio-fab" onclick="apToggleControls()" title="Audio Player" style="display:none;">🔊</button>
 </div>
 <audio id="ap-audio"></audio>
 
@@ -9121,6 +9146,42 @@ function apTogglePin(on) {
   apState.pinned = on;
   if (on) apShowControls(true);
 }
+
+/* ── Three-dot menu ── */
+const apDotsMenu = document.getElementById('ap-dots-menu');
+
+function apToggleDotsMenu(e) {
+  e.stopPropagation();
+  apDotsMenu.classList.toggle('open');
+}
+function apCloseDotsMenu() {
+  apDotsMenu.classList.remove('open');
+}
+function apSyncDotsMenu() {
+  const isOt = apState.col === 'ot';
+  const otBtn = document.getElementById('apm-col-ot');
+  const v1Btn = document.getElementById('apm-col-v1');
+  if (otBtn) otBtn.classList.toggle('active', isOt);
+  if (v1Btn) v1Btn.classList.toggle('active', !isOt);
+  const pinCheck = document.getElementById('apm-pin-check');
+  if (pinCheck) pinCheck.textContent = apState.pinned ? '✓' : '';
+  const pinBtn = document.getElementById('apm-pin');
+  if (pinBtn) pinBtn.classList.toggle('active', apState.pinned);
+}
+function apMenuTogglePin() {
+  const newVal = !apState.pinned;
+  apTogglePin(newVal);
+  document.getElementById('ap-pin').checked = newVal;
+  apSyncDotsMenu();
+}
+document.addEventListener('click', e => {
+  if (!apDotsMenu.contains(e.target) && e.target.id !== 'ap-dots-btn') {
+    apCloseDotsMenu();
+  }
+});
+
+/* ── Show bar on load ── */
+apShowControls(true);
 
 /* ── Re-sync whenever render() runs (new rows loaded) ── */
 const _origRender = render;

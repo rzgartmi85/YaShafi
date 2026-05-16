@@ -2393,36 +2393,92 @@ tr.row-bookmarked {
   pointer-events: none;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
 }
 
 /* ── FAB — visible when bar is collapsed ── */
 #audio-fab {
   pointer-events: all;
-  width: 46px;
   height: 46px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: none;
-  color: #f5ede0;
+  border-radius: 23px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
   font-size: 1.05rem;
   cursor: pointer;
   box-shadow: 0 4px 18px rgba(0,0,0,.55);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 18px 16px 0;
+  gap: 0;
+  margin: 0 0 16px 0;
+  padding: 3px;
   flex-shrink: 0;
-  transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s, opacity .15s;
+  transition: box-shadow .18s, opacity .15s, transform .18s;
   position: relative;
   overflow: visible;
 }
-#audio-fab:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(0,0,0,.6); }
-#audio-fab:active { transform: scale(0.93); }
+#audio-fab:hover { box-shadow: 0 6px 24px rgba(0,0,0,.6); }
 #audio-fab.no-audio { background: var(--surface3); color: var(--text-faint); box-shadow: 0 2px 8px rgba(0,0,0,.3); }
 #audio-fab.playing-pulse { animation: ap-fab-pulse 1.8s ease-in-out infinite; }
 /* hide FAB when bar is expanded */
 #audio-fab.bar-open { opacity: 0; pointer-events: none; transform: scale(0.8); }
+
+/* FAB inner buttons */
+.fab-nav-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 1.15rem;
+  width: 36px;
+  height: 38px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .13s, color .13s;
+  flex-shrink: 0;
+}
+.fab-nav-btn:hover { background: var(--surface3); color: var(--accent); }
+.fab-nav-btn:disabled { opacity: 0.28; cursor: default; }
+.fab-play-btn {
+  background: var(--accent);
+  border: none;
+  color: #f5ede0;
+  cursor: pointer;
+  font-size: 1rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter .15s, transform .15s;
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+.fab-play-btn:hover { filter: brightness(1.15); transform: scale(1.06); }
+.fab-play-btn:active { transform: scale(0.94); }
+.fab-play-btn:disabled { background: var(--surface3); color: var(--text-faint); cursor: default; transform: none; filter: none; }
+.fab-open-btn {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  font-size: 0.75rem;
+  width: 26px;
+  height: 38px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color .13s;
+  flex-shrink: 0;
+  padding: 0;
+  opacity: 0.6;
+}
+.fab-open-btn:hover { color: var(--accent); opacity: 1; }
 @keyframes ap-fab-pulse {
   0%,100% { box-shadow: 0 4px 18px rgba(0,0,0,.55), 0 0 0 0 rgba(200,169,110,.45); }
   50%      { box-shadow: 0 4px 18px rgba(0,0,0,.55), 0 0 0 10px rgba(200,169,110,0); }
@@ -2430,9 +2486,12 @@ tr.row-bookmarked {
 
 /* ── Full-width bar ── */
 #audio-controls {
-  width: 100%;
+  width: calc(100% - 24px);
+  max-width: 700px;
   background: var(--surface);
+  border: 1px solid var(--border);
   border-top: 1px solid var(--border);
+  border-radius: 14px 14px 0 0;
   box-shadow: 0 -4px 24px rgba(0,0,0,.45);
   display: flex !important;
   flex-direction: column;
@@ -2577,7 +2636,7 @@ tr.row-bookmarked {
   letter-spacing: .04em;
 }
 
-/* ── Nav: prev · counter · next ── */
+/* ── Nav: prev · play · next ── */
 .ap-nav-row {
   display: flex;
   align-items: center;
@@ -2606,6 +2665,14 @@ tr.row-bookmarked {
 }
 .ap-nav-btn:hover { background: var(--surface3); color: var(--accent); }
 .ap-nav-btn:disabled { opacity: 0.28; cursor: default; }
+/* play btn inside nav row */
+.ap-nav-row .ap-play-btn {
+  margin-right: 0;
+  width: 32px;
+  height: 30px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
 .ap-row-label {
   font-size: 0.68rem;
   color: var(--text-dim);
@@ -2739,7 +2806,7 @@ tr.row-bookmarked {
   #audio-controls { padding: 0; }
   .ap-header-row { padding: 0 6px 0 8px; height: 50px; min-height: 50px; }
   .ap-row-label { min-width: 40px; }
-  #audio-fab { margin: 0 14px 14px 0; width: 42px; height: 42px; }
+  #audio-fab { margin: 0 0 12px 0; }
 }
 
 /* Row audio indicator dot */
@@ -8976,14 +9043,13 @@ function buildReflectionsSidebar() {
     <div class="ap-header-row">
       <!-- Collapse button -->
       <button class="ap-collapse-btn" onclick="apToggleControls()" title="Collapse player">✕</button>
-      <button class="ap-play-btn" id="ap-play-btn" onclick="apFabClick()" title="Play / Pause" disabled>▶</button>
       <div class="ap-track-info">
         <div class="ap-track-label" id="ap-row-label">No audio loaded</div>
         <div class="ap-track-sub" id="ap-track-sub">Select a row to play</div>
       </div>
       <div class="ap-nav-row">
         <button class="ap-nav-btn" id="ap-prev" onclick="apPrev()" title="Previous">‹</button>
-        <span class="ap-row-label" id="ap-nav-label">— / —</span>
+        <button class="ap-play-btn" id="ap-play-btn" onclick="apFabClick()" title="Play / Pause" disabled>▶</button>
         <button class="ap-nav-btn" id="ap-next" onclick="apNext()" title="Next">›</button>
       </div>
       <button class="ap-dots-btn" id="ap-dots-btn" onclick="apToggleDotsMenu(event)" title="More options">⋯</button>
@@ -9009,8 +9075,13 @@ function buildReflectionsSidebar() {
       </div>
     </div>
   </div>
-  <!-- FAB — shown when bar is collapsed -->
-  <button id="audio-fab" onclick="apToggleControls()" title="Open audio player">🔊</button>
+  <!-- FAB pill — shown when bar is collapsed -->
+  <div id="audio-fab">
+    <button class="fab-nav-btn" id="fab-prev" onclick="apPrev()" title="Previous" disabled>‹</button>
+    <button class="fab-play-btn" id="fab-play-btn" onclick="apFabClick()" title="Play / Pause" disabled>▶</button>
+    <button class="fab-nav-btn" id="fab-next" onclick="apNext()" title="Next" disabled>›</button>
+    <button class="fab-open-btn" onclick="apToggleControls()" title="Open player">▲</button>
+  </div>
 </div>
 <audio id="ap-audio"></audio>
 
@@ -9083,9 +9154,16 @@ function apSyncFab() {
   const hasAny = apHasAnyAudio();
   apFab.classList.toggle('has-audio', hasAny);
   apFab.classList.toggle('no-audio', !hasAny);
+  const icon = apState.playing ? '⏸' : '▶';
   if (apPlayBtn) {
-    apPlayBtn.textContent = apState.playing ? '⏸' : '▶';
+    apPlayBtn.textContent = icon;
     apPlayBtn.disabled = !apHasAnyAudio();
+  }
+  // Sync FAB pill play button
+  const fabPlayBtn = document.getElementById('fab-play-btn');
+  if (fabPlayBtn) {
+    fabPlayBtn.textContent = icon;
+    fabPlayBtn.disabled = !hasAny;
   }
   apFab.classList.toggle('playing-pulse', apState.playing && !apState.visible);
   // update row play buttons
@@ -9108,6 +9186,7 @@ function apSyncControls() {
   const rows = apGetRows();
   const total = rows.length;
   const idx   = apState.rowIndex;
+  const apNavLabel = document.getElementById('ap-nav-label');
   if (apNavLabel) apNavLabel.textContent = total > 0 ? `${idx + 1} / ${total}` : '— / —';
   if (apLabel) {
     const url = apUrlForRow(idx);
@@ -9118,6 +9197,11 @@ function apSyncControls() {
   }
   if (apPrevBtn) apPrevBtn.disabled = apFindNextWithAudio(idx - 1, false) < 0;
   if (apNextBtn) apNextBtn.disabled = apFindNextWithAudio(idx + 1, true)  < 0;
+  // Sync FAB pill nav buttons
+  const fabPrev = document.getElementById('fab-prev');
+  const fabNext = document.getElementById('fab-next');
+  if (fabPrev) fabPrev.disabled = apFindNextWithAudio(idx - 1, false) < 0;
+  if (fabNext) fabNext.disabled = apFindNextWithAudio(idx + 1, true)  < 0;
   document.getElementById('ap-col-ot').classList.toggle('active', apState.col === 'ot');
   document.getElementById('ap-col-v1').classList.toggle('active', apState.col === 'v1');
 }
@@ -9143,13 +9227,12 @@ function apSetCol(col) {
   apSyncFab();
 }
 
-/* ── FAB click (now a separate play/pause for backward compat) ── */
+/* ── FAB click (play/pause — works from both FAB pill and full bar) ── */
 function apFabClick() {
   if (!apHasAnyAudio()) return;
   if (apState.playing) {
     apPause();
   } else {
-    if (!apState.visible) apShowControls(true);
     apPlay(apState.rowIndex);
   }
 }

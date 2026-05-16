@@ -2406,33 +2406,62 @@ tr.row-bookmarked {
   padding-bottom: 20px;
 }
 
-/* Shell — always a rounded card, hidden via transform when collapsed */
+/* Shell — circle when collapsed, card when open */
 #audio-shell {
   pointer-events: all;
   position: relative;
-  width: min(460px, calc(100vw - 32px));
+  /* Collapsed = circle */
+  width: 52px;
+  height: 52px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 24px;
-  box-shadow: 0 12px 40px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.3);
+  border-radius: 999px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 2px 8px rgba(0,0,0,.25);
   overflow: hidden;
-  /* collapsed: slide down + fade out */
-  transform: translateY(calc(100% + 28px));
-  opacity: 0;
   transition:
-    transform .35s cubic-bezier(.4,0,.2,1),
-    opacity .28s ease;
-  pointer-events: none;
+    width .38s cubic-bezier(.4,0,.2,1),
+    height .38s cubic-bezier(.4,0,.2,1),
+    border-radius .38s cubic-bezier(.4,0,.2,1),
+    box-shadow .38s ease;
+  cursor: pointer;
 }
 [data-theme="light"] #audio-shell {
+  box-shadow: 0 8px 28px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.1);
+}
+
+/* Expanded state */
+#audio-shell.bar-open {
+  width: min(460px, calc(100vw - 32px));
+  height: auto;
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.3);
+  cursor: default;
+}
+[data-theme="light"] #audio-shell.bar-open {
   box-shadow: 0 8px 32px rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.1);
 }
 
-/* Expanded — slide up into view */
-#audio-shell.bar-open {
-  transform: translateY(0);
-  opacity: 1;
-  pointer-events: all;
+/* Collapsed: show only the play icon centred in the circle */
+#audio-shell:not(.bar-open) .ap-pill-row {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+#audio-shell:not(.bar-open) .ap-nav-btn,
+#audio-shell:not(.bar-open) .ap-progress-zone {
+  display: none;
+}
+
+/* Pulse when playing while collapsed */
+#audio-shell.playing-pulse {
+  animation: ap-shell-pulse 2s ease-in-out infinite;
+}
+@keyframes ap-shell-pulse {
+  0%,100% { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 0 rgba(200,169,110,.5); }
+  50%      { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 10px rgba(200,169,110,0); }
 }
 
 /* Progress zone */
@@ -2524,26 +2553,26 @@ tr.row-bookmarked {
 .ap-nav-btn:hover { background: var(--surface2); color: var(--accent); }
 .ap-nav-btn:disabled { opacity: 0.28; cursor: default; }
 
-/* Play button */
+/* Play button — flat, no circle */
 .ap-play-btn {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: var(--accent);
+  background: none;
   border: none;
-  color: #f5ede0;
-  font-size: 1.1rem;
+  color: var(--accent);
+  font-size: 1.4rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: filter .15s, transform .15s, box-shadow .15s;
-  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  transition: color .15s, transform .15s;
+  box-shadow: none;
 }
-.ap-play-btn:hover { filter: brightness(1.18); transform: scale(1.06); box-shadow: 0 4px 14px rgba(0,0,0,.4); }
+.ap-play-btn:hover { color: var(--accent); transform: scale(1.12); }
 .ap-play-btn:active { transform: scale(0.93); }
-.ap-play-btn:disabled { background: var(--surface3); color: var(--text-faint); cursor: default; transform: none; filter: none; box-shadow: none; }
+.ap-play-btn:disabled { color: var(--text-faint); cursor: default; transform: none; }
 
 /* Hidden elements */
 .ap-track-info, .ap-track-label, .ap-track-sub,
@@ -9002,7 +9031,8 @@ function apSyncFab() {
     apPlayBtn.textContent = icon;
     apPlayBtn.disabled = !hasAny;
   }
-  // playing-pulse removed (no circle mode)
+  // playing-pulse: active when playing and collapsed
+  apShell.classList.toggle('playing-pulse', apState.playing && !apState.visible);
   // update row play buttons
   apSyncRowPlayBtns();
 }
@@ -9217,6 +9247,12 @@ function apToggleDotsMenu() {}
 function apCloseDotsMenu() {}
 function apSyncDotsMenu() {}
 function apMenuTogglePin() {}
+
+/* ── Tapping the circle (collapsed) → expand ── */
+apShell.addEventListener('click', function(e) {
+  if (apShell.classList.contains('bar-open')) return;
+  apShowControls(true);
+});
 
 /* ── Tap outside the shell → collapse player ── */
 document.addEventListener('click', e => {

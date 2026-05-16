@@ -2733,6 +2733,7 @@ tr.row-bookmarked {
     </div>
     <button class="tb-btn" id="btn-bk" onclick="openBookmarksTab()" title="Bookmarks">🔖</button>
     <button class="tb-btn" id="btn-reflect" onclick="openReflectionsTab()" title="Reflections">📝</button>
+    <button class="tb-btn" id="btn-ap-toggle" onclick="apToggleBar()" title="Show / hide audio player">♫</button>
     <button class="tb-btn" id="btn-tr" onclick="openSettingsTab()" title="Settings">⚙</button>
   </div>
   <div id="topbar-progress-wrap"><div id="pm-progress-bar"></div></div>
@@ -2905,6 +2906,7 @@ tr.row-bookmarked {
           </div>
           <div style="font-size:0.6rem;color:var(--text-faint);margin-top:4px;line-height:1.55;">
             Filename format: <code style="font-size:0.62rem;">{risaleId}_{rowIndex}_{col}.webm</code><br>
+            Optional speaker: <code style="font-size:0.62rem;">{risaleId}_{rowIndex}_{col}_{SpeakerName}.webm</code><br>
             col = <code>ot</code> (Ottoman) or <code>v1</code> (Kurdish Literal)<br>
             Row index is 0-based (first row = 0).
           </div>
@@ -8988,6 +8990,7 @@ const apState = {
   playing:   false,
   pinned:    false,
   visible:   false,
+  hidden:    false,   // user toggled bar off
 };
 
 const apAudio    = document.getElementById('ap-audio');
@@ -9040,13 +9043,25 @@ function apFmtTime(sec) {
   return `${m}:${s.toString().padStart(2,'0')}`;
 }
 
+/* ── Toggle bar visibility (topbar button) ── */
+function apToggleBar() {
+  apState.hidden = !apState.hidden;
+  const btn = document.getElementById('btn-ap-toggle');
+  if (btn) btn.classList.toggle('active', !apState.hidden);
+  apSyncFab();
+}
+
 /* ── UI sync ── */
 function apSyncFab() {
   const hasAny = apHasAnyAudio();
-  // Show/hide the whole bar
-  apPlayer.classList.toggle('ap-visible', hasAny || apState.visible);
+  // Show bar only when there is audio AND user has not hidden it
+  const shouldShow = hasAny && !apState.hidden;
+  apPlayer.classList.toggle('ap-visible', shouldShow);
   apShell.classList.toggle('has-audio', hasAny);
   apShell.classList.toggle('ap-playing', apState.playing);
+  // Keep toggle button lit when bar is visible
+  const toggleBtn = document.getElementById('btn-ap-toggle');
+  if (toggleBtn) toggleBtn.classList.toggle('active', shouldShow);
   const icon = apState.playing ? '&#9646;&#9646;' : '&#9654;';
   if (apPlayBtn) {
     apPlayBtn.innerHTML = icon;
@@ -9074,11 +9089,16 @@ function apSyncControls() {
   if (apNavLabel) apNavLabel.textContent = total > 0 ? `${idx + 1} / ${total}` : '— / —';
   if (apLabel) {
     const url = apUrlForRow(idx);
+    const row = rows[idx];
     apLabel.textContent = total > 0 ? `Row ${idx + 1}` : 'No audio loaded';
     if (apTrackSub) {
-      apTrackSub.textContent = url
-        ? (apState.col === 'ot' ? 'Ottoman Turkish' : 'Kurdish Literal')
-        : 'No clip for this row';
+      if (!url) {
+        apTrackSub.textContent = 'No clip for this row';
+      } else {
+        const colLabel = apState.col === 'ot' ? 'Ottoman Turkish' : 'Kurdish Literal';
+        const owner = row && (apState.col === 'ot' ? row.voiceOwnerOt : row.voiceOwnerV1);
+        apTrackSub.textContent = owner ? `${colLabel} · ${owner}` : colLabel;
+      }
     }
   }
   if (apPrevBtn) apPrevBtn.disabled = apFindNextWithAudio(idx - 1, false) < 0;
@@ -9301,17 +9321,21 @@ apSyncControls();
   });
 
   /* ── Filename parser ── */
-  // Returns { risaleId, rowIndex, col } or null
+  // Returns { risaleId, rowIndex, col, speaker? } or null
+  // Formats supported:
+  //   {risaleId}_{rowIndex}_{col}.webm
+  //   {risaleId}_{rowIndex}_{col}_{SpeakerName}.webm   ← optional speaker
   function parseFilename(filename) {
     // Strip extension
     const base = filename.replace(/\.[^.]+$/, '');
-    // Pattern: digits _ digits _ (ot|v1)
-    const m = base.match(/^(\d+)_(\d+)_(ot|v1)$/i);
+    // Pattern: digits _ digits _ (ot|v1) [_ anything]
+    const m = base.match(/^(\d+)_(\d+)_(ot|v1)(?:_(.+))?$/i);
     if (!m) return null;
     return {
       risaleId: parseInt(m[1], 10),
       rowIndex:  parseInt(m[2], 10),
-      col:       m[3].toLowerCase()
+      col:       m[3].toLowerCase(),
+      speaker:   m[4] ? m[4].replace(/_/g, ' ').trim() : null
     };
   }
 
@@ -9353,7 +9377,7 @@ apSyncControls();
         continue;
       }
 
-      const { risaleId, rowIndex, col } = parsed;
+      const { risaleId, rowIndex, col, speaker } = parsed;
 
       // Find the risale in memory
       let targetRisale = null;
@@ -9384,10 +9408,10 @@ apSyncControls();
         await ref.put(file);
         const url = await ref.getDownloadURL();
 
-        // Write URL to the row
+        // Write URL (and optional speaker name) to the row
         const row = targetRisale.rows[rowIndex];
-        if (col === 'ot')  row.audioOt = url;
-        if (col === 'v1')  row.audioV1 = url;
+        if (col === 'ot') { row.audioOt = url; if (speaker) row.voiceOwnerOt = speaker; }
+        if (col === 'v1') { row.audioV1 = url; if (speaker) row.voiceOwnerV1 = speaker; }
 
         // Persist row array to Firestore
         db.collection('books')

@@ -2384,6 +2384,11 @@ tr.row-bookmarked {
    ═══════════════════════════════════════ */
 
 /* Wrapper: fixed to bottom, full width, stacks bar above FAB */
+/* ════════════════════════════════════════
+   AUDIO PLAYER  — unified morphing card
+   ════════════════════════════════════════ */
+
+/* Anchor: sits at bottom-center, pointer-events off so it doesn't block content */
 #audio-player {
   position: fixed;
   bottom: 0;
@@ -2392,140 +2397,183 @@ tr.row-bookmarked {
   z-index: 900;
   pointer-events: none;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 16px;
 }
 
-/* ── FAB — visible when bar is collapsed ── */
-#audio-fab {
+/* ── The single card that morphs between pill and full bar ── */
+#audio-shell {
   pointer-events: all;
-  height: 46px;
-  border-radius: 23px;
+  position: relative;
+  width: calc(100% - 32px);
+  max-width: 700px;
+
   background: var(--surface);
   border: 1px solid var(--border);
-  color: var(--text-dim);
-  font-size: 1.05rem;
-  cursor: pointer;
-  box-shadow: 0 4px 18px rgba(0,0,0,.55);
+  border-radius: 999px;               /* pill in collapsed state */
+  box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 2px 8px rgba(0,0,0,.25);
+
+  /* morph transition */
+  transition:
+    border-radius .38s cubic-bezier(.4,0,.2,1),
+    box-shadow .38s ease,
+    max-height .38s cubic-bezier(.4,0,.2,1),
+    padding .28s cubic-bezier(.4,0,.2,1);
+
+  overflow: hidden;
+  max-height: 56px;                   /* pill height */
+}
+[data-theme="light"] #audio-shell {
+  box-shadow: 0 8px 28px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.1);
+}
+
+/* ── Expanded state ── */
+#audio-shell.bar-open {
+  border-radius: 20px;
+  max-height: 140px;                  /* enough for progress + main row */
+  box-shadow: 0 12px 40px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.3);
+}
+[data-theme="light"] #audio-shell.bar-open {
+  box-shadow: 0 8px 32px rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.1);
+}
+
+/* ── Pill row (always visible — the "mini player") ── */
+.ap-pill-row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  height: 54px;
+  padding: 0 6px 0 8px;
   gap: 0;
-  margin: 0 0 16px 0;
-  padding: 3px;
-  flex-shrink: 0;
-  transition: box-shadow .18s, opacity .15s, transform .18s;
-  position: relative;
-  overflow: visible;
 }
-#audio-fab:hover { box-shadow: 0 6px 24px rgba(0,0,0,.6); }
-#audio-fab.no-audio { background: var(--surface3); color: var(--text-faint); box-shadow: 0 2px 8px rgba(0,0,0,.3); }
-#audio-fab.playing-pulse { animation: ap-fab-pulse 1.8s ease-in-out infinite; }
-/* hide FAB when bar is expanded */
-#audio-fab.bar-open { opacity: 0; pointer-events: none; transform: scale(0.8); }
 
-/* FAB inner buttons */
-.fab-nav-btn {
+/* Nav buttons */
+.ap-nav-btn {
   background: none;
   border: none;
+  border-radius: 50%;
   color: var(--text-dim);
-  cursor: pointer;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   width: 36px;
-  height: 38px;
-  border-radius: 18px;
+  height: 36px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background .13s, color .13s;
   flex-shrink: 0;
 }
-.fab-nav-btn:hover { background: var(--surface3); color: var(--accent); }
-.fab-nav-btn:disabled { opacity: 0.28; cursor: default; }
-.fab-play-btn {
-  background: var(--accent);
-  border: none;
-  color: #f5ede0;
-  cursor: pointer;
-  font-size: 1rem;
+.ap-nav-btn:hover { background: var(--surface2); color: var(--accent); }
+.ap-nav-btn:disabled { opacity: 0.28; cursor: default; }
+
+/* Play button */
+.ap-play-btn {
   width: 38px;
   height: 38px;
   border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  color: #f5ede0;
+  font-size: 1rem;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: filter .15s, transform .15s;
   flex-shrink: 0;
   margin: 0 2px;
+  transition: filter .15s, transform .15s, box-shadow .15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
 }
-.fab-play-btn:hover { filter: brightness(1.15); transform: scale(1.06); }
-.fab-play-btn:active { transform: scale(0.94); }
-.fab-play-btn:disabled { background: var(--surface3); color: var(--text-faint); cursor: default; transform: none; filter: none; }
-.fab-open-btn {
+.ap-play-btn:hover { filter: brightness(1.18); transform: scale(1.07); box-shadow: 0 4px 14px rgba(0,0,0,.4); }
+.ap-play-btn:active { transform: scale(0.93); }
+.ap-play-btn:disabled { background: var(--surface3); color: var(--text-faint); cursor: default; transform: none; filter: none; box-shadow: none; }
+
+/* Track info — shown in pill */
+.ap-track-info {
+  flex: 1;
+  min-width: 0;
+  padding: 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.ap-track-label {
+  font-size: 0.75rem;
+  color: var(--text);
+  font-family: 'Spectral', serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.ap-track-sub {
+  font-size: 0.58rem;
+  color: var(--text-faint);
+  font-family: 'Spectral', serif;
+  letter-spacing: .04em;
+}
+
+/* Chevron toggle — rotates to signal direction */
+.ap-chevron-btn {
   background: none;
   border: none;
   color: var(--text-faint);
   cursor: pointer;
-  font-size: 0.75rem;
-  width: 26px;
-  height: 38px;
-  border-radius: 18px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color .13s;
   flex-shrink: 0;
+  transition: color .15s, background .15s;
   padding: 0;
-  opacity: 0.6;
+  margin-left: 2px;
 }
-.fab-open-btn:hover { color: var(--accent); opacity: 1; }
-@keyframes ap-fab-pulse {
-  0%,100% { box-shadow: 0 4px 18px rgba(0,0,0,.55), 0 0 0 0 rgba(200,169,110,.45); }
-  50%      { box-shadow: 0 4px 18px rgba(0,0,0,.55), 0 0 0 10px rgba(200,169,110,0); }
+.ap-chevron-btn:hover { color: var(--accent); background: var(--surface2); }
+.ap-chevron-btn svg {
+  width: 14px;
+  height: 14px;
+  transition: transform .38s cubic-bezier(.4,0,.2,1);
+  display: block;
 }
+/* chevron points up in pill (→ expand), down in bar (→ collapse) */
+#audio-shell.bar-open .ap-chevron-btn svg { transform: rotate(180deg); }
 
-/* ── Full-width bar ── */
-#audio-controls {
-  width: calc(100% - 24px);
-  max-width: 700px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-top: 1px solid var(--border);
-  border-radius: 14px 14px 0 0;
-  box-shadow: 0 -4px 24px rgba(0,0,0,.45);
-  display: flex !important;
-  flex-direction: column;
-  pointer-events: all;
-  /* collapsed by default */
-  transform: translateY(100%);
-  opacity: 0;
-  visibility: hidden;
-  transition: transform .25s cubic-bezier(.4,0,.2,1), opacity .2s, visibility 0s .25s;
-  overflow: visible;
-  position: relative;
+/* Three-dot menu button */
+.ap-dots-btn {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  font-size: 1.1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color .15s, background .15s;
+  flex-shrink: 0;
+  line-height: 1;
+  letter-spacing: 1px;
 }
-[data-theme="light"] #audio-controls {
-  box-shadow: 0 -4px 20px rgba(0,0,0,.15);
-}
-#audio-controls.bar-open {
-  transform: translateY(0);
-  opacity: 1;
-  visibility: visible;
-  transition: transform .25s cubic-bezier(.4,0,.2,1), opacity .2s, visibility 0s 0s;
-}
-/* keep hidden class working for JS calls that use it */
-#audio-controls.hidden {
-  transform: translateY(100%);
-  opacity: 0;
-  visibility: hidden;
-}
+.ap-dots-btn:hover { color: var(--accent); background: var(--surface2); }
 
-/* ── Progress bar — top edge, full bleed ── */
+/* ── Progress zone — revealed when expanded ── */
 .ap-progress-zone {
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin: 0 -16px 0 -12px;
+  /* sits above the pill row visually; we put it first in DOM */
+  order: -1;
+  /* hidden in pill state */
+  opacity: 0;
+  transition: opacity .2s .05s;
+}
+#audio-shell.bar-open .ap-progress-zone {
+  opacity: 1;
+  transition: opacity .22s .18s;
 }
 .ap-progress-wrap {
   height: 4px;
@@ -2551,176 +2599,41 @@ tr.row-bookmarked {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2px 16px 0 12px;
+  padding: 3px 14px 0;
 }
 .ap-time {
-  font-size: 0.58rem;
+  font-size: 0.57rem;
   color: var(--text-faint);
   font-family: 'Spectral', serif;
   letter-spacing: .04em;
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Main controls row ── */
-.ap-header-row {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  height: 52px;
-  min-height: 52px;
-  padding: 0 4px 0 12px;
+/* ── Pulse animation when playing and collapsed ── */
+#audio-shell.playing-pulse {
+  animation: ap-shell-pulse 2s ease-in-out infinite;
 }
-
-/* Collapse (×) button — far left of bar */
-.ap-collapse-btn {
-  background: none;
-  border: none;
-  color: var(--text-faint);
-  cursor: pointer;
-  font-size: 1rem;
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-right: 6px;
-  transition: color .15s, background .15s;
-  line-height: 1;
+@keyframes ap-shell-pulse {
+  0%,100% { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 0 rgba(200,169,110,.4); }
+  50%      { box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 8px rgba(200,169,110,0); }
 }
-.ap-collapse-btn:hover { color: var(--accent); background: var(--surface2); }
-
-/* Play button */
-.ap-play-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: none;
-  color: #f5ede0;
-  font-size: 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: filter .15s, transform .15s;
-  margin-right: 12px;
-}
-.ap-play-btn:hover { filter: brightness(1.15); transform: scale(1.06); }
-.ap-play-btn:active { transform: scale(0.94); }
-.ap-play-btn:disabled { background: var(--surface3); color: var(--text-faint); cursor: default; transform: none; filter: none; }
-
-/* Track info */
-.ap-track-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.ap-track-label {
-  font-size: 0.75rem;
-  color: var(--text);
-  font-family: 'Spectral', serif;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.3;
-}
-.ap-track-sub {
-  font-size: 0.6rem;
-  color: var(--text-faint);
-  font-family: 'Spectral', serif;
-  letter-spacing: .04em;
-}
-
-/* ── Nav: prev · play · next ── */
-.ap-nav-row {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  margin-left: 12px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 2px;
-  flex-shrink: 0;
-}
-.ap-nav-btn {
-  background: none;
-  border: none;
-  border-radius: 6px;
-  color: var(--text-dim);
-  font-size: 1.1rem;
-  width: 32px;
-  height: 30px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .13s, color .13s;
-  flex-shrink: 0;
-}
-.ap-nav-btn:hover { background: var(--surface3); color: var(--accent); }
-.ap-nav-btn:disabled { opacity: 0.28; cursor: default; }
-/* play btn inside nav row */
-.ap-nav-row .ap-play-btn {
-  margin-right: 0;
-  width: 32px;
-  height: 30px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-.ap-row-label {
-  font-size: 0.68rem;
-  color: var(--text-dim);
-  text-align: center;
-  font-family: 'Spectral', serif;
-  white-space: nowrap;
-  padding: 0 8px;
-  min-width: 52px;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── Three-dot menu button ── */
-.ap-dots-btn {
-  background: none;
-  border: none;
-  color: var(--text-faint);
-  cursor: pointer;
-  font-size: 1.1rem;
-  width: 34px;
-  height: 34px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color .15s, background .15s;
-  flex-shrink: 0;
-  margin-left: 6px;
-  line-height: 1;
-  letter-spacing: 1px;
-}
-.ap-dots-btn:hover { color: var(--accent); background: var(--surface2); }
 
 /* ── Three-dot dropdown ── */
 .ap-dots-menu {
   display: none;
   position: absolute;
-  bottom: calc(100% + 6px);
-  right: 8px;
+  bottom: calc(100% + 8px);
+  right: 10px;
   background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  min-width: 180px;
+  border-radius: 16px;
+  min-width: 188px;
   z-index: 950;
   overflow: hidden;
-  box-shadow: 0 -6px 24px rgba(0,0,0,.45);
+  box-shadow: 0 8px 28px rgba(0,0,0,.45);
 }
 .ap-dots-menu.open { display: block; }
-[data-theme="light"] .ap-dots-menu { box-shadow: 0 -6px 24px rgba(0,0,0,.15); }
+[data-theme="light"] .ap-dots-menu { box-shadow: 0 6px 24px rgba(0,0,0,.15); }
 .ap-menu-section {
   padding: 6px 0;
   border-bottom: 1px solid var(--border-soft);
@@ -2731,7 +2644,7 @@ tr.row-bookmarked {
   letter-spacing: .1em;
   text-transform: uppercase;
   color: var(--text-faint);
-  padding: 2px 13px 5px;
+  padding: 2px 14px 5px;
   font-family: 'Spectral', serif;
 }
 .ap-menu-btn {
@@ -2744,7 +2657,7 @@ tr.row-bookmarked {
   color: var(--text-dim);
   font-family: 'Spectral', serif;
   font-size: 0.76rem;
-  padding: 7px 13px;
+  padding: 7px 14px;
   cursor: pointer;
   text-align: left;
   transition: background .12s, color .12s;
@@ -2758,6 +2671,14 @@ tr.row-bookmarked {
 /* ── hidden compat rows ── */
 .ap-col-row { display: none; }
 .ap-pin-row { display: none; }
+.ap-row-label { display: none; }
+
+/* Mobile tweaks */
+@media (max-width: 600px) {
+  #audio-player { padding-bottom: 10px; }
+  #audio-shell { width: calc(100% - 20px); }
+  .ap-pill-row { height: 50px; padding: 0 4px 0 6px; }
+}
 
 /* ── Per-row play button in the number cell ── */
 .row-play-btn {
@@ -2802,12 +2723,6 @@ tr.row-bookmarked {
   margin: 0;
 }
 
-@media (max-width: 600px) {
-  #audio-controls { padding: 0; }
-  .ap-header-row { padding: 0 6px 0 8px; height: 50px; min-height: 50px; }
-  .ap-row-label { min-width: 40px; }
-  #audio-fab { margin: 0 0 12px 0; }
-}
 
 /* Row audio indicator dot */
 .row-has-audio::after {
@@ -9026,11 +8941,12 @@ function buildReflectionsSidebar() {
 
 </script>
 
-<!-- AUDIO PLAYER -->
+<!-- AUDIO PLAYER — unified morphing shell -->
 <div id="audio-player">
-  <div id="audio-controls" style="position:relative;">
-    <!-- Progress bar — full bleed at top -->
-    <div class="ap-progress-zone" style="margin:0;">
+  <div id="audio-shell">
+
+    <!-- Progress zone (revealed when expanded) -->
+    <div class="ap-progress-zone">
       <div class="ap-progress-wrap" id="ap-progress-wrap" title="Seek">
         <div class="ap-progress-bar" id="ap-progress-bar"></div>
       </div>
@@ -9039,22 +8955,29 @@ function buildReflectionsSidebar() {
         <span class="ap-time" id="ap-time-dur">0:00</span>
       </div>
     </div>
-    <!-- Main row -->
-    <div class="ap-header-row">
-      <!-- Collapse button -->
-      <button class="ap-collapse-btn" onclick="apToggleControls()" title="Collapse player">✕</button>
+
+    <!-- Pill row — always visible -->
+    <div class="ap-pill-row">
+      <button class="ap-nav-btn" id="ap-prev" onclick="apPrev()" title="Previous" disabled>‹</button>
+      <button class="ap-play-btn" id="ap-play-btn" onclick="apFabClick()" title="Play / Pause" disabled>▶</button>
+      <button class="ap-nav-btn" id="ap-next" onclick="apNext()" title="Next" disabled>›</button>
+
       <div class="ap-track-info">
         <div class="ap-track-label" id="ap-row-label">No audio loaded</div>
         <div class="ap-track-sub" id="ap-track-sub">Select a row to play</div>
       </div>
-      <div class="ap-nav-row">
-        <button class="ap-nav-btn" id="ap-prev" onclick="apPrev()" title="Previous">‹</button>
-        <button class="ap-play-btn" id="ap-play-btn" onclick="apFabClick()" title="Play / Pause" disabled>▶</button>
-        <button class="ap-nav-btn" id="ap-next" onclick="apNext()" title="Next">›</button>
-      </div>
+
       <button class="ap-dots-btn" id="ap-dots-btn" onclick="apToggleDotsMenu(event)" title="More options">⋯</button>
+
+      <!-- Chevron: up = expand, down = collapse -->
+      <button class="ap-chevron-btn" onclick="apToggleControls()" title="Expand / Collapse player" aria-label="Toggle player">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3,10 8,5 13,10"/>
+        </svg>
+      </button>
     </div>
-    <!-- Hidden compat rows -->
+
+    <!-- Hidden compat rows (JS targets) -->
     <div class="ap-col-row" style="display:none;">
       <button class="ap-col-btn active" id="ap-col-ot" onclick="apSetCol('ot')">Ottoman</button>
       <button class="ap-col-btn" id="ap-col-v1" onclick="apSetCol('v1')">Kurdish (L)</button>
@@ -9062,6 +8985,8 @@ function buildReflectionsSidebar() {
     <div class="ap-pin-row" style="display:none;">
       <label class="sw"><input type="checkbox" id="ap-pin" onchange="apTogglePin(this.checked)"><div class="sw-t"></div></label>
     </div>
+    <span id="ap-nav-label" style="display:none;"></span>
+
     <!-- Three-dot dropdown -->
     <div class="ap-dots-menu" id="ap-dots-menu">
       <div class="ap-menu-section">
@@ -9074,13 +8999,7 @@ function buildReflectionsSidebar() {
         <button class="ap-menu-btn" onclick="apStop();apCloseDotsMenu()">Stop & close<span class="ap-menu-check"></span></button>
       </div>
     </div>
-  </div>
-  <!-- FAB pill — shown when bar is collapsed -->
-  <div id="audio-fab">
-    <button class="fab-nav-btn" id="fab-prev" onclick="apPrev()" title="Previous" disabled>‹</button>
-    <button class="fab-play-btn" id="fab-play-btn" onclick="apFabClick()" title="Play / Pause" disabled>▶</button>
-    <button class="fab-nav-btn" id="fab-next" onclick="apNext()" title="Next" disabled>›</button>
-    <button class="fab-open-btn" onclick="apToggleControls()" title="Open player">▲</button>
+
   </div>
 </div>
 <audio id="ap-audio"></audio>
@@ -9102,11 +9021,12 @@ const apState = {
 };
 
 const apAudio    = document.getElementById('ap-audio');
-const apFab      = document.getElementById('audio-fab');
-const apControls = document.getElementById('audio-controls');
+const apFab      = document.getElementById('audio-shell');   // legacy alias
+const apControls = document.getElementById('audio-shell');   // legacy alias
+const apShell    = document.getElementById('audio-shell');
 const apBar      = document.getElementById('ap-progress-bar');
 const apLabel    = document.getElementById('ap-row-label');  // track label in header
-const apNavLabel = document.getElementById('ap-nav-label');  // row X / Y in nav bar
+const apNavLabel = document.getElementById('ap-nav-label');  // row X / Y (hidden)
 const apPrevBtn  = document.getElementById('ap-prev');
 const apNextBtn  = document.getElementById('ap-next');
 const apPlayBtn  = document.getElementById('ap-play-btn');
@@ -9152,20 +9072,14 @@ function apFmtTime(sec) {
 /* ── UI sync ── */
 function apSyncFab() {
   const hasAny = apHasAnyAudio();
-  apFab.classList.toggle('has-audio', hasAny);
-  apFab.classList.toggle('no-audio', !hasAny);
+  apShell.classList.toggle('has-audio', hasAny);
+  apShell.classList.toggle('no-audio', !hasAny);
   const icon = apState.playing ? '⏸' : '▶';
   if (apPlayBtn) {
     apPlayBtn.textContent = icon;
-    apPlayBtn.disabled = !apHasAnyAudio();
+    apPlayBtn.disabled = !hasAny;
   }
-  // Sync FAB pill play button
-  const fabPlayBtn = document.getElementById('fab-play-btn');
-  if (fabPlayBtn) {
-    fabPlayBtn.textContent = icon;
-    fabPlayBtn.disabled = !hasAny;
-  }
-  apFab.classList.toggle('playing-pulse', apState.playing && !apState.visible);
+  apShell.classList.toggle('playing-pulse', apState.playing && !apState.visible);
   // update row play buttons
   apSyncRowPlayBtns();
 }
@@ -9197,20 +9111,13 @@ function apSyncControls() {
   }
   if (apPrevBtn) apPrevBtn.disabled = apFindNextWithAudio(idx - 1, false) < 0;
   if (apNextBtn) apNextBtn.disabled = apFindNextWithAudio(idx + 1, true)  < 0;
-  // Sync FAB pill nav buttons
-  const fabPrev = document.getElementById('fab-prev');
-  const fabNext = document.getElementById('fab-next');
-  if (fabPrev) fabPrev.disabled = apFindNextWithAudio(idx - 1, false) < 0;
-  if (fabNext) fabNext.disabled = apFindNextWithAudio(idx + 1, true)  < 0;
   document.getElementById('ap-col-ot').classList.toggle('active', apState.col === 'ot');
   document.getElementById('ap-col-v1').classList.toggle('active', apState.col === 'v1');
 }
 
 function apShowControls(show) {
   apState.visible = show;
-  apControls.classList.toggle('bar-open', show);
-  apControls.classList.toggle('hidden', !show);
-  apFab.classList.toggle('bar-open', show);
+  apShell.classList.toggle('bar-open', show);
   apSyncFab();
 }
 

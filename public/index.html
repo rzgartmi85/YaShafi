@@ -615,6 +615,12 @@ tr.row-bookmarked {
 .pill-btn.pill-delete:hover { color: var(--danger); }
 .pill-btn.pill-delete.confirm-pending { color: var(--warn); background: rgba(200,160,64,.14); }
 .pill-btn.pill-bookmark.bookmarked { color: var(--accent); }
+/* View-row modal */
+.vr-col { margin-bottom: 14px; }
+.vr-col:last-child { margin-bottom: 0; }
+.vr-col-lbl { font-size: 0.62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-dim); margin-bottom: 5px; font-family: 'Spectral', serif; }
+.vr-col-text { font-size: 1rem; line-height: 1.9; color: var(--text); padding: 8px 12px; background: var(--surface2); border-radius: 7px; border: 1px solid var(--border-soft); }
+.vr-col-text.rtl-cell { direction: rtl; text-align: right; font-family: 'Amiri', serif; font-size: 1.1rem; line-height: 2.1; }
 /* Bookmark group picker */
 .pill-bk-group-picker {
   position: absolute;
@@ -2644,6 +2650,11 @@ tr.row-bookmarked {
 
 <!-- FLOATING ROW PILL -->
 <div class="row-pill hidden" id="row-pill" role="toolbar" aria-label="Row actions">
+  <button class="pill-btn pill-view" id="pill-view" aria-label="View full row" tabindex="0">
+    <span aria-hidden="true">👁</span>
+    <span class="pill-tip" aria-hidden="true">View Row</span>
+    <span class="pill-mobile-label" aria-hidden="true">View</span>
+  </button>
   <button class="pill-btn pill-edit" id="pill-edit" aria-label="Edit row" tabindex="0">
     <span aria-hidden="true">✎</span>
     <span class="pill-tip" aria-hidden="true">Edit</span>
@@ -2665,6 +2676,17 @@ tr.row-bookmarked {
     <span class="pill-tip" aria-hidden="true">Delete</span>
     <span class="pill-mobile-label" aria-hidden="true">Delete</span>
   </button>
+</div>
+
+<!-- MODAL: View Row -->
+<div class="modal-bg" id="m-view-row" role="dialog" aria-modal="true" aria-label="View Row">
+  <div class="modal" id="m-view-row-inner" style="max-width:560px;">
+    <h2>Row <span id="view-row-num"></span></h2>
+    <div id="view-row-cols"></div>
+    <div style="margin-top:16px;text-align:right;">
+      <button class="btn-pri" onclick="closeM('m-view-row')">Close</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL: Edit Row -->
@@ -3539,9 +3561,13 @@ const mob = ()=>window.innerWidth<=1024;
 /* ── TOPBAR ICON SYNC (swap to × when sidebar is open) ── */
 const TB_ICONS = { 'btn-bk': '🔖', 'btn-reflect': '📝', 'btn-tr': '⚙', 'btn-tl': '☰' };
 function syncTbIcons() {
+  const sbRight = document.getElementById('sb-right');
+  const rightOpenOnMobile = mob() && sbRight && sbRight.classList.contains('mob-open');
   for (const [id, icon] of Object.entries(TB_ICONS)) {
     const btn = document.getElementById(id);
     if (!btn) continue;
+    // On mobile with right sidebar open, always show ✕ on btn-tr
+    if (id === 'btn-tr' && rightOpenOnMobile) { btn.textContent = '✕'; continue; }
     btn.textContent = btn.classList.contains('active') ? '✕' : icon;
   }
 }
@@ -4288,8 +4314,39 @@ function setView(v){
 }
 
 function toggleFlow(on){
-  flowMode=on;
+  // Find the row index closest to the top of the visible area
+  const mainEl = document.getElementById('main');
+  let anchorRowIdx = 0;
+  if (mainEl) {
+    const mainTop = mainEl.getBoundingClientRect().top;
+    const candidates = mainEl.querySelectorAll('[data-row]');
+    let bestDist = Infinity;
+    candidates.forEach(el => {
+      const dist = Math.abs(el.getBoundingClientRect().top - mainTop);
+      if (dist < bestDist) { bestDist = dist; anchorRowIdx = parseInt(el.dataset.row, 10); }
+    });
+  }
+
+  flowMode = on;
   render();
+
+  // After render, scroll the anchor row into view at the top
+  requestAnimationFrame(() => {
+    const mainEl = document.getElementById('main');
+    if (!mainEl) return;
+    const mainTop = mainEl.getBoundingClientRect().top;
+    // Find the element with data-row closest to anchorRowIdx
+    const candidates = [...mainEl.querySelectorAll('[data-row]')];
+    let best = null, bestDiff = Infinity;
+    candidates.forEach(el => {
+      const diff = Math.abs(parseInt(el.dataset.row, 10) - anchorRowIdx);
+      if (diff < bestDiff) { bestDiff = diff; best = el; }
+    });
+    if (best) {
+      const elTop = best.getBoundingClientRect().top - mainTop;
+      mainEl.scrollTop += elTop;
+    }
+  });
 }
 
 function setPageMode(mode) {
@@ -4456,6 +4513,7 @@ function renderTable(rows){
   let lastPgOt = null;
   rows.forEach((row,i)=>{
     const tr=document.createElement('tr');
+    tr.dataset.row = i;
     if(isRowBookmarked(i)) tr.classList.add('row-bookmarked');
     const pgBadge = (row.pgOt != null && row.pgOt !== '' && String(row.pgOt) !== lastPgOt)
       ? `<span class="pg-badge">p.${row.pgOt}</span>` : '';
@@ -4496,6 +4554,7 @@ function renderStacked(rows){
   let lastPgOt = null;
   rows.forEach((row,i)=>{
     const d=document.createElement('div'); d.className='s-row';
+    d.dataset.row = i;
     if(isRowBookmarked(i)) d.classList.add('row-bookmarked');
     // Bookmark icon
     if(isRowBookmarked(i)){
@@ -4552,17 +4611,17 @@ function renderFlowSide(rows){
     return;
   }
   // Split rows into page sections (only when page numbers are shown)
-  const sections=[]; // [{pgOt, rows}]
+  const sections=[]; // [{pgOt, rows, firstIdx}]
   if(showPages){
     let lastPgOt=null;
-    rows.forEach(r=>{
+    rows.forEach((r,i)=>{
       const pg=(r.pgOt!=null&&r.pgOt!=='') ? String(r.pgOt) : null;
-      if(pg!==null && pg!==lastPgOt){ sections.push({pgOt:pg,rows:[]}); lastPgOt=pg; }
-      if(sections.length===0) sections.push({pgOt:null,rows:[]});
+      if(pg!==null && pg!==lastPgOt){ sections.push({pgOt:pg,rows:[],firstIdx:i}); lastPgOt=pg; }
+      if(sections.length===0) sections.push({pgOt:null,rows:[],firstIdx:i});
       sections[sections.length-1].rows.push(r);
     });
   } else {
-    sections.push({pgOt:null,rows:rows});
+    sections.push({pgOt:null,rows:rows,firstIdx:0});
   }
   sections.forEach(sec=>{
     if(sec.pgOt!==null){
@@ -4571,6 +4630,7 @@ function renderFlowSide(rows){
       el.appendChild(divider);
     }
     const wrap=document.createElement('div'); wrap.className='flow-side-wrap';
+    wrap.dataset.row = sec.firstIdx;
     ac.forEach(col=>{
       const paragraphs=[]; let cur=[];
       sec.rows.forEach((r,i)=>{
@@ -4605,14 +4665,14 @@ function renderFlowStack(rows){
   const sections=[];
   if(showPages){
     let lastPgOt=null;
-    rows.forEach(r=>{
+    rows.forEach((r,i)=>{
       const pg=(r.pgOt!=null&&r.pgOt!=='') ? String(r.pgOt) : null;
-      if(pg!==null && pg!==lastPgOt){ sections.push({pgOt:pg,rows:[]}); lastPgOt=pg; }
-      if(sections.length===0) sections.push({pgOt:null,rows:[]});
+      if(pg!==null && pg!==lastPgOt){ sections.push({pgOt:pg,rows:[],firstIdx:i}); lastPgOt=pg; }
+      if(sections.length===0) sections.push({pgOt:null,rows:[],firstIdx:i});
       sections[sections.length-1].rows.push(r);
     });
   } else {
-    sections.push({pgOt:null,rows:rows});
+    sections.push({pgOt:null,rows:rows,firstIdx:0});
   }
   sections.forEach(sec=>{
     if(sec.pgOt!==null){
@@ -4620,6 +4680,7 @@ function renderFlowStack(rows){
       divider.innerHTML=`<div class="pg-divider-line"></div><span class="pg-divider-label">Page ${sec.pgOt}</span><div class="pg-divider-line"></div>`;
       el.appendChild(divider);
     }
+    let firstColInSec = true;
     ac.forEach(col=>{
       const paragraphs=[]; let cur=[];
       sec.rows.forEach((r,i)=>{
@@ -4632,6 +4693,7 @@ function renderFlowStack(rows){
       if(!text) return;
       const colDiv=document.createElement('div');
       colDiv.className=`flow-stack-col ${col}${COL_RTL[col]?' rtl-cell':''}`;
+      if(firstColInSec){ colDiv.dataset.row = sec.firstIdx; firstColInSec = false; }
       colDiv.innerHTML=`<div class="flow-col-lbl">${COL_LABELS[col]}</div>${text}`;
       el.appendChild(colDiv);
     });
@@ -5313,6 +5375,7 @@ let pillState = {
 };
 
 const pill = document.getElementById('row-pill');
+const pillView = document.getElementById('pill-view');
 const pillEdit = document.getElementById('pill-edit');
 const pillReflect = document.getElementById('pill-reflect');
 const pillBookmark = document.getElementById('pill-bookmark');
@@ -5422,6 +5485,33 @@ function updatePillBookmarkState() {
 }
 
 // Pill button actions
+pillView.addEventListener('click', e => {
+  e.stopPropagation();
+  const idx = pillState.rowIndex;
+  const r = cur();
+  if (!r || !r.rows[idx]) return;
+  const row = r.rows[idx];
+  document.getElementById('view-row-num').textContent = idx + 1;
+  const colsEl = document.getElementById('view-row-cols');
+  colsEl.innerHTML = '';
+  DATA_COLS.forEach(col => {
+    const val = row[COL_KEYS[col]] || '';
+    if (!val) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'vr-col';
+    const lbl = document.createElement('div');
+    lbl.className = 'vr-col-lbl';
+    lbl.textContent = COL_LABELS[col];
+    const txt = document.createElement('div');
+    txt.className = 'vr-col-text' + (COL_RTL[col] ? ' rtl-cell' : '');
+    txt.innerHTML = AR(val);
+    wrap.appendChild(lbl);
+    wrap.appendChild(txt);
+    colsEl.appendChild(wrap);
+  });
+  openM('m-view-row');
+});
+
 pillEdit.addEventListener('click', e => {
   e.stopPropagation();
   const idx = pillState.rowIndex;

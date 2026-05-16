@@ -2652,6 +2652,67 @@ tr.row-bookmarked {
   .ap-pill-row { padding: 0 10px; height: 58px; }
 }
 
+/* ── Audio FAB toggle circle ── */
+#ap-fab-toggle {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 910;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-faint);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: none; /* shown only when audio exists */
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,.4);
+  transition: bottom .32s cubic-bezier(.4,0,.2,1),
+              background .15s, border-color .15s, color .15s, transform .15s, opacity .2s;
+  line-height: 1;
+  padding: 0;
+}
+#ap-fab-toggle.ap-fab-visible {
+  display: flex;
+}
+/* Lift FAB above the bar when bar is showing */
+#ap-fab-toggle.ap-fab-above {
+  bottom: calc(66px + 22px); /* bar height ~66px + margin */
+}
+#ap-fab-toggle:hover {
+  background: var(--surface3);
+  border-color: var(--accent-dim);
+  color: var(--accent);
+  transform: translateX(-50%) scale(1.1);
+}
+#ap-fab-toggle:active {
+  transform: translateX(-50%) scale(0.94);
+}
+/* Pulse ring when audio is playing */
+#ap-fab-toggle.ap-fab-playing {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+  animation: ap-fab-pulse 2s ease-in-out infinite;
+}
+@keyframes ap-fab-pulse {
+  0%,100% { box-shadow: 0 4px 16px rgba(0,0,0,.4), 0 0 0 0 rgba(200,169,110,.45); }
+  50%      { box-shadow: 0 4px 16px rgba(0,0,0,.4), 0 0 0 8px rgba(200,169,110,0); }
+}
+[data-theme="light"] #ap-fab-toggle {
+  box-shadow: 0 3px 12px rgba(0,0,0,.15);
+}
+[data-theme="light"] #ap-fab-toggle.ap-fab-playing {
+  animation: ap-fab-pulse-light 2s ease-in-out infinite;
+}
+@keyframes ap-fab-pulse-light {
+  0%,100% { box-shadow: 0 3px 12px rgba(0,0,0,.15), 0 0 0 0 rgba(138,96,32,.4); }
+  50%      { box-shadow: 0 3px 12px rgba(0,0,0,.15), 0 0 0 8px rgba(138,96,32,0); }
+}
+
 /* ── Per-row play button in the number cell ── */
 .row-play-btn {
   background: none;
@@ -2733,7 +2794,6 @@ tr.row-bookmarked {
     </div>
     <button class="tb-btn" id="btn-bk" onclick="openBookmarksTab()" title="Bookmarks">🔖</button>
     <button class="tb-btn" id="btn-reflect" onclick="openReflectionsTab()" title="Reflections">📝</button>
-    <button class="tb-btn" id="btn-ap-toggle" onclick="apToggleBar()" title="Show / hide audio player">♫</button>
     <button class="tb-btn" id="btn-tr" onclick="openSettingsTab()" title="Settings">⚙</button>
   </div>
   <div id="topbar-progress-wrap"><div id="pm-progress-bar"></div></div>
@@ -8915,6 +8975,9 @@ function buildReflectionsSidebar() {
 
 </script>
 
+<!-- AUDIO PLAYER TOGGLE FAB -->
+<button id="ap-fab-toggle" onclick="apToggleBar()" title="Show / hide audio player">&#9654;</button>
+
 <!-- AUDIO PLAYER — refined full-width bottom bar -->
 <div id="audio-player">
   <div id="audio-shell">
@@ -9046,8 +9109,6 @@ function apFmtTime(sec) {
 /* ── Toggle bar visibility (topbar button) ── */
 function apToggleBar() {
   apState.hidden = !apState.hidden;
-  const btn = document.getElementById('btn-ap-toggle');
-  if (btn) btn.classList.toggle('active', !apState.hidden);
   apSyncFab();
 }
 
@@ -9059,9 +9120,20 @@ function apSyncFab() {
   apPlayer.classList.toggle('ap-visible', shouldShow);
   apShell.classList.toggle('has-audio', hasAny);
   apShell.classList.toggle('ap-playing', apState.playing);
-  // Keep toggle button lit when bar is visible
-  const toggleBtn = document.getElementById('btn-ap-toggle');
-  if (toggleBtn) toggleBtn.classList.toggle('active', shouldShow);
+
+  // FAB toggle circle
+  const fab = document.getElementById('ap-fab-toggle');
+  if (fab) {
+    // Visible whenever audio exists
+    fab.classList.toggle('ap-fab-visible', hasAny);
+    // Lift above bar when bar is showing
+    fab.classList.toggle('ap-fab-above', shouldShow);
+    // Pulse when playing
+    fab.classList.toggle('ap-fab-playing', apState.playing);
+    // Icon: pause bars when playing, play arrow when paused/stopped
+    fab.innerHTML = apState.playing ? '&#9646;&#9646;' : '&#9654;';
+  }
+
   const icon = apState.playing ? '&#9646;&#9646;' : '&#9654;';
   if (apPlayBtn) {
     apPlayBtn.innerHTML = icon;

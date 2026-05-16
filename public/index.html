@@ -3546,7 +3546,7 @@ function syncTbIcons() {
 
 function toggleLeft(){
   const sb=document.getElementById('sb-left');
-  if(mob()){ const o=sb.classList.contains('mob-open'); closeAll(); if(!o){sb.classList.add('mob-open');document.getElementById('mob-ov').classList.add('on');} }
+  if(mob()){ const o=sb.classList.contains('mob-open'); closeAll(); if(!o){sb.classList.add('mob-open');document.getElementById('mob-ov').classList.add('on'); const bar=document.getElementById('pm-progress-bar'); if(bar) bar.style.width='0%';} }
   else { sb.classList.toggle('collapsed'); }
   document.getElementById('btn-tl').classList.toggle('active', mob()?sb.classList.contains('mob-open'):!sb.classList.contains('collapsed'));
   syncTbIcons();
@@ -3554,7 +3554,7 @@ function toggleLeft(){
 function toggleRight(){
   // legacy: open/close without changing tab
   const sb=document.getElementById('sb-right');
-  if(mob()){ const o=sb.classList.contains('mob-open'); closeAll(); if(!o){sb.classList.add('mob-open');document.getElementById('mob-ov').classList.add('on');} }
+  if(mob()){ const o=sb.classList.contains('mob-open'); closeAll(); if(!o){sb.classList.add('mob-open');document.getElementById('mob-ov').classList.add('on'); const bar=document.getElementById('pm-progress-bar'); if(bar) bar.style.width='0%';} }
   else { sb.classList.toggle('collapsed'); }
   document.getElementById('btn-tr').classList.toggle('active', mob()?sb.classList.contains('mob-open'):!sb.classList.contains('collapsed'));
   document.getElementById('btn-reflect').classList.remove('active');
@@ -4368,6 +4368,12 @@ function updateScrollProgress() {
   if (pageMode !== 'continuous') return;
   const bar = document.getElementById('pm-progress-bar');
   if (!bar) return;
+  // Hide when home page is showing or a mobile sidebar is covering the screen
+  const mobileSidebarOpen = mob() && (
+    document.getElementById('sb-left').classList.contains('mob-open') ||
+    document.getElementById('sb-right').classList.contains('mob-open')
+  );
+  if (homeActive || mobileSidebarOpen) { bar.style.width = '0%'; return; }
   const mainEl = document.getElementById('main');
   const el = (mainEl && mainEl.scrollHeight > mainEl.clientHeight + 1) ? mainEl : document.documentElement;
   const scrollable = el.scrollHeight - el.clientHeight;
@@ -4547,15 +4553,19 @@ function renderFlowSide(rows){
     el.innerHTML=`<div class="main-empty"><div class="main-empty-icon">👁</div><div class="main-empty-title">No columns visible</div><div class="main-empty-msg">Enable at least one column in the Settings panel.</div></div>`;
     return;
   }
-  // Split rows into page sections
+  // Split rows into page sections (only when page numbers are shown)
   const sections=[]; // [{pgOt, rows}]
-  let lastPgOt=null;
-  rows.forEach(r=>{
-    const pg=(r.pgOt!=null&&r.pgOt!=='') ? String(r.pgOt) : null;
-    if(pg!==null && pg!==lastPgOt){ sections.push({pgOt:pg,rows:[]}); lastPgOt=pg; }
-    if(sections.length===0) sections.push({pgOt:null,rows:[]});
-    sections[sections.length-1].rows.push(r);
-  });
+  if(showPages){
+    let lastPgOt=null;
+    rows.forEach(r=>{
+      const pg=(r.pgOt!=null&&r.pgOt!=='') ? String(r.pgOt) : null;
+      if(pg!==null && pg!==lastPgOt){ sections.push({pgOt:pg,rows:[]}); lastPgOt=pg; }
+      if(sections.length===0) sections.push({pgOt:null,rows:[]});
+      sections[sections.length-1].rows.push(r);
+    });
+  } else {
+    sections.push({pgOt:null,rows:rows});
+  }
   sections.forEach(sec=>{
     if(sec.pgOt!==null){
       const divider=document.createElement('div'); divider.className='pg-divider';
@@ -4593,15 +4603,19 @@ function renderFlowStack(rows){
     el.innerHTML=`<div class="main-empty"><div class="main-empty-icon">👁</div><div class="main-empty-title">No columns visible</div><div class="main-empty-msg">Enable at least one column in the Settings panel.</div></div>`;
     return;
   }
-  // Split rows into page sections
+  // Split rows into page sections (only when page numbers are shown)
   const sections=[];
-  let lastPgOt=null;
-  rows.forEach(r=>{
-    const pg=(r.pgOt!=null&&r.pgOt!=='') ? String(r.pgOt) : null;
-    if(pg!==null && pg!==lastPgOt){ sections.push({pgOt:pg,rows:[]}); lastPgOt=pg; }
-    if(sections.length===0) sections.push({pgOt:null,rows:[]});
-    sections[sections.length-1].rows.push(r);
-  });
+  if(showPages){
+    let lastPgOt=null;
+    rows.forEach(r=>{
+      const pg=(r.pgOt!=null&&r.pgOt!=='') ? String(r.pgOt) : null;
+      if(pg!==null && pg!==lastPgOt){ sections.push({pgOt:pg,rows:[]}); lastPgOt=pg; }
+      if(sections.length===0) sections.push({pgOt:null,rows:[]});
+      sections[sections.length-1].rows.push(r);
+    });
+  } else {
+    sections.push({pgOt:null,rows:rows});
+  }
   sections.forEach(sec=>{
     if(sec.pgOt!==null){
       const divider=document.createElement('div'); divider.className='pg-divider';
@@ -5776,6 +5790,8 @@ function showHomePage() {
   document.getElementById('main').style.display = 'none';
   document.getElementById('btn-home').classList.add('home-active');
   document.getElementById('topbar-title').textContent = 'Ya Hakeem Risale';
+  const bar = document.getElementById('pm-progress-bar');
+  if (bar) bar.style.width = '0%';
   renderHomePage();
 }
 
@@ -7702,7 +7718,8 @@ function buildReadingSessionsSection() {
         metaEl.className = 'h-bkl-row-meta';
         const rowNum  = b.rowNumber  ? 'Row ' + b.rowNumber : '';
         const risName = b.risalahName ? '<strong>' + AR(b.risalahName) + '</strong>' : '';
-        metaEl.innerHTML = [rowNum, risName].filter(Boolean).join(' \u00b7 ');
+        const bmTs = b.timestamp ? '<span style="color:var(--text-faint);font-style:italic;">' + new Date(b.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) + '</span>' : '';
+        metaEl.innerHTML = [rowNum, risName, bmTs].filter(Boolean).join(' \u00b7 ');
         row.appendChild(metaEl);
 
         if (hasRefs) {

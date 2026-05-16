@@ -2321,6 +2321,64 @@ tr.row-bookmarked {
 }
 .auth-guest-close-btn:hover { border-color: var(--text-dim); color: var(--text); }
 
+/* Speaker dot on rows that have audio */
+.ap-has-audio-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent2);
+  margin-left: 5px;
+  vertical-align: middle;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+/* ── AUDIO UPLOAD PANEL ── */
+.au-drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 18px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  font-size: 0.76rem;
+  color: var(--text-faint);
+  margin-bottom: 8px;
+}
+.au-drop-zone.drag-over { border-color: var(--accent); background: rgba(200,169,110,.06); }
+.au-drop-zone input[type=file] { display: none; }
+
+.au-log {
+  max-height: 140px;
+  overflow-y: auto;
+  font-size: 0.65rem;
+  font-family: 'Spectral', serif;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+.au-log-ok   { color: var(--accent2); }
+.au-log-err  { color: var(--danger); }
+.au-log-skip { color: var(--text-faint); }
+
+.au-progress {
+  height: 4px;
+  background: var(--surface3);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 4px 0;
+}
+.au-progress-bar {
+  height: 100%;
+  background: var(--accent2);
+  border-radius: 2px;
+  width: 0%;
+  transition: width .2s;
+}
+
 /* ── AUDIO PLAYER ── */
 #audio-player {
   position: fixed;
@@ -2469,6 +2527,7 @@ tr.row-bookmarked {
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 </head>
 <body>
 
@@ -2638,6 +2697,37 @@ tr.row-bookmarked {
           <div class="ss-label">Typography</div>
         </div>
         <div id="typo-groups"></div>
+
+        <div class="ss" id="ss-audio">
+          <div class="ss-label">Audio</div>
+          <div class="au-drop-zone" id="au-drop-zone">
+            <div>Drop audio clips here</div>
+            <div style="font-size:0.6rem;margin-top:4px;opacity:.7;">or click to browse</div>
+            <input type="file" id="au-file-input" multiple accept=".webm,.mp3,.wav,.m4a,.ogg">
+          </div>
+          <div class="au-progress"><div class="au-progress-bar" id="au-prog-bar"></div></div>
+          <div class="au-log" id="au-log"></div>
+          <div style="margin-top:8px;border-top:1px solid var(--border-soft);padding-top:8px;">
+            <div style="font-size:0.62rem;color:var(--text-faint);margin-bottom:5px;">Remove a clip</div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <input type="number" id="au-del-row" min="1" placeholder="Row №"
+                style="width:70px;background:var(--surface);border:1px solid var(--border);
+                border-radius:5px;color:var(--text);font-family:'Spectral',serif;
+                font-size:0.76rem;padding:4px 6px;outline:none;">
+              <div class="vseg" style="flex:1;margin-bottom:0;">
+                <button id="au-del-col-ot" class="active" onclick="auDelSetCol('ot')">OT</button>
+                <button id="au-del-col-v1" onclick="auDelSetCol('v1')">KU</button>
+              </div>
+              <button class="ie-btn" style="padding:5px 8px;" onclick="auDeleteClip()" title="Delete this clip">🗑</button>
+            </div>
+            <div id="au-del-fb" style="font-size:0.62rem;margin-top:3px;min-height:14px;"></div>
+          </div>
+          <div style="font-size:0.6rem;color:var(--text-faint);margin-top:4px;line-height:1.55;">
+            Filename format: <code style="font-size:0.62rem;">{risaleId}_{rowIndex}_{col}.webm</code><br>
+            col = <code>ot</code> (Ottoman) or <code>v1</code> (Kurdish Literal)<br>
+            Row index is 0-based (first row = 0).
+          </div>
+        </div>
 
         <div class="ss" style="margin-top:2px;">
           <div class="ss-label">Rows</div>
@@ -2816,6 +2906,11 @@ tr.row-bookmarked {
     <span class="pill-mobile-label" aria-hidden="true">Bookmark</span>
   </button>
   <div id="pill-bk-group-picker" class="pill-bk-group-picker hidden"></div>
+  <button class="pill-btn pill-play" id="pill-play" aria-label="Play audio for this row" tabindex="0">
+    <span aria-hidden="true">▶</span>
+    <span class="pill-tip" aria-hidden="true">Play</span>
+    <span class="pill-mobile-label" aria-hidden="true">Play</span>
+  </button>
   <button class="pill-btn pill-delete" id="pill-delete" aria-label="Delete this row" tabindex="0">
     <span aria-hidden="true">🗑</span>
     <span class="pill-tip" aria-hidden="true">Delete</span>
@@ -3057,22 +3152,31 @@ const _dbStub = {
   delete() { return Promise.resolve(); },
   onSnapshot(cb) { cb({ docs: [], forEach() {} }); return () => {}; }
 };
+const _storageStub = {
+  ref() { return this; },
+  child() { return this; },
+  put() { return Promise.reject(new Error('Storage unavailable')); },
+  getDownloadURL() { return Promise.reject(new Error('Storage unavailable')); },
+};
 
-let auth, db;
+let auth, db, storage;
 if (typeof firebase !== 'undefined') {
   try {
     firebase.initializeApp(firebaseConfig);
     auth = firebase.auth();
     db = firebase.firestore();
+    storage = firebase.storage();
   } catch(e) {
     console.warn('Firebase init failed:', e);
     auth = _authStub;
     db = _dbStub;
+    storage = _storageStub;
   }
 } else {
   console.warn('Firebase SDK not loaded — running in local-only mode.');
   auth = _authStub;
   db = _dbStub;
+  storage = _storageStub;
 }
 
 let currentUser = null;
@@ -8849,6 +8953,302 @@ window.render = function() {
 /* ── Init ── */
 apSyncFab();
 apSyncControls();
+</script>
+
+<script>
+/* ══════════════════════════════════════
+   AUDIO UPLOAD  (Phase B)
+   ══════════════════════════════════════ */
+
+(function initAudioUpload() {
+  const dropZone  = document.getElementById('au-drop-zone');
+  const fileInput = document.getElementById('au-file-input');
+  const log       = document.getElementById('au-log');
+  const progBar   = document.getElementById('au-prog-bar');
+
+  /* ── Drag-and-drop ── */
+  dropZone.addEventListener('click', () => fileInput.click());
+
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    processFiles([...e.dataTransfer.files]);
+  });
+  fileInput.addEventListener('change', () => {
+    processFiles([...fileInput.files]);
+    fileInput.value = '';
+  });
+
+  /* ── Filename parser ── */
+  // Returns { risaleId, rowIndex, col } or null
+  function parseFilename(filename) {
+    // Strip extension
+    const base = filename.replace(/\.[^.]+$/, '');
+    // Pattern: digits _ digits _ (ot|v1)
+    const m = base.match(/^(\d+)_(\d+)_(ot|v1)$/i);
+    if (!m) return null;
+    return {
+      risaleId: parseInt(m[1], 10),
+      rowIndex:  parseInt(m[2], 10),
+      col:       m[3].toLowerCase()
+    };
+  }
+
+  /* ── Log helpers ── */
+  function logLine(text, cls) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    if (cls) d.className = cls;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+  function clearLog() { log.innerHTML = ''; }
+
+  /* ── Process a batch of files ── */
+  async function processFiles(files) {
+    clearLog();
+    if (!files.length) return;
+
+    // Only accept audio files
+    const audioFiles = files.filter(f =>
+      /\.(webm|mp3|wav|m4a|ogg)$/i.test(f.name)
+    );
+    if (!audioFiles.length) {
+      logLine('No recognised audio files found.', 'au-log-err');
+      return;
+    }
+
+    logLine(`Processing ${audioFiles.length} file(s)…`);
+    progBar.style.width = '0%';
+
+    let done = 0;
+
+    for (const file of audioFiles) {
+      const parsed = parseFilename(file.name);
+      if (!parsed) {
+        logLine(`✗ ${file.name} — filename not recognised`, 'au-log-err');
+        done++;
+        progBar.style.width = (done / audioFiles.length * 100) + '%';
+        continue;
+      }
+
+      const { risaleId, rowIndex, col } = parsed;
+
+      // Find the risale in memory
+      let targetRisale = null;
+      let targetBook   = null;
+      for (const bk of books) {
+        const r = bk.risales.find(x => x.id === risaleId);
+        if (r) { targetRisale = r; targetBook = bk; break; }
+      }
+
+      if (!targetRisale) {
+        logLine(`✗ ${file.name} — risale id=${risaleId} not found`, 'au-log-err');
+        done++;
+        progBar.style.width = (done / audioFiles.length * 100) + '%';
+        continue;
+      }
+
+      if (rowIndex < 0 || rowIndex >= targetRisale.rows.length) {
+        logLine(`✗ ${file.name} — row index ${rowIndex} out of range (${targetRisale.rows.length} rows)`, 'au-log-err');
+        done++;
+        progBar.style.width = (done / audioFiles.length * 100) + '%';
+        continue;
+      }
+
+      try {
+        // Upload to Firebase Storage
+        const storagePath = `audio/${risaleId}/${col}/${rowIndex}.webm`;
+        const ref = storage.ref().child(storagePath);
+        await ref.put(file);
+        const url = await ref.getDownloadURL();
+
+        // Write URL to the row
+        const row = targetRisale.rows[rowIndex];
+        if (col === 'ot')  row.audioOt = url;
+        if (col === 'v1')  row.audioV1 = url;
+
+        // Persist row array to Firestore
+        db.collection('books')
+          .doc(String(targetBook.id))
+          .collection('risales')
+          .doc(String(risaleId))
+          .update({ rows: targetRisale.rows })
+          .catch(e => console.error('Firestore update error:', e));
+
+        logLine(`✓ ${file.name} → row ${rowIndex + 1} of "${targetRisale.name}"`, 'au-log-ok');
+      } catch (e) {
+        logLine(`✗ ${file.name} — upload failed: ${e.message}`, 'au-log-err');
+      }
+
+      done++;
+      progBar.style.width = (done / audioFiles.length * 100) + '%';
+    }
+
+    logLine('Done.', 'au-log-ok');
+
+    // Re-sync player UI now that URLs exist
+    if (typeof apSyncFab === 'function') { apSyncFab(); apSyncControls(); }
+    // Re-render so speaker indicators appear
+    if (typeof render === 'function') render();
+  }
+})();
+</script>
+
+<script>
+/* ══════════════════════════════════════
+   AUDIO PHASE C: indicators + delete + pill play
+   ══════════════════════════════════════ */
+
+/* ── 1. Speaker dot helpers ── */
+
+// Call this after render() to inject dots into rendered rows.
+// Works for both table view (#tbody > tr) and stacked view (.s-row).
+function apInjectAudioDots() {
+  const rows = apGetRows();
+  if (!rows.length) return;
+  const col = apState.col; // 'ot' or 'v1'
+
+  // Table view: inject into col-num cell
+  document.querySelectorAll('#tbody tr').forEach((tr, i) => {
+    if (i >= rows.length) return;
+    const hasAudio = col === 'ot' ? !!rows[i].audioOt : !!rows[i].audioV1;
+    // Remove old dot if any
+    const old = tr.querySelector('.ap-has-audio-dot');
+    if (old) old.remove();
+    if (hasAudio) {
+      const numTd = tr.querySelector('td.col-num');
+      if (numTd) {
+        const dot = document.createElement('span');
+        dot.className = 'ap-has-audio-dot';
+        dot.title = 'Has audio';
+        numTd.appendChild(dot);
+      }
+    }
+  });
+
+  // Stacked view: inject into .s-num bar
+  document.querySelectorAll('#stacked .s-row').forEach((srow, i) => {
+    if (i >= rows.length) return;
+    const hasAudio = col === 'ot' ? !!rows[i].audioOt : !!rows[i].audioV1;
+    const old = srow.querySelector('.ap-has-audio-dot');
+    if (old) old.remove();
+    if (hasAudio) {
+      const numBar = srow.querySelector('.s-num');
+      if (numBar) {
+        const dot = document.createElement('span');
+        dot.className = 'ap-has-audio-dot';
+        dot.title = 'Has audio';
+        numBar.appendChild(dot);
+      }
+    }
+  });
+}
+
+// Patch render() to also inject dots after each render
+const _renderPhaseC = window.render;
+window.render = function() {
+  _renderPhaseC.apply(this, arguments);
+  requestAnimationFrame(apInjectAudioDots);
+};
+
+// Also re-inject when column changes in the player
+const _origApSetCol = apSetCol;
+window.apSetCol = function(col) {
+  _origApSetCol(col);
+  requestAnimationFrame(apInjectAudioDots);
+};
+
+/* ── 2. Pill play button ── */
+
+const pillPlay = document.getElementById('pill-play');
+if (pillPlay) {
+  pillPlay.addEventListener('click', e => {
+    e.stopPropagation();
+    const idx = pillState.rowIndex;
+    closePill();
+    // Show controls if hidden
+    apShowControls(true);
+    apPlay(idx);
+  });
+}
+
+// Also update pill play button appearance based on whether row has audio
+const _origOpenPill = openPill;
+window.openPill = function(rowIndex, anchorEl) {
+  _origOpenPill(rowIndex, anchorEl);
+  if (!pillPlay) return;
+  const rows = apGetRows();
+  const row = rows[rowIndex];
+  const hasAudio = row && (row.audioOt || row.audioV1);
+  pillPlay.style.opacity = hasAudio ? '1' : '0.3';
+  pillPlay.title = hasAudio ? 'Play audio for this row' : 'No audio for this row';
+};
+
+/* ── 3. Delete clip ── */
+
+let auDelCol = 'ot';
+
+function auDelSetCol(col) {
+  auDelCol = col;
+  document.getElementById('au-del-col-ot').classList.toggle('active', col === 'ot');
+  document.getElementById('au-del-col-v1').classList.toggle('active', col === 'v1');
+}
+
+function auDeleteClip() {
+  const fb = document.getElementById('au-del-fb');
+  const rowNumInput = document.getElementById('au-del-row');
+  const rowNum = parseInt(rowNumInput.value, 10);
+  if (!rowNum || rowNum < 1) { fb.textContent = 'Enter a row number.'; fb.style.color = 'var(--danger)'; return; }
+
+  const rowIndex = rowNum - 1;
+  const r = cur();
+  if (!r || rowIndex >= r.rows.length) { fb.textContent = 'Row not found.'; fb.style.color = 'var(--danger)'; return; }
+
+  const row = r.rows[rowIndex];
+  const urlKey = auDelCol === 'ot' ? 'audioOt' : 'audioV1';
+  const url = row[urlKey];
+
+  if (!url) { fb.textContent = 'No audio on that row/column.'; fb.style.color = 'var(--text-faint)'; return; }
+
+  // Delete from Firebase Storage
+  try {
+    storage.refFromURL(url).delete()
+      .then(() => console.log('Storage file deleted'))
+      .catch(e => console.warn('Storage delete error (file may already be gone):', e));
+  } catch(e) {
+    console.warn('Could not delete from storage:', e);
+  }
+
+  // Remove URL from row
+  delete row[urlKey];
+
+  // Persist to Firestore
+  for (const bk of books) {
+    const rs = bk.risales.find(x => x.id === activeId);
+    if (rs) {
+      db.collection('books').doc(String(bk.id)).collection('risales').doc(String(activeId))
+        .update({ rows: rs.rows })
+        .catch(e => console.error('Firestore update after delete:', e));
+      break;
+    }
+  }
+
+  fb.textContent = `✓ Clip removed from row ${rowNum}.`;
+  fb.style.color = 'var(--accent2)';
+  rowNumInput.value = '';
+
+  // Re-sync player and dots
+  if (apState.rowIndex === rowIndex) apStop();
+  apSyncFab();
+  apSyncControls();
+  requestAnimationFrame(apInjectAudioDots);
+}
 </script>
 </body>
 </html>

@@ -212,6 +212,9 @@ body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Spectra
 .pg-divider-line{flex:1;height:1px;background:var(--border);}
 .pg-divider-label{font-size:0.68rem;color:var(--text-faint);font-family:'Spectral',serif;letter-spacing:.08em;opacity:0.7;white-space:nowrap;}
 .hide-pages .pg-divider{display:none!important;}
+.hide-pages .pg-divider-row{display:none!important;}
+.hide-pages .para-break-row{display:none!important;}
+.hide-pages .s-para-break{display:none!important;}
 
 /* ── PAGE NAV BAR (in main content) ── */
 #pm-nav-bar-outer{display:none;position:sticky;bottom:0;z-index:100;flex-shrink:0;}
@@ -611,6 +614,47 @@ tr.row-bookmarked {
 .pill-btn.pill-delete:hover { color: var(--danger); }
 .pill-btn.pill-delete.confirm-pending { color: var(--warn); background: rgba(200,160,64,.14); }
 .pill-btn.pill-bookmark.bookmarked { color: var(--accent); }
+/* Bookmark group picker */
+.pill-bk-group-picker {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 5px;
+  min-width: 160px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.5);
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pill-bk-group-picker.hidden { display: none; }
+.pill-bk-group-opt {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: 'Spectral', serif;
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  text-align: left;
+  transition: background .12s, color .12s;
+  white-space: nowrap;
+}
+.pill-bk-group-opt:hover { background: var(--surface3); color: var(--text); }
+.pill-bk-group-opt.is-default { color: var(--accent); }
+.pill-bk-group-sep { height: 1px; background: var(--border-soft); margin: 3px 0; }
+.pill-bk-group-label {
+  font-size: 0.6rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 2px 10px 4px;
+}
 
 /* Pill tooltips — desktop hover */
 .pill-btn .pill-tip {
@@ -2614,6 +2658,7 @@ tr.row-bookmarked {
     <span class="pill-tip" aria-hidden="true">Bookmark</span>
     <span class="pill-mobile-label" aria-hidden="true">Bookmark</span>
   </button>
+  <div id="pill-bk-group-picker" class="pill-bk-group-picker hidden"></div>
   <button class="pill-btn pill-delete" id="pill-delete" aria-label="Delete this row" tabindex="0">
     <span aria-hidden="true">🗑</span>
     <span class="pill-tip" aria-hidden="true">Delete</span>
@@ -4749,7 +4794,7 @@ function isRowBookmarked(rowIndex) {
   return !!getRowBookmarks(activeId)[rowIndex];
 }
 
-function getOrCreateBookmark(risaleId, rowIndex) {
+function getOrCreateBookmark(risaleId, rowIndex, groupId) {
   const existing = (rowBookmarks[risaleId] || {})[rowIndex];
   if (existing) return existing;
   const r = cur();
@@ -4766,7 +4811,7 @@ function getOrCreateBookmark(risaleId, rowIndex) {
     bookName,
     rowNumber: rowIndex + 1,
     timestamp: Date.now(),
-    groups: [],
+    groups: (groupId != null) ? [groupId] : [],
     tags: []
   };
   bookmarksStore.push(bm);
@@ -5033,7 +5078,8 @@ function buildBkItem(bm) {
   // Source line
   const src = document.createElement('div');
   src.className = 'bk-item-source';
-  src.innerHTML = `<strong>${AR(bm.risalahName)}</strong> · ${AR(bm.bookName)} · Row ${bm.rowNumber}`;
+  const ts = bm.timestamp ? new Date(bm.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+  src.innerHTML = `<strong>${AR(bm.risalahName)}</strong> · ${AR(bm.bookName)} · Row ${bm.rowNumber}` + (ts ? ` · <span style="color:var(--text-faint);font-style:italic;">${ts}</span>` : '');
   item.appendChild(src);
 
   // Badges: groups + tags
@@ -5298,6 +5344,7 @@ function openPill(rowIndex, anchorEl) {
 }
 
 function closePill() {
+  closeBkGroupPicker();
   pill.classList.add('hidden');
   pillState.visible = false;
   pillState.deleteConfirmPending = false;
@@ -5379,15 +5426,84 @@ pillReflect.addEventListener('click', e => {
   openReflectionsForRow(rowNum);
 });
 
+let _bkPickerTimer = null;
+let _lastBkGroupId = null; // remember last chosen group
+
+function closeBkGroupPicker() {
+  const picker = document.getElementById('pill-bk-group-picker');
+  if (picker) picker.classList.add('hidden');
+  if (_bkPickerTimer) { clearTimeout(_bkPickerTimer); _bkPickerTimer = null; }
+}
+
+function openBkGroupPicker() {
+  const picker = document.getElementById('pill-bk-group-picker');
+  if (!picker) return;
+  picker.innerHTML = '';
+
+  const label = document.createElement('div');
+  label.className = 'pill-bk-group-label';
+  label.textContent = 'Add to group';
+  picker.appendChild(label);
+
+  // "No group" option
+  const noneOpt = document.createElement('button');
+  noneOpt.className = 'pill-bk-group-opt' + (_lastBkGroupId === null ? ' is-default' : '');
+  noneOpt.textContent = '🔖 No group';
+  noneOpt.addEventListener('click', e => {
+    e.stopPropagation();
+    _lastBkGroupId = null;
+    getOrCreateBookmark(activeId, pillState.rowIndex, null);
+    closeBkGroupPicker();
+    updatePillBookmarkState();
+    render();
+  });
+  picker.appendChild(noneOpt);
+
+  if (bookmarkGroups.length > 0) {
+    const sep = document.createElement('div');
+    sep.className = 'pill-bk-group-sep';
+    picker.appendChild(sep);
+  }
+
+  bookmarkGroups.forEach(g => {
+    const opt = document.createElement('button');
+    opt.className = 'pill-bk-group-opt' + (_lastBkGroupId === g.id ? ' is-default' : '');
+    opt.textContent = g.icon + ' ' + g.name;
+    opt.addEventListener('click', e => {
+      e.stopPropagation();
+      _lastBkGroupId = g.id;
+      const bm = getOrCreateBookmark(activeId, pillState.rowIndex, g.id);
+      closeBkGroupPicker();
+      updatePillBookmarkState();
+      render();
+    });
+    picker.appendChild(opt);
+  });
+
+  picker.classList.remove('hidden');
+  if (_bkPickerTimer) clearTimeout(_bkPickerTimer);
+  _bkPickerTimer = setTimeout(closeBkGroupPicker, 5000);
+}
+
 pillBookmark.addEventListener('click', e => {
   e.stopPropagation();
-  toggleRowBookmark(pillState.rowIndex);
-  updatePillBookmarkState();
-  render(); // re-render to show bookmark indicator
-  // Keep pill open
-  if (pillState.anchorEl) {
-    requestAnimationFrame(() => positionPill(pillState.anchorEl));
+  const alreadyBookmarked = isRowBookmarked(pillState.rowIndex);
+  if (alreadyBookmarked) {
+    // Remove bookmark immediately
+    closeBkGroupPicker();
+    toggleRowBookmark(pillState.rowIndex);
+    updatePillBookmarkState();
+    render();
+  } else {
+    // Show group picker
+    const picker = document.getElementById('pill-bk-group-picker');
+    if (picker && !picker.classList.contains('hidden')) {
+      closeBkGroupPicker();
+    } else {
+      openBkGroupPicker();
+    }
   }
+  if (pillState.anchorEl) requestAnimationFrame(() => positionPill(pillState.anchorEl));
 });
 
 pillDelete.addEventListener('click', e => {
@@ -5415,6 +5531,10 @@ pillDelete.addEventListener('click', e => {
 
 // Close pill on outside click
 document.addEventListener('click', e => {
+  const picker = document.getElementById('pill-bk-group-picker');
+  if (picker && !picker.classList.contains('hidden') && !picker.contains(e.target) && e.target !== pillBookmark && !pillBookmark.contains(e.target)) {
+    closeBkGroupPicker();
+  }
   if (pillState.visible && !pill.contains(e.target) && !e.target.classList.contains('row-dots-btn')) {
     closePill();
   }

@@ -2667,7 +2667,7 @@ tr.row-bookmarked {
   color: var(--text-faint);
   font-size: 0.9rem;
   cursor: pointer;
-  display: none; /* shown only when audio exists */
+  display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 16px rgba(0,0,0,.4);
@@ -2675,9 +2675,6 @@ tr.row-bookmarked {
               background .15s, border-color .15s, color .15s, transform .15s, opacity .2s;
   line-height: 1;
   padding: 0;
-}
-#ap-fab-toggle.ap-fab-visible {
-  display: flex;
 }
 /* Lift FAB above the bar when bar is showing */
 #ap-fab-toggle.ap-fab-above {
@@ -9121,11 +9118,10 @@ function apSyncFab() {
   apShell.classList.toggle('has-audio', hasAny);
   apShell.classList.toggle('ap-playing', apState.playing);
 
-  // FAB toggle circle
+  // FAB toggle circle — always visible
   const fab = document.getElementById('ap-fab-toggle');
   if (fab) {
-    // Visible whenever audio exists
-    fab.classList.toggle('ap-fab-visible', hasAny);
+    fab.classList.add('ap-fab-visible');
     // Lift above bar when bar is showing
     fab.classList.toggle('ap-fab-above', shouldShow);
     // Pulse when playing

@@ -8483,154 +8483,408 @@ function buildReflectionsSidebar() {
 
 </script>
 
-<!-- ── FLOATING AUDIO PLAYER ── -->
+<!-- ── BOTTOM BAR AUDIO PLAYER ── -->
 <style>
-#float-player{
-  position:fixed;
-  bottom:22px;
-  left:22px;
-  z-index:9999;
-  display:flex;
-  align-items:center;
-  pointer-events:none;
+/* ── Player shell ── */
+#yt-player {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  pointer-events: none;
+  font-family: 'Spectral', Georgia, serif;
 }
-#float-play-btn{
-  width:44px;
-  height:44px;
-  border-radius:50%;
-  background:var(--accent);
-  border:none;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 3px 14px rgba(0,0,0,.45);
-  flex-shrink:0;
-  pointer-events:all;
-  transition:background .18s, transform .15s;
-  position:relative;
-  z-index:2;
+
+/* ── Hidden tray (slides up) ── */
+#ytp-tray {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 16px;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height .32s cubic-bezier(.4,0,.2,1), opacity .24s, padding .28s;
+  pointer-events: none;
 }
-#float-play-btn:hover{background:var(--accent-dim);transform:scale(1.07);}
-#float-play-btn svg{width:16px;height:16px;fill:#1a1208;pointer-events:none;}
-#float-progress-track{
-  height:4px;
-  border-radius:2px;
-  background:var(--surface3);
-  border:1px solid var(--border);
-  overflow:hidden;
-  width:0;
-  max-width:500px;
-  margin-left:0;
-  transition:width .32s cubic-bezier(.4,0,.2,1), margin-left .32s cubic-bezier(.4,0,.2,1), opacity .28s;
-  opacity:0;
-  pointer-events:none;
-  box-shadow:0 2px 8px rgba(0,0,0,.3);
+#ytp-tray.open {
+  max-height: 60px;
+  opacity: 1;
+  pointer-events: all;
 }
-#float-progress-track.visible{
-  width:min(calc(100vw - 90px), 500px);
-  margin-left:10px;
-  opacity:1;
+
+/* tray buttons */
+.ytp-tb {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 6px;
+  width: 32px; height: 32px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .15s, color .15s, background .15s;
+  flex-shrink: 0;
 }
-#float-progress-fill{
-  height:100%;
-  background:var(--accent);
-  width:0%;
-  transition:width .25s linear;
-  border-radius:2px;
+.ytp-tb:hover { border-color: var(--accent); color: var(--accent); }
+.ytp-tb.active { background: var(--accent); border-color: var(--accent); color: #1a1208; }
+.ytp-tb svg { width: 15px; height: 15px; fill: currentColor; pointer-events: none; }
+
+/* volume slider in tray */
+#ytp-vol-wrap {
+  display: flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 8px;
+  height: 32px;
 }
+#ytp-vol-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 80px; height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) 0%, var(--accent) 80%, var(--surface3) 80%);
+  outline: none;
+  cursor: pointer;
+}
+#ytp-vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,.4);
+}
+#ytp-vol-slider::-moz-range-thumb {
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+}
+
+/* speed pills */
+#ytp-speed-wrap {
+  display: flex; align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  height: 32px;
+}
+.ytp-speed-btn {
+  background: none;
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: 'Spectral', Georgia, serif;
+  font-size: 0.68rem;
+  letter-spacing: .02em;
+  padding: 0 8px;
+  height: 100%;
+  cursor: pointer;
+  transition: background .13s, color .13s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ytp-speed-btn:last-child { border-right: none; }
+.ytp-speed-btn:hover { background: var(--surface3); color: var(--text); }
+.ytp-speed-btn.active { background: var(--accent); color: #1a1208; font-weight: 700; }
+
+/* tray separator */
+.ytp-sep {
+  width: 1px; height: 22px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+/* ── Main bar ── */
+#ytp-bar {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 10px;
+  height: 52px;
+  pointer-events: all;
+  position: relative;
+}
+
+/* seek track spanning full bar width */
+#ytp-seek-wrap {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  cursor: pointer;
+  z-index: 2;
+}
+#ytp-seek-bg {
+  width: 100%; height: 100%;
+  background: var(--surface3);
+}
+#ytp-seek-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  pointer-events: none;
+  transition: width .22s linear;
+}
+#ytp-seek-wrap:hover #ytp-seek-fill { background: var(--accent); filter: brightness(1.15); }
+
+/* prev / play / next */
+.ytp-ctrl {
+  background: none; border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  transition: color .15s, background .15s;
+  flex-shrink: 0;
+}
+.ytp-ctrl:hover { color: var(--text); background: var(--surface3); }
+.ytp-ctrl svg { width: 18px; height: 18px; fill: currentColor; pointer-events: none; }
+#ytp-play-btn { color: var(--accent); }
+#ytp-play-btn:hover { background: rgba(200,169,110,.12); }
+
+/* track info */
+#ytp-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 10px;
+  min-width: 0;
+}
+#ytp-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+#ytp-sub {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+/* time */
+#ytp-time {
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  letter-spacing: .04em;
+  flex-shrink: 0;
+  padding: 0 6px;
+}
+
+/* arrow toggle */
+#ytp-arrow {
+  background: none; border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  transition: color .15s, background .15s, transform .28s cubic-bezier(.4,0,.2,1);
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+#ytp-arrow:hover { color: var(--accent); background: var(--surface3); }
+#ytp-arrow svg { width: 16px; height: 16px; fill: currentColor; pointer-events: none; }
+#ytp-arrow.open { transform: rotate(180deg); }
 </style>
 
-<div id="float-player">
-  <button id="float-play-btn" title="Play / Pause">
-    <svg id="float-icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-    <svg id="float-icon-pause" viewBox="0 0 24 24" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-  </button>
-  <div id="float-progress-track">
-    <div id="float-progress-fill"></div>
+<div id="yt-player">
+  <!-- hidden tray -->
+  <div id="ytp-tray">
+    <!-- mute + volume -->
+    <div id="ytp-vol-wrap">
+      <button class="ytp-tb" id="ytp-mute" title="Mute">
+        <svg id="ytp-vol-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        <svg id="ytp-mute-icon" viewBox="0 0 24 24" style="display:none"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+      </button>
+      <input type="range" id="ytp-vol-slider" min="0" max="100" value="80" title="Volume">
+    </div>
+    <div class="ytp-sep"></div>
+    <!-- speed -->
+    <div id="ytp-speed-wrap">
+      <button class="ytp-speed-btn active" data-rate="1">1×</button>
+      <button class="ytp-speed-btn" data-rate="1.25">1.25×</button>
+      <button class="ytp-speed-btn" data-rate="1.5">1.5×</button>
+      <button class="ytp-speed-btn" data-rate="2">2×</button>
+    </div>
+    <div class="ytp-sep"></div>
+    <!-- repeat -->
+    <button class="ytp-tb" id="ytp-repeat" title="Repeat">
+      <svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+    </button>
+  </div>
+
+  <!-- main bar -->
+  <div id="ytp-bar">
+    <!-- seek strip along the very top of the bar -->
+    <div id="ytp-seek-wrap" title="Seek">
+      <div id="ytp-seek-bg"><div id="ytp-seek-fill"></div></div>
+    </div>
+
+    <button class="ytp-ctrl" id="ytp-prev" title="Previous">
+      <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+    </button>
+    <button class="ytp-ctrl" id="ytp-play-btn" title="Play / Pause">
+      <svg id="ytp-icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <svg id="ytp-icon-pause" viewBox="0 0 24 24" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+    </button>
+    <button class="ytp-ctrl" id="ytp-next" title="Next">
+      <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zm2-8.14L11.03 12 8 14.14V9.86zM16 6h2v12h-2z"/></svg>
+    </button>
+
+    <div id="ytp-info">
+      <div id="ytp-title">No track loaded</div>
+      <div id="ytp-sub">—</div>
+    </div>
+
+    <div id="ytp-time">0:00</div>
+
+    <button id="ytp-arrow" title="More controls">
+      <svg viewBox="0 0 24 24"><path d="M7.41 15.41 12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+    </button>
   </div>
 </div>
 
 <script>
 (function(){
-  const btn       = document.getElementById('float-play-btn');
-  const track     = document.getElementById('float-progress-track');
-  const fill      = document.getElementById('float-progress-fill');
-  const iconPlay  = document.getElementById('float-icon-play');
-  const iconPause = document.getElementById('float-icon-pause');
+  /* ── elements ── */
+  const tray      = document.getElementById('ytp-tray');
+  const arrow     = document.getElementById('ytp-arrow');
+  const playBtn   = document.getElementById('ytp-play-btn');
+  const iconPlay  = document.getElementById('ytp-icon-play');
+  const iconPause = document.getElementById('ytp-icon-pause');
+  const seekWrap  = document.getElementById('ytp-seek-wrap');
+  const seekFill  = document.getElementById('ytp-seek-fill');
+  const timeEl    = document.getElementById('ytp-time');
+  const muteBtn   = document.getElementById('ytp-mute');
+  const volIcon   = document.getElementById('ytp-vol-icon');
+  const muteIcon  = document.getElementById('ytp-mute-icon');
+  const volSlider = document.getElementById('ytp-vol-slider');
+  const repeatBtn = document.getElementById('ytp-repeat');
+  const speedBtns = document.querySelectorAll('.ytp-speed-btn');
 
-  let playing = false;
-  let progress = 0;          // 0–100
-  let rafId    = null;
-  let lastTs   = null;
-  const DURATION_MS = 60000; // 60 s demo loop
-  let inactivityTimer = null;
+  /* ── state ── */
+  let playing   = false;
+  let muted     = false;
+  let repeat    = false;
+  let progress  = 0;       // 0–100
+  let rafId     = null;
+  let lastTs    = null;
+  const DURATION_MS = 240000; // 4 min demo
 
-  function showBar(){
-    track.classList.add('visible');
-    resetInactivity();
-  }
-
-  function hideBar(){
-    track.classList.remove('visible');
-  }
-
-  function resetInactivity(){
-    clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(() => {
-      if(!playing) hideBar();
-      else {
-        // still playing – just keep alive until paused
-        resetInactivity();
-      }
-    }, 3000);
+  /* ── helpers ── */
+  function fmt(pct) {
+    const s = Math.round((pct / 100) * (DURATION_MS / 1000));
+    const m = Math.floor(s / 60);
+    return m + ':' + String(s % 60).padStart(2,'0');
   }
 
   function setPlaying(val){
     playing = val;
-    iconPlay.style.display  = playing ? 'none'  : '';
-    iconPause.style.display = playing ? ''      : 'none';
+    iconPlay.style.display  = val ? 'none' : '';
+    iconPause.style.display = val ? ''     : 'none';
   }
 
   function tick(ts){
     if(lastTs == null) lastTs = ts;
-    const dt = ts - lastTs;
-    lastTs   = ts;
+    const dt = ts - lastTs; lastTs = ts;
     progress += (dt / DURATION_MS) * 100;
-    if(progress >= 100){ progress = 0; }
-    fill.style.width = progress + '%';
+    if(progress >= 100){
+      progress = repeat ? 0 : 100;
+      if(!repeat){ setPlaying(false); return; }
+    }
+    seekFill.style.width = progress + '%';
+    timeEl.textContent   = fmt(progress);
     if(playing) rafId = requestAnimationFrame(tick);
   }
 
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
+  /* ── play / pause ── */
+  playBtn.addEventListener('click', () => {
     if(!playing){
       setPlaying(true);
-      showBar();
       lastTs = null;
       rafId  = requestAnimationFrame(tick);
     } else {
       setPlaying(false);
       cancelAnimationFrame(rafId);
-      resetInactivity();
     }
   });
 
-  /* tap outside → collapse */
-  document.addEventListener('click', (e) => {
-    if(!btn.contains(e.target) && !track.contains(e.target)){
-      if(playing){ setPlaying(false); cancelAnimationFrame(rafId); }
-      hideBar();
-      clearTimeout(inactivityTimer);
-    }
+  /* ── seek ── */
+  function seek(e){
+    const rect = seekWrap.getBoundingClientRect();
+    progress = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    seekFill.style.width = progress + '%';
+    timeEl.textContent   = fmt(progress);
+  }
+  let seeking = false;
+  seekWrap.addEventListener('mousedown', e => { seeking = true; seek(e); });
+  document.addEventListener('mousemove', e => { if(seeking) seek(e); });
+  document.addEventListener('mouseup',   () => { seeking = false; });
+
+  /* ── mute ── */
+  muteBtn.addEventListener('click', () => {
+    muted = !muted;
+    volIcon.style.display  = muted ? 'none' : '';
+    muteIcon.style.display = muted ? ''     : 'none';
+    muteBtn.classList.toggle('active', muted);
+    /* (hook into real audio element here) */
   });
 
-  /* scroll → collapse */
-  document.addEventListener('scroll', () => {
-    if(playing){ setPlaying(false); cancelAnimationFrame(rafId); }
-    hideBar();
-    clearTimeout(inactivityTimer);
-  }, { passive:true, capture:true });
+  /* ── volume slider fill ── */
+  volSlider.addEventListener('input', () => {
+    const pct = volSlider.value;
+    volSlider.style.background =
+      `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--surface3) ${pct}%)`;
+  });
+
+  /* ── speed ── */
+  speedBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      speedBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      /* (hook: audioEl.playbackRate = parseFloat(btn.dataset.rate)) */
+    });
+  });
+
+  /* ── repeat ── */
+  repeatBtn.addEventListener('click', () => {
+    repeat = !repeat;
+    repeatBtn.classList.toggle('active', repeat);
+  });
+
+  /* ── arrow toggle tray ── */
+  arrow.addEventListener('click', () => {
+    const open = tray.classList.toggle('open');
+    arrow.classList.toggle('open', open);
+  });
+
+  /* ── prev / next (stubs) ── */
+  document.getElementById('ytp-prev').addEventListener('click', () => {
+    progress = 0; seekFill.style.width = '0%'; timeEl.textContent = '0:00';
+  });
+  document.getElementById('ytp-next').addEventListener('click', () => {
+    progress = 0; seekFill.style.width = '0%'; timeEl.textContent = '0:00';
+    if(playing){ cancelAnimationFrame(rafId); lastTs = null; rafId = requestAnimationFrame(tick); }
+  });
 })();
 </script>
 

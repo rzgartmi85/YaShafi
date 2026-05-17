@@ -8819,7 +8819,7 @@ function buildReflectionsSidebar() {
   const GITHUB_BRANCH = 'main';
 
   function audioUrl(id){
-    return `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/Audio/${id}.mp3`;
+    return `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/audio/${id}.mp3`;
   }
 
   /* No pre-fetch needed — we just try to load by ID and handle
@@ -8869,28 +8869,24 @@ function buildReflectionsSidebar() {
 
   /* ── load a risale into the player ── */
   window.ytpLoadRisale = function(id, name){
+    // Find subtitle from books data (book name the risale belongs to)
     let subtitle = '';
     if(typeof books !== 'undefined'){
       for(const b of books){
         if(b.risales.find(r => r.id === id)){ subtitle = b.name; break; }
       }
     }
-    titleEl.textContent  = name || '';
-    subEl.textContent    = subtitle;
+
+    titleEl.textContent = name || '';
+    subEl.textContent   = subtitle;
     seekFill.style.width = '0%';
-    timeEl.textContent   = '0:00 / 0:00';
-    player.classList.remove('no-audio');
+    timeEl.textContent  = '0:00 / 0:00';
 
     const wasPlaying = !audio.paused;
-    audio.pause();
     audio.src = audioUrl(id);
     audio.load();
-    if(wasPlaying){
-      audio.addEventListener('canplaythrough', function onReady(){
-        audio.removeEventListener('canplaythrough', onReady);
-        audio.play().catch(()=>{});
-      });
-    }
+    player.classList.remove('no-audio');
+    if(wasPlaying) audio.play().catch(()=>{});
   };
 
   /* If the file doesn't exist on GitHub, degrade silently */
@@ -8915,6 +8911,7 @@ function buildReflectionsSidebar() {
 
   /* ── play / pause ── */
   playBtn.addEventListener('click', () => {
+    if(!audio.src){ return; } // nothing loaded yet
     if(audio.paused){ audio.play().catch(()=>{}); }
     else { audio.pause(); }
   });
@@ -9009,10 +9006,8 @@ function buildReflectionsSidebar() {
   audio.addEventListener('pause', syncBubbleIcon);
 
   bubble.addEventListener('click', () => {
-    // reveal the player bar
     player.classList.remove('hidden');
     bubble.classList.remove('visible');
-    // also toggle play/pause
     if(audio.src){
       if(audio.paused) audio.play().catch(()=>{});
       else audio.pause();

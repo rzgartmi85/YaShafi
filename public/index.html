@@ -8504,6 +8504,36 @@ function buildReflectionsSidebar() {
   transform: translateY(100%);
 }
 
+/* ── Mini play/pause bubble ── */
+#ytp-bubble {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 9998;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,.45);
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.7);
+  transition: opacity .28s cubic-bezier(.4,0,.2,1),
+              transform .28s cubic-bezier(.4,0,.2,1);
+}
+#ytp-bubble.visible {
+  opacity: 1;
+  pointer-events: all;
+  transform: scale(1);
+}
+#ytp-bubble:hover { filter: brightness(1.12); }
+#ytp-bubble svg { width: 20px; height: 20px; fill: #1a1208; pointer-events: none; }
+
 /* ── Hidden tray (slides up) ── */
 #ytp-tray {
   background: var(--surface);
@@ -8713,6 +8743,11 @@ function buildReflectionsSidebar() {
 #ytp-arrow.open { transform: rotate(180deg); }
 </style>
 
+<button id="ytp-bubble" title="Play / Pause">
+  <svg id="ytp-bubble-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+  <svg id="ytp-bubble-pause" viewBox="0 0 24 24" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+</button>
+
 <div id="yt-player">
   <!-- hidden tray -->
   <div id="ytp-tray">
@@ -8784,7 +8819,7 @@ function buildReflectionsSidebar() {
   const GITHUB_BRANCH = 'main';
 
   function audioUrl(id){
-    return `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/audio/${id}.mp3`;
+    return `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/Audio/${id}.mp3`;
   }
 
   /* No pre-fetch needed — we just try to load by ID and handle
@@ -8958,6 +8993,29 @@ function buildReflectionsSidebar() {
     if(id != null && typeof selectRisale === 'function') selectRisale(id);
   });
 
+  /* ── mini bubble ── */
+  const bubble      = document.getElementById('ytp-bubble');
+  const bubblePlay  = document.getElementById('ytp-bubble-play');
+  const bubblePause = document.getElementById('ytp-bubble-pause');
+
+  function syncBubbleIcon(){
+    bubblePlay.style.display  = audio.paused ? '' : 'none';
+    bubblePause.style.display = audio.paused ? 'none' : '';
+  }
+  audio.addEventListener('play',  syncBubbleIcon);
+  audio.addEventListener('pause', syncBubbleIcon);
+
+  bubble.addEventListener('click', () => {
+    // reveal the player bar
+    player.classList.remove('hidden');
+    bubble.classList.remove('visible');
+    // also toggle play/pause
+    if(audio.src){
+      if(audio.paused) audio.play().catch(()=>{});
+      else audio.pause();
+    }
+  });
+
   /* ── hide on scroll down, show on scroll up ── */
   (function(){
     let lastY = window.scrollY, ticking = false;
@@ -8969,8 +9027,10 @@ function buildReflectionsSidebar() {
             player.classList.add('hidden');
             tray.classList.remove('open');
             arrow.classList.remove('open');
+            bubble.classList.add('visible');
           } else {
             player.classList.remove('hidden');
+            bubble.classList.remove('visible');
           }
           lastY = y; ticking = false;
         });

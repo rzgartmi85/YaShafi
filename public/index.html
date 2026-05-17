@@ -8507,7 +8507,7 @@ function buildReflectionsSidebar() {
 /* ── Mini play/pause bubble ── */
 #ytp-bubble {
   position: fixed;
-  bottom: 18px;
+  bottom: 74px;
   right: 18px;
   z-index: 9998;
   width: 48px;
@@ -8884,9 +8884,14 @@ function buildReflectionsSidebar() {
 
     const wasPlaying = !audio.paused;
     audio.src = audioUrl(id);
-    audio.load();
     player.classList.remove('no-audio');
-    if(wasPlaying) audio.play().catch(()=>{});
+    if(wasPlaying){
+      audio.addEventListener('canplay', function onReady(){
+        audio.removeEventListener('canplay', onReady);
+        audio.play().catch(()=>{});
+      });
+    }
+    audio.load();
   };
 
   /* If the file doesn't exist on GitHub, degrade silently */

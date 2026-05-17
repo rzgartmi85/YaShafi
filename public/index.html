@@ -8532,7 +8532,7 @@ function buildReflectionsSidebar() {
   transform: scale(1);
 }
 #ytp-bubble:hover { filter: brightness(1.12); }
-#ytp-bubble svg { width: 20px; height: 20px; fill: #1a1208; pointer-events: none; }
+#ytp-bubble svg { width: 20px; height: 20px; fill: #ffffff; pointer-events: none; }
 
 /* ── Hidden tray (slides up) ── */
 #ytp-tray {
@@ -8869,29 +8869,28 @@ function buildReflectionsSidebar() {
 
   /* ── load a risale into the player ── */
   window.ytpLoadRisale = function(id, name){
-    // Find subtitle from books data (book name the risale belongs to)
     let subtitle = '';
     if(typeof books !== 'undefined'){
       for(const b of books){
         if(b.risales.find(r => r.id === id)){ subtitle = b.name; break; }
       }
     }
-
-    titleEl.textContent = name || '';
-    subEl.textContent   = subtitle;
+    titleEl.textContent  = name || '';
+    subEl.textContent    = subtitle;
     seekFill.style.width = '0%';
-    timeEl.textContent  = '0:00 / 0:00';
+    timeEl.textContent   = '0:00 / 0:00';
+    player.classList.remove('no-audio');
 
     const wasPlaying = !audio.paused;
+    audio.pause();
     audio.src = audioUrl(id);
-    player.classList.remove('no-audio');
+    audio.load();
     if(wasPlaying){
-      audio.addEventListener('canplay', function onReady(){
-        audio.removeEventListener('canplay', onReady);
+      audio.addEventListener('canplaythrough', function onReady(){
+        audio.removeEventListener('canplaythrough', onReady);
         audio.play().catch(()=>{});
       });
     }
-    audio.load();
   };
 
   /* If the file doesn't exist on GitHub, degrade silently */
@@ -8916,7 +8915,6 @@ function buildReflectionsSidebar() {
 
   /* ── play / pause ── */
   playBtn.addEventListener('click', () => {
-    if(!audio.src){ return; } // nothing loaded yet
     if(audio.paused){ audio.play().catch(()=>{}); }
     else { audio.pause(); }
   });

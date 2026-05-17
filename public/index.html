@@ -8787,19 +8787,8 @@ function buildReflectionsSidebar() {
     return `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/audio/${id}.mp3`;
   }
 
-  /* Fetch the repo's /audio/ file list via GitHub API so we
-     know which IDs actually have a file, without any manual map. */
-  const AVAILABLE_IDS = new Set();
-  fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/audio`)
-    .then(r => r.json())
-    .then(files => {
-      if(!Array.isArray(files)) return;
-      files.forEach(f => {
-        const m = f.name.match(/^(\d+)\.mp3$/i);
-        if(m) AVAILABLE_IDS.add(parseInt(m[1]));
-      });
-    })
-    .catch(() => {}); // silently fail — player degrades gracefully
+  /* No pre-fetch needed — we just try to load by ID and handle
+     errors gracefully if the file doesn't exist. */
 
   /* ── elements ── */
   const audio     = document.getElementById('ytp-audio');
@@ -8853,25 +8842,26 @@ function buildReflectionsSidebar() {
       }
     }
 
-    titleEl.textContent = name || 'No audio';
+    titleEl.textContent = name || '';
     subEl.textContent   = subtitle;
+    seekFill.style.width = '0%';
+    timeEl.textContent  = '0:00 / 0:00';
 
-    if(!AVAILABLE_IDS.has(id)){
-      // No audio file for this risale — reset player but keep name visible
-      audio.src = '';
-      seekFill.style.width = '0%';
-      timeEl.textContent = '0:00 / 0:00';
-      setPlayIcon(false);
-      player.classList.add('no-audio');
-      return;
-    }
-
-    player.classList.remove('no-audio');
     const wasPlaying = !audio.paused;
     audio.src = audioUrl(id);
     audio.load();
+    player.classList.remove('no-audio');
     if(wasPlaying) audio.play().catch(()=>{});
   };
+
+  /* If the file doesn't exist on GitHub, degrade silently */
+  audio.addEventListener('error', () => {
+    if(!audio.src) return;
+    setPlayIcon(false);
+    seekFill.style.width = '0%';
+    timeEl.textContent = '—';
+    player.classList.add('no-audio');
+  });
 
   /* ── audio events ── */
   audio.addEventListener('timeupdate', updateSeek);

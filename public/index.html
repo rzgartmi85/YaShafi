@@ -4283,6 +4283,8 @@ function selectRisale(id){
   renderRisaleList(); render();
   savePrefsToFirestore();
   if(mob()) closeAll();
+  // ── notify audio player ──
+  if(typeof ytpLoadRisale === 'function') ytpLoadRisale(id, r.name);
 }
 
 function openNewRisale(){
@@ -8495,6 +8497,11 @@ function buildReflectionsSidebar() {
   align-items: stretch;
   pointer-events: none;
   font-family: 'Spectral', Georgia, serif;
+  transform: translateY(0);
+  transition: transform .35s cubic-bezier(.4,0,.2,1);
+}
+#yt-player.hidden {
+  transform: translateY(100%);
 }
 
 /* ── Hidden tray (slides up) ── */
@@ -8763,9 +8770,40 @@ function buildReflectionsSidebar() {
   </div>
 </div>
 
+<audio id="ytp-audio" preload="metadata"></audio>
 <script>
 (function(){
+
+  /* ════════════════════════════════════════════════════════
+     ONE-TIME SETUP — set your GitHub username and repo name.
+     Audio files must be named by risale ID: 1.mp3, 2.mp3, etc.
+     and placed in the /audio/ folder of your repo.
+  ════════════════════════════════════════════════════════ */
+  const GITHUB_USER = 'rzgartmi85';
+  const GITHUB_REPO = 'YaShafi';
+  const GITHUB_BRANCH = 'main';
+
+  function audioUrl(id){
+    return `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/audio/${id}.mp3`;
+  }
+
+  /* Fetch the repo's /audio/ file list via GitHub API so we
+     know which IDs actually have a file, without any manual map. */
+  const AVAILABLE_IDS = new Set();
+  fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/audio`)
+    .then(r => r.json())
+    .then(files => {
+      if(!Array.isArray(files)) return;
+      files.forEach(f => {
+        const m = f.name.match(/^(\d+)\.mp3$/i);
+        if(m) AVAILABLE_IDS.add(parseInt(m[1]));
+      });
+    })
+    .catch(() => {}); // silently fail — player degrades gracefully
+
   /* ── elements ── */
+  const audio     = document.getElementById('ytp-audio');
+  const player    = document.getElementById('yt-player');
   const tray      = document.getElementById('ytp-tray');
   const arrow     = document.getElementById('ytp-arrow');
   const playBtn   = document.getElementById('ytp-play-btn');
@@ -8774,6 +8812,8 @@ function buildReflectionsSidebar() {
   const seekWrap  = document.getElementById('ytp-seek-wrap');
   const seekFill  = document.getElementById('ytp-seek-fill');
   const timeEl    = document.getElementById('ytp-time');
+  const titleEl   = document.getElementById('ytp-title');
+  const subEl     = document.getElementById('ytp-sub');
   const muteBtn   = document.getElementById('ytp-mute');
   const volIcon   = document.getElementById('ytp-vol-icon');
   const muteIcon  = document.getElementById('ytp-mute-icon');
@@ -8781,94 +8821,124 @@ function buildReflectionsSidebar() {
   const repeatBtn = document.getElementById('ytp-repeat');
   const speedBtns = document.querySelectorAll('.ytp-speed-btn');
 
-  /* ── state ── */
-  let playing   = false;
-  let muted     = false;
-  let repeat    = false;
-  let progress  = 0;       // 0–100
-  let rafId     = null;
-  let lastTs    = null;
-  const DURATION_MS = 240000; // 4 min demo
-
   /* ── helpers ── */
-  function fmt(pct) {
-    const s = Math.round((pct / 100) * (DURATION_MS / 1000));
-    const m = Math.floor(s / 60);
-    return m + ':' + String(s % 60).padStart(2,'0');
+  function fmt(sec){
+    sec = Math.floor(sec || 0);
+    const m = Math.floor(sec / 60);
+    return m + ':' + String(sec % 60).padStart(2,'0');
+  }
+  function setPlayIcon(isPlaying){
+    iconPlay.style.display  = isPlaying ? 'none' : '';
+    iconPause.style.display = isPlaying ? ''     : 'none';
+  }
+  function updateSeek(){
+    const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+    seekFill.style.width = pct + '%';
+    timeEl.textContent   = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
+  }
+  function updateVolSlider(){
+    const pct = Math.round(audio.volume * 100);
+    volSlider.value = pct;
+    volSlider.style.background =
+      `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--surface3) ${pct}%)`;
   }
 
-  function setPlaying(val){
-    playing = val;
-    iconPlay.style.display  = val ? 'none' : '';
-    iconPause.style.display = val ? ''     : 'none';
-  }
-
-  function tick(ts){
-    if(lastTs == null) lastTs = ts;
-    const dt = ts - lastTs; lastTs = ts;
-    progress += (dt / DURATION_MS) * 100;
-    if(progress >= 100){
-      progress = repeat ? 0 : 100;
-      if(!repeat){ setPlaying(false); return; }
+  /* ── load a risale into the player ── */
+  window.ytpLoadRisale = function(id, name){
+    // Find subtitle from books data (book name the risale belongs to)
+    let subtitle = '';
+    if(typeof books !== 'undefined'){
+      for(const b of books){
+        if(b.risales.find(r => r.id === id)){ subtitle = b.name; break; }
+      }
     }
-    seekFill.style.width = progress + '%';
-    timeEl.textContent   = fmt(progress);
-    if(playing) rafId = requestAnimationFrame(tick);
-  }
+
+    titleEl.textContent = name || 'No audio';
+    subEl.textContent   = subtitle;
+
+    if(!AVAILABLE_IDS.has(id)){
+      // No audio file for this risale — reset player but keep name visible
+      audio.src = '';
+      seekFill.style.width = '0%';
+      timeEl.textContent = '0:00 / 0:00';
+      setPlayIcon(false);
+      player.classList.add('no-audio');
+      return;
+    }
+
+    player.classList.remove('no-audio');
+    const wasPlaying = !audio.paused;
+    audio.src = audioUrl(id);
+    audio.load();
+    if(wasPlaying) audio.play().catch(()=>{});
+  };
+
+  /* ── audio events ── */
+  audio.addEventListener('timeupdate', updateSeek);
+  audio.addEventListener('loadedmetadata', updateSeek);
+  audio.addEventListener('play',  () => setPlayIcon(true));
+  audio.addEventListener('pause', () => setPlayIcon(false));
+  audio.addEventListener('ended', () => {
+    if(audio.loop) return; // loop handles itself
+    setPlayIcon(false);
+    seekFill.style.width = '0%';
+  });
 
   /* ── play / pause ── */
   playBtn.addEventListener('click', () => {
-    if(!playing){
-      setPlaying(true);
-      lastTs = null;
-      rafId  = requestAnimationFrame(tick);
-    } else {
-      setPlaying(false);
-      cancelAnimationFrame(rafId);
-    }
+    if(!audio.src){ return; } // nothing loaded yet
+    if(audio.paused){ audio.play().catch(()=>{}); }
+    else { audio.pause(); }
   });
 
   /* ── seek ── */
-  function seek(e){
-    const rect = seekWrap.getBoundingClientRect();
-    progress = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-    seekFill.style.width = progress + '%';
-    timeEl.textContent   = fmt(progress);
-  }
   let seeking = false;
-  seekWrap.addEventListener('mousedown', e => { seeking = true; seek(e); });
-  document.addEventListener('mousemove', e => { if(seeking) seek(e); });
+  function applySeek(e){
+    if(!audio.duration) return;
+    const rect = seekWrap.getBoundingClientRect();
+    const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    audio.currentTime = pct * audio.duration;
+    updateSeek();
+  }
+  seekWrap.addEventListener('mousedown', e => { seeking = true; applySeek(e); });
+  document.addEventListener('mousemove', e => { if(seeking) applySeek(e); });
   document.addEventListener('mouseup',   () => { seeking = false; });
 
   /* ── mute ── */
   muteBtn.addEventListener('click', () => {
-    muted = !muted;
-    volIcon.style.display  = muted ? 'none' : '';
-    muteIcon.style.display = muted ? ''     : 'none';
-    muteBtn.classList.toggle('active', muted);
-    /* (hook into real audio element here) */
+    audio.muted = !audio.muted;
+    volIcon.style.display  = audio.muted ? 'none' : '';
+    muteIcon.style.display = audio.muted ? ''     : 'none';
+    muteBtn.classList.toggle('active', audio.muted);
   });
 
-  /* ── volume slider fill ── */
+  /* ── volume ── */
+  audio.volume = volSlider.value / 100;
   volSlider.addEventListener('input', () => {
-    const pct = volSlider.value;
-    volSlider.style.background =
-      `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--surface3) ${pct}%)`;
+    audio.volume = volSlider.value / 100;
+    if(audio.muted && audio.volume > 0){
+      audio.muted = false;
+      volIcon.style.display  = '';
+      muteIcon.style.display = 'none';
+      muteBtn.classList.remove('active');
+    }
+    updateVolSlider();
   });
+  updateVolSlider();
 
   /* ── speed ── */
   speedBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       speedBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      /* (hook: audioEl.playbackRate = parseFloat(btn.dataset.rate)) */
+      audio.playbackRate = parseFloat(btn.dataset.rate);
     });
   });
 
   /* ── repeat ── */
   repeatBtn.addEventListener('click', () => {
-    repeat = !repeat;
-    repeatBtn.classList.toggle('active', repeat);
+    audio.loop = !audio.loop;
+    repeatBtn.classList.toggle('active', audio.loop);
   });
 
   /* ── arrow toggle tray ── */
@@ -8877,14 +8947,48 @@ function buildReflectionsSidebar() {
     arrow.classList.toggle('open', open);
   });
 
-  /* ── prev / next (stubs) ── */
+  /* ── prev / next ── */
+  function getAdjacentRisaleId(dir){
+    // Walk all books in order to find prev/next risale globally
+    const all = [];
+    if(typeof books !== 'undefined'){
+      books.forEach(b => b.risales.forEach(r => all.push(r)));
+    }
+    const idx = all.findIndex(r => r.id === (typeof activeId !== 'undefined' ? activeId : -1));
+    const next = all[idx + dir];
+    return next ? next.id : null;
+  }
   document.getElementById('ytp-prev').addEventListener('click', () => {
-    progress = 0; seekFill.style.width = '0%'; timeEl.textContent = '0:00';
+    const id = getAdjacentRisaleId(-1);
+    if(id != null && typeof selectRisale === 'function') selectRisale(id);
+    else { audio.currentTime = 0; updateSeek(); }
   });
   document.getElementById('ytp-next').addEventListener('click', () => {
-    progress = 0; seekFill.style.width = '0%'; timeEl.textContent = '0:00';
-    if(playing){ cancelAnimationFrame(rafId); lastTs = null; rafId = requestAnimationFrame(tick); }
+    const id = getAdjacentRisaleId(1);
+    if(id != null && typeof selectRisale === 'function') selectRisale(id);
   });
+
+  /* ── hide on scroll down, show on scroll up ── */
+  (function(){
+    let lastY = window.scrollY, ticking = false;
+    window.addEventListener('scroll', () => {
+      if(!ticking){
+        requestAnimationFrame(() => {
+          const y = window.scrollY;
+          if(y > lastY && y > 60){
+            player.classList.add('hidden');
+            tray.classList.remove('open');
+            arrow.classList.remove('open');
+          } else {
+            player.classList.remove('hidden');
+          }
+          lastY = y; ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+  })();
+
 })();
 </script>
 
